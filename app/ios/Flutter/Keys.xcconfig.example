@@ -1,0 +1,6 @@
+// Renomeie para Keys.xcconfig e cole sua chave do Google Maps abaixo.
+// Este arquivo NÃO deve ser commitado (.gitignore já trata).
+//
+// A variável GMS_API_KEY é lida pelo Info.plist via $(GMS_API_KEY).
+
+GMS_API_KEY = COLE_AQUI_SUA_CHAVE_IOS

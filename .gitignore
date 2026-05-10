@@ -49,6 +49,8 @@ android/app/profile
 android/app/release
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+**/ios/Flutter/Keys.xcconfig
+**/android/key.properties
 *.jks
 *.keystore
 
