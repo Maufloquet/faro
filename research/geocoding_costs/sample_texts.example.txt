@@ -1,0 +1,9 @@
+# Cole aqui 500 textos reais (1 por linha) extraídos de portais de notícia locais.
+# Renomeie para sample_texts.txt antes de rodar test_volume.py.
+# Formato: cada linha é um trecho com menção a localização. Ex:
+#
+# Tiroteio na Avenida Sete de Setembro, no centro de Salvador, deixou trânsito interrompido
+# Assalto registrado no bairro do Rio Vermelho durante a madrugada
+# Polícia investiga roubo de carga na BR-324 perto de Pirajá
+# Comerciante é assaltado na Liberdade no início da noite
+# Suspeitos fugiram pela Suburbana após tentativa de assalto em Periperi
