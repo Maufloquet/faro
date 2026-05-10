@@ -13,16 +13,15 @@ Prazo total estimado: **3-4 semanas**.
 ### 1. Auditoria de dados da SSP
 
 **Diretório:** `ssp_audit/`
-**Status:** EM ANDAMENTO — pesquisa preliminar pronta (`findings_initial.md`)
-**Próximo passo:** baixar amostra real do painel SSP-BA + ISPDados-RJ
+**Status:** REBAIXADA — não-crítica após aprovação da Validação 2
+**Justificativa:** Fogo Cruzado já cobre Salvador com 100% de geocodificação. Camada SSP-BA vira complementar (histórico de longo prazo), não crítica. Pode ser feita em paralelo à Fase 1 ou após o MVP.
 **Critério de aprovação:** dados estruturados ou semiestruturados da cidade piloto, com granularidade ≤ bairro e atualização ≥ mensal.
 
 ### 2. Teste de cobertura do Fogo Cruzado
 
 **Diretório:** `fogo_cruzado_test/`
-**Status:** PRONTO PARA RODAR — falta API key
-**Próximo passo:** cadastrar em https://api.fogocruzado.org.br, preencher `.env`, executar `python test_api.py`
-**Critério de aprovação:** API responde com dados geocodificados, cobertura inclui cidade piloto OU cidade alternativa viável.
+**Status: APROVADA** (2026-05-10) — ver `fogo_cruzado_test/findings.md`
+**Resultado:** 4 estados cobertos, 100% com geocoordenadas. **Salvador domina BA com 78 de 100 ocorrências recentes** (~3/dia). Densidade comparável a RJ. Salvador confirmada como piloto recomendado.
 
 ### 3. Teste de custo de Geocoding em volume
 
