@@ -22,6 +22,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   );
 
   GoogleMapController? _map;
+  MapType _mapType = MapType.hybrid;
 
   Future<void> _focusOn(Occurrence o) async {
     final controller = _map;
@@ -33,6 +34,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  void _toggleMapType() {
+    setState(() {
+      _mapType = _mapType == MapType.hybrid ? MapType.normal : MapType.hybrid;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final occurrences = ref.watch(recentOccurrencesProvider);
@@ -42,13 +49,49 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         children: [
           _Map(
             initialCamera: _salvador,
+            mapType: _mapType,
             occurrences: occurrences.maybeWhen(data: (v) => v, orElse: () => const []),
             onCreated: (c) => _map = c,
             onTap: _focusOn,
           ),
           const _Header(),
+          Positioned(
+            right: 14,
+            bottom: MediaQuery.of(context).size.height * 0.18 + 12,
+            child: _MapTypeToggle(
+              isHybrid: _mapType == MapType.hybrid,
+              onTap: _toggleMapType,
+            ),
+          ),
           _Sheet(occurrences: occurrences, onTapTile: _focusOn),
         ],
+      ),
+    );
+  }
+}
+
+class _MapTypeToggle extends StatelessWidget {
+  final bool isHybrid;
+  final VoidCallback onTap;
+  const _MapTypeToggle({required this.isHybrid, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 4,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(11),
+          child: Icon(
+            isHybrid ? Icons.map_outlined : Icons.satellite_alt_outlined,
+            size: 22,
+            color: const Color(0xFF2A4A7A),
+          ),
+        ),
       ),
     );
   }
@@ -60,12 +103,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
 class _Map extends StatelessWidget {
   final CameraPosition initialCamera;
+  final MapType mapType;
   final List<Occurrence> occurrences;
   final ValueChanged<GoogleMapController> onCreated;
   final ValueChanged<Occurrence> onTap;
 
   const _Map({
     required this.initialCamera,
+    required this.mapType,
     required this.occurrences,
     required this.onCreated,
     required this.onTap,
@@ -75,6 +120,7 @@ class _Map extends StatelessWidget {
   Widget build(BuildContext context) {
     return GoogleMap(
       initialCameraPosition: initialCamera,
+      mapType: mapType,
       myLocationEnabled: true,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
