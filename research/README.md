@@ -31,34 +31,33 @@ Prazo total estimado: **3-4 semanas**.
 **Próximo passo:** habilitar Geocoding API no GCP, preencher `.env`, popular `sample_texts.txt`, executar `python test_volume.py`
 **Critério de aprovação:** custo escalado ≤ R$ 800/mês para o volume projetado do MVP.
 
-### 4. Consulta jurídica inicial
+### 4. Consulta jurídica inicial — PULADA (decisão do autor, 2026-05-10)
 
 **Diretório:** `telegram_legal/`
-**Status:** TODO
-**Próximo passo:** contratar advogado especializado em LGPD + direito digital
-**Critério de aprovação:** parecer escrito de advogado cobrindo (a) base legal LGPD para geolocalização sensível, (b) viabilidade de scraping de Telegram público, (c) exposição civil "o app disse que estava seguro".
+**Status:** PULADA — retomar antes do beta público
+**Justificativa:** decisão do autor de seguir para desenvolvimento técnico antes do parecer jurídico. **Risco aceito:** sem parecer, decisões de arquitetura sobre Telegram MTProto e tratamento de geolocalização ficam tentativas; podem precisar de retrabalho. Esta validação **deve** ser executada antes do beta público (com usuários reais) — sob pena de exposição LGPD não mitigada.
+**Reativação obrigatória:** quando modelo de dados estiver definido E antes do primeiro beta com usuários externos.
 
-### 5. Conversa exploratória B2B
+### 5. Conversa exploratória B2B — PULADA (decisão do autor, 2026-05-10)
 
 **Diretório:** `b2b_discovery/`
-**Status:** TODO
-**Próximo passo:** mapear 5 candidatos via LinkedIn (delivery local, logística última-milha, seguro de moto), agendar 3 conversas
-**Critério de aprovação:** ao menos 1 de 3 clientes potenciais demonstra disposição concreta de pagar (não "interessante", não "manda proposta") por um serviço de inteligência de risco urbano.
+**Status:** PULADA — retomar quando MVP tiver demo navegável
+**Justificativa:** decisão do autor de seguir B2C-first antes de validar disposição de pagamento B2B. **Risco aceito:** caminho B2B alternativo não validado; se MVP B2C não engajar, opção B2B precisará ser reaberta como pivô, não como saída paralela.
+**Reativação obrigatória:** quando MVP tiver demo navegável com dados reais (~Fim Fase 1).
 
 ---
 
-## Gate de decisão final
+## Gate de decisão final (revisado — apenas 1, 2, 3)
 
-Após as 5 validações, decidir entre 3 caminhos:
+Validações 4 e 5 puladas por decisão do autor. Decisão simplificada:
 
-**A — Continuar como B2C-first**
-Validações 1, 2, 3 aprovadas. Validação 4 sem bloqueio. Validação 5 ainda incerta. Iniciar Fase 1 (MVP modo passivo).
-
-**B — Pivotar para B2B-first**
-Validações 1, 2, 3 aprovadas. Validação 5 forte (cliente disposto). Construir API e dashboard B2B, deixar B2C como extensão.
+**A — Continuar como B2C-first** (caminho ativo)
+Validações 1, 2, 3 aprovadas → iniciar Fase 1 (MVP modo passivo). É o caminho assumido.
 
 **C — Arquivar**
-Validação 1 falha (sem dados públicos viáveis) E validação 5 falha (sem dor B2B real). O projeto não tem fundação técnica nem de receita.
+Validação 1 falha (sem dados públicos viáveis em nenhuma cidade) E validação 2 falha (Fogo Cruzado sem cobertura útil). Sem dados, modo passivo não funciona.
+
+Caminho B (B2B-first) reaberto apenas se Fase 1 mostrar engajamento ruim e validação 5 for retomada nesse contexto.
 
 A decisão é registrada em `findings.md` com data, motivo e dados que sustentam a escolha.
 

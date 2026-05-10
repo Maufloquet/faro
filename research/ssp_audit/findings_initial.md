@@ -71,16 +71,16 @@ ISPDados é a fonte mais madura do Brasil para dados de segurança. Suporta down
 
 ## Hipótese inicial de cidade piloto
 
-Antes da auditoria detalhada, ranking de candidatas:
+**Atualização 2026-05-10:** busca pública confirmou que o **Fogo Cruzado hoje monitora violência armada em RJ, PE E BAHIA** (57 municípios no total entre os 3 estados). Salvador está coberta. Isso muda o ranking — não dependemos mais só da SSP-BA pra ter dados em tempo real na cidade piloto.
 
 | Cidade | Vantagem | Risco |
 |---|---|---|
-| **Rio de Janeiro** | ISPDados maduro + Fogo Cruzado | Concorrência mais cara, distância do autor |
-| **Recife** | Fogo Cruzado nativo | SDS-PE com dados estruturados a confirmar |
-| **Salvador** | Proximidade do autor, base de usuários | SSP-BA aparenta ser apenas painel/PDF |
+| **Salvador** ⭐ | Fogo Cruzado cobre + proximidade do autor + base de usuários | SSP-BA ainda incógnita (granularidade) |
+| **Rio de Janeiro** | ISPDados maduro + Fogo Cruzado | Distância do autor |
+| **Recife** | Fogo Cruzado nativo + SDS-PE | Sem vantagem operacional vs Salvador agora |
 | **São Paulo** | Maior mercado | Granularidade só municipal |
 
-**Recomendação inicial:** focar a auditoria detalhada em Salvador (preferência operacional) e Recife (backup). Se Salvador falhar em granularidade, Recife com Fogo Cruzado vira o piloto.
+**Recomendação revisada:** Salvador é o piloto natural. Validar Fogo Cruzado primeiro (rápido) — se cobertura em Salvador for densa o suficiente, a SSP-BA vira camada complementar (não crítica) e a auditoria pode até ser feita em paralelo à Fase 1.
 
 ---
 
