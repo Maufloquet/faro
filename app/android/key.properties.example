@@ -1,0 +1,10 @@
+# Renomeie para key.properties e preencha.
+# Este arquivo NÃO deve ser commitado (já está no .gitignore).
+#
+# Como obter:
+# 1. Console do Google Cloud (https://console.cloud.google.com)
+# 2. Habilitar "Maps SDK for Android"
+# 3. Credentials → Create credentials → API key
+# 4. Restringir a key por aplicativo Android (package name + SHA-1)
+
+MAPS_API_KEY=

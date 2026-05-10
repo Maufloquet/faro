@@ -1,17 +1,17 @@
-# `app/` — Flutter (vazio)
+# projeto_seg
 
-## O que vai aqui
+App de alerta de seguranca urbana - assistente de decisao em tempo real
 
-Projeto Flutter completo do app móvel. Stack alinhada com o Datestre: Flutter + Firebase Auth + Firestore + Cloud Messaging + Google Maps SDK.
+## Getting Started
 
-## Quando começar
+This project is a starting point for a Flutter application.
 
-**Apenas após o gate da Fase 0 ser aprovado** (ver `research/README.md`).
+A few resources to get you started if this is your first Flutter project:
 
-## Por que está vazio
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
 
-O relatório v3 (§11) explicita que iniciar código antes da validação das premissas é o erro clássico desse tipo de projeto. Sem confirmação de dados públicos viáveis, custo de infra dimensionado e parecer jurídico, qualquer trabalho aqui é dívida que pode ter de ser jogada fora.
-
-## Primeira ação quando autorizado
-
-`flutter create . --org com.projetoseg --project-name projeto_seg` — substituir org e nome quando a marca estiver definida.
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
