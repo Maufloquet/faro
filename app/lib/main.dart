@@ -1,26 +1,45 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'screens/map_screen.dart';
+import 'services/dev_data_source.dart';
+import 'services/occurrences_service.dart';
+
+/// Modo dev: lê ocorrências do asset local, sem precisar de Firebase.
+/// Vire pra false (ou defina --dart-define=USE_DEV_DATA=false) quando o
+/// Firebase project estiver configurado.
+const bool kUseDevAssetData = bool.fromEnvironment('USE_DEV_DATA', defaultValue: true);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const ProviderScope(child: ProjetoSegApp()));
+
+  if (!kUseDevAssetData) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } else if (kDebugMode) {
+    debugPrint('[Faro] modo dev: lendo ocorrências de assets/, sem Firebase.');
+  }
+
+  runApp(ProviderScope(
+    overrides: kUseDevAssetData
+        ? [recentOccurrencesProvider.overrideWith((_) => devOccurrencesStream())]
+        : const [],
+    child: const FaroApp(),
+  ));
 }
 
-class ProjetoSegApp extends StatelessWidget {
-  const ProjetoSegApp({super.key});
+class FaroApp extends StatelessWidget {
+  const FaroApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Projeto Segurança Urbana',
+      title: 'Faro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

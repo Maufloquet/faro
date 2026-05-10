@@ -1,6 +1,6 @@
 {
-  "name": "projeto-seg-functions",
-  "description": "Cloud Functions: ingestão Fogo Cruzado + cálculo de risco em tempo real",
+  "name": "faro-functions",
+  "description": "Faro Cloud Functions: ingestão Fogo Cruzado + cálculo de risco em tempo real",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",

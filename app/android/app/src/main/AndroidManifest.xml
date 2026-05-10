@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:label="Projeto Seg"
+        android:label="Faro"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- Substituir pelo key real do Google Maps em key.properties (não commitado).
