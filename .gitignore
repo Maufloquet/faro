@@ -1,0 +1,82 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+serviceAccount*.json
+firebase-debug.log
+
+# Logs
+*.log
+logs/
+
+# Flutter / Dart (Fase 1+)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/debug
+android/app/profile
+android/app/release
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+*.jks
+*.keystore
+
+# Node / Cloud Functions (Fase 1+)
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+package-lock.json.bak
+
+# Python (research scripts)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# Dados sensíveis coletados em research
+research/**/samples/*
+!research/**/samples/.gitkeep
+!research/**/samples/README.md
+
+# PDFs binários grandes (manter o relatório, ignorar outros)
+docs/*.pdf
+!docs/relatorio_v3.pdf
+
+# Outputs locais
+out/
+tmp/
+*.bak
