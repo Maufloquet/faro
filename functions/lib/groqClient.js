@@ -15,7 +15,10 @@
  */
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
+// 8B é suficiente pra extração estruturada de bairro + tipo. Free tier
+// dá 30k TPM (vs 12k do 70B) — ~2.5x mais throughput, suficiente pro
+// nosso volume sem estourar o limite por minuto.
+const MODEL = "llama-3.1-8b-instant";
 
 const SYSTEM_PROMPT = `Você é um classificador editorial de notícias de segurança urbana brasileiras.
 
@@ -36,6 +39,40 @@ Regras:
 - Sem campo extra, sem markdown, sem explicação. Apenas o JSON.`;
 
 async function classify(title, description) {
+  return classifyWithRetry(title, description, 3);
+}
+
+async function classifyWithRetry(title, description, maxRetries) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await doClassify(title, description);
+    } catch (e) {
+      const m = e.message || "";
+      const retry = parseRetryAfter(m);
+      if (m.includes("Groq 429") && retry && attempt < maxRetries) {
+        await sleep(retry + 150);
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
+function parseRetryAfter(msg) {
+  // Mensagens do Groq tipo: "Please try again in 1.079999999s"
+  // ou "...in 235ms"
+  const sec = msg.match(/try again in ([\d.]+)\s*s\b/i);
+  if (sec) return Math.ceil(parseFloat(sec[1]) * 1000);
+  const ms = msg.match(/try again in ([\d.]+)\s*ms\b/i);
+  if (ms) return Math.ceil(parseFloat(ms[1]));
+  return null;
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function doClassify(title, description) {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
     throw new Error("GROQ_API_KEY não configurada");

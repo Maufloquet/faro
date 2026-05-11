@@ -36,7 +36,9 @@ const { resolveBairro } = require("./bairrosDict");
 
 const SOURCE = "media";
 const PARSE_TIMEOUT_MS = 15000;
-const MAX_ITEMS_PER_SOURCE = 15;
+// Reduzido pra 8 — com 12 fontes ativas, são ~96 items/run. Margem
+// confortável dentro do TPM do Groq 8B (30k/min) sem retry agressivo.
+const MAX_ITEMS_PER_SOURCE = 8;
 const TTL_HOURS = 24 * 30;
 
 // Parser instanciado lazy dentro da função pra não pesar o load global
