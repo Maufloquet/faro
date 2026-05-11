@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'about_screen.dart';
+
 /// Tela de ajuda — explica o produto sem ser onboarding obrigatório.
 ///
 /// Acessível via ícone "?" na app bar do mapa. Inspirada no padrão
@@ -13,6 +15,15 @@ class HelpScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Como o Faro funciona', style: TextStyle(fontFamily: 'Georgia')),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Sobre o Faro',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AboutScreen()),
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
