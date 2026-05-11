@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'map_screen.dart';
+import 'onboarding_screen.dart';
 
 /// Splash de marca antes do mapa carregar.
 ///
@@ -30,17 +31,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _controller.forward();
 
-    Timer(const Duration(milliseconds: 1400), () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 450),
-          pageBuilder: (_, _, _) => const MapScreen(),
-          transitionsBuilder: (_, anim, _, child) =>
-              FadeTransition(opacity: anim, child: child),
-        ),
-      );
-    });
+    Timer(const Duration(milliseconds: 1400), _goNext);
+  }
+
+  Future<void> _goNext() async {
+    if (!mounted) return;
+    final needsOnboarding = await OnboardingScreen.shouldShow();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 450),
+        pageBuilder: (_, _, _) => needsOnboarding ? const OnboardingScreen() : const MapScreen(),
+        transitionsBuilder: (_, anim, _, child) =>
+            FadeTransition(opacity: anim, child: child),
+      ),
+    );
   }
 
   @override
