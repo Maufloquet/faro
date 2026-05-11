@@ -27,57 +27,57 @@ class MarkerFactory {
   }
 
   Future<BitmapDescriptor> _build(RiskLevel level, double dpr) async {
-    final size = 80.0 * dpr;
+    // Canvas em alta resolução pra evitar borrar quando o Maps escala.
+    final size = 96.0 * dpr;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final center = Offset(size / 2, size / 2);
     final color = level.color;
 
-    // Halo glow externo
+    // Halo externo (sutil — só pra sugerir "aura")
     canvas.drawCircle(
       center,
       size / 2.4,
-      Paint()..color = color.withValues(alpha: 0.18),
+      Paint()..color = color.withValues(alpha: 0.20),
     );
 
-    // Halo médio
+    // Halo médio (mais opaco)
     canvas.drawCircle(
       center,
       size / 3,
-      Paint()..color = color.withValues(alpha: 0.32),
+      Paint()..color = color.withValues(alpha: 0.42),
     );
 
-    // Sombra suave atrás do dot
+    // Sombra suave atrás do dot (cria profundidade sobre satélite)
     canvas.drawCircle(
-      Offset(center.dx, center.dy + 2 * dpr),
-      size / 4.6,
+      Offset(center.dx, center.dy + 2.5 * dpr),
+      size / 4.0,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.25)
+        ..color = Colors.black.withValues(alpha: 0.38)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * dpr),
     );
 
-    // Dot principal
+    // Anel branco externo (background ring — destaca do mapa)
+    canvas.drawCircle(
+      center,
+      size / 4.0,
+      Paint()..color = Colors.white,
+    );
+
+    // Dot principal — proporcionalmente maior pra ficar visível
     canvas.drawCircle(
       center,
       size / 4.6,
       Paint()..color = color,
     );
 
-    // Anel branco
-    canvas.drawCircle(
-      center,
-      size / 4.6,
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.4 * dpr,
-    );
-
     final picture = recorder.endRecording();
     final img = await picture.toImage(size.toInt(), size.toInt());
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final bytes = byteData!.buffer.asUint8List();
-    return BitmapDescriptor.bytes(bytes, width: 40);
+    // 56 pontos lógicos: 40% maior que antes (40 → 56), fica visível mesmo
+    // em zoom de cidade sem dominar a tela em zoom de rua.
+    return BitmapDescriptor.bytes(bytes, width: 56);
   }
 }
 

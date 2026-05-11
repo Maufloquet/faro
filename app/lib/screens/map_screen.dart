@@ -36,9 +36,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
 
   /// Limite de zoom que separa heatmap (zoom-out) de marcadores individuais.
-  /// Salvador inteira cabe em ~12; bairro em ~14-15. Em 13.5 fica o meio
-  /// termo: cidade ainda mostra heatmap, dou zoom pra ver pin individual.
-  static const double _heatmapZoomThreshold = 13.5;
+  /// Salvador inteira cabe em ~12; bairro em ~14-15. Em 14.5 fica natural:
+  /// vista de cidade/zona mostra heatmap, zoom de rua mostra markers.
+  static const double _heatmapZoomThreshold = 14.5;
   double _zoom = 12;
 
   bool get _showHeatmap => _zoom < _heatmapZoomThreshold;
