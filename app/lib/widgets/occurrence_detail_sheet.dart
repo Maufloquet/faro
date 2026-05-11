@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/text/string_format.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
+import '../screens/contestation_screen.dart';
 import 'risk_dot.dart';
 
 /// Sheet modal mostrado quando o usuário toca em um marker ou item da lista.
@@ -151,12 +152,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Contestação ainda não disponível — em breve'),
-                    duration: Duration(seconds: 2),
-                  ),
-                ),
+                onPressed: () => _openContestation(context),
                 icon: const Icon(Icons.flag_outlined, size: 18),
                 label: const Text('Contestar relato'),
                 style: OutlinedButton.styleFrom(
@@ -200,6 +196,23 @@ class OccurrenceDetailSheet extends StatelessWidget {
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Não foi possível abrir o link.')),
+      );
+    }
+  }
+
+  Future<void> _openContestation(BuildContext context) async {
+    Navigator.of(context).pop(); // fecha o sheet primeiro
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final submitted = await navigator.push<bool>(
+      MaterialPageRoute(builder: (_) => ContestationScreen(occurrence: occurrence)),
+    );
+    if (submitted == true) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Contestação enviada. Será revisada em até 2h.'),
+          duration: Duration(seconds: 3),
+        ),
       );
     }
   }

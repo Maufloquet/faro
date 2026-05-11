@@ -28,6 +28,21 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Contestations — usuário autenticado (mesmo anonymous) pode criar.
+    // Leitura bloqueada: visíveis só via admin/dashboard (V2).
+    // Campos obrigatórios + tamanho máximo do detail evitam abuso.
+    match /contestations/{contestationId} {
+      allow read: if false;
+      allow create: if request.auth != null
+        && request.resource.data.occurrenceId is string
+        && request.resource.data.reason is string
+        && request.resource.data.submittedBy == request.auth.uid
+        && (request.resource.data.detail == null
+            || (request.resource.data.detail is string
+                && request.resource.data.detail.size() < 500));
+      allow update, delete: if false;
+    }
+
     // Tudo o que não estiver mapeado: fechado por default.
     match /{document=**} {
       allow read, write: if false;
