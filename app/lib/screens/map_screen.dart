@@ -499,13 +499,19 @@ class _Map extends StatelessWidget {
       Heatmap(
         heatmapId: const HeatmapId('faro_occurrences'),
         data: points,
-        radius: HeatmapRadius.fromPixels(40),
-        opacity: 0.75,
+        radius: HeatmapRadius.fromPixels(80),
+        opacity: 0.85,
+        // Paleta estilo \"surge\" do Uber: transparente nas bordas, amarelo
+        // suave em densidade baixa, laranja em densidade média, vermelho
+        // intenso onde concentra. Sem verde nem azul-base — evita tingir
+        // o mapa inteiro.
         gradient: HeatmapGradient([
-          HeatmapGradientColor(Color(0xFF7E8C9A), 0.0),
-          HeatmapGradientColor(Color(0xFFC9A65A), 0.35),
-          HeatmapGradientColor(Color(0xFFC46A2C), 0.7),
-          HeatmapGradientColor(Color(0xFF9A3C2C), 1.0),
+          HeatmapGradientColor(Color(0x00FFE082), 0.0),
+          HeatmapGradientColor(Color(0xFFFFD56A), 0.15),
+          HeatmapGradientColor(Color(0xFFFFA646), 0.35),
+          HeatmapGradientColor(Color(0xFFFF6B3D), 0.6),
+          HeatmapGradientColor(Color(0xFFD93030), 0.85),
+          HeatmapGradientColor(Color(0xFF8B0000), 1.0),
         ]),
       ),
     };
