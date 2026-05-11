@@ -6,6 +6,7 @@ import '../core/filters/time_window.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import '../services/location_service.dart';
+import '../services/marker_factory.dart';
 import '../services/occurrences_service.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
@@ -29,6 +30,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   TimeWindow _window = TimeWindow.semana;
   final _location = LocationService();
   bool _locating = false;
+  final _markerFactory = MarkerFactory();
+  Map<RiskLevel, BitmapDescriptor>? _markerIcons;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMarkers();
+  }
+
+  Future<void> _loadMarkers() async {
+    final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+    final icons = await _markerFactory.all(devicePixelRatio: dpr);
+    if (mounted) setState(() => _markerIcons = icons);
+  }
 
   Future<void> _focusOn(Occurrence o) async {
     final controller = _map;
@@ -95,6 +110,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             initialCamera: _salvador,
             mapType: _mapType,
             occurrences: filtered.maybeWhen(data: (v) => v, orElse: () => const []),
+            markerIcons: _markerIcons,
             onCreated: (c) => _map = c,
             onTap: _openDetail,
           ),
@@ -122,7 +138,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ],
             ),
           ),
-          _Sheet(occurrences: filtered, onTapTile: _openDetail),
+          _Sheet(
+            occurrences: filtered,
+            window: _window,
+            onTapTile: _openDetail,
+            onExpandWindow: _window != TimeWindow.tudo
+                ? () => setState(() => _window = TimeWindow.tudo)
+                : null,
+          ),
         ],
       ),
     );
@@ -242,6 +265,7 @@ class _Map extends StatelessWidget {
   final CameraPosition initialCamera;
   final MapType mapType;
   final List<Occurrence> occurrences;
+  final Map<RiskLevel, BitmapDescriptor>? markerIcons;
   final ValueChanged<GoogleMapController> onCreated;
   final ValueChanged<Occurrence> onTap;
 
@@ -249,6 +273,7 @@ class _Map extends StatelessWidget {
     required this.initialCamera,
     required this.mapType,
     required this.occurrences,
+    required this.markerIcons,
     required this.onCreated,
     required this.onTap,
   });
@@ -269,24 +294,21 @@ class _Map extends StatelessWidget {
   }
 
   Set<Marker> _markers() {
+    final icons = markerIcons;
     return occurrences.map((o) {
+      final risk = classifyAge(o.date);
+      final icon = icons?[risk] ?? BitmapDescriptor.defaultMarkerWithHue(_fallbackHue(risk));
       return Marker(
         markerId: MarkerId(o.id),
         position: LatLng(o.latitude, o.longitude),
-        icon: BitmapDescriptor.defaultMarkerWithHue(_hue(_classify(o.date))),
+        icon: icon,
+        anchor: const Offset(0.5, 0.5),
         onTap: () => onTap(o),
       );
     }).toSet();
   }
 
-  RiskLevel _classify(DateTime d) {
-    final h = DateTime.now().difference(d).inHours;
-    if (h < 2) return RiskLevel.confirmedActivity;
-    if (h < 12) return RiskLevel.lightActivity;
-    return RiskLevel.noRecentReports;
-  }
-
-  double _hue(RiskLevel r) {
+  double _fallbackHue(RiskLevel r) {
     switch (r) {
       case RiskLevel.highCorroborated:
       case RiskLevel.confirmedActivity:
@@ -359,9 +381,16 @@ class _Header extends StatelessWidget {
 
 class _Sheet extends StatelessWidget {
   final AsyncValue<List<Occurrence>> occurrences;
+  final TimeWindow window;
   final ValueChanged<Occurrence> onTapTile;
+  final VoidCallback? onExpandWindow;
 
-  const _Sheet({required this.occurrences, required this.onTapTile});
+  const _Sheet({
+    required this.occurrences,
+    required this.window,
+    required this.onTapTile,
+    this.onExpandWindow,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -381,8 +410,10 @@ class _Sheet extends StatelessWidget {
           child: occurrences.when(
             data: (items) => _SheetContent(
               items: items,
+              window: window,
               scrollController: scrollController,
               onTapTile: onTapTile,
+              onExpandWindow: onExpandWindow,
             ),
             loading: () => const _SheetSimple(message: 'Carregando relatos…'),
             error: (e, _) => _SheetSimple(message: 'Erro ao carregar: $e'),
@@ -395,13 +426,17 @@ class _Sheet extends StatelessWidget {
 
 class _SheetContent extends StatelessWidget {
   final List<Occurrence> items;
+  final TimeWindow window;
   final ScrollController scrollController;
   final ValueChanged<Occurrence> onTapTile;
+  final VoidCallback? onExpandWindow;
 
   const _SheetContent({
     required this.items,
+    required this.window,
     required this.scrollController,
     required this.onTapTile,
+    this.onExpandWindow,
   });
 
   @override
@@ -412,16 +447,10 @@ class _SheetContent extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         const _Handle(),
-        _SummaryHeader(count: items.length),
+        _SummaryHeader(count: items.length, window: window),
         const Divider(height: 1),
         if (sorted.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 28),
-            child: Text(
-              'Sem relatos nas últimas 24h. Isso não significa que está seguro — significa que ninguém reportou nada.',
-              style: TextStyle(fontSize: 13.5, height: 1.5, color: Color(0xFF555555)),
-            ),
-          )
+          _EmptyState(window: window, onExpandWindow: onExpandWindow)
         else
           ...sorted.map(
             (o) => Column(
@@ -437,12 +466,59 @@ class _SheetContent extends StatelessWidget {
   }
 }
 
-class _SummaryHeader extends StatelessWidget {
-  final int count;
-  const _SummaryHeader({required this.count});
+class _EmptyState extends StatelessWidget {
+  final TimeWindow window;
+  final VoidCallback? onExpandWindow;
+  const _EmptyState({required this.window, this.onExpandWindow});
 
   @override
   Widget build(BuildContext context) {
+    final scope = window == TimeWindow.tudo ? 'no histórico carregado' : 'em ${window.label.toLowerCase()}';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sem relatos $scope.',
+            style: const TextStyle(
+              fontFamily: 'Georgia',
+              fontSize: 15.5,
+              height: 1.3,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Isso não significa que está seguro — significa que ninguém reportou nada nessa janela. Mantenha atenção.',
+            style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF555555)),
+          ),
+          if (onExpandWindow != null) ...[
+            const SizedBox(height: 14),
+            OutlinedButton.icon(
+              onPressed: onExpandWindow,
+              icon: const Icon(Icons.history, size: 16),
+              label: const Text('Ver tudo o que temos'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryHeader extends StatelessWidget {
+  final int count;
+  final TimeWindow window;
+  const _SummaryHeader({required this.count, required this.window});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = window == TimeWindow.tudo ? '' : ' · ${window.label.toLowerCase()}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
       child: Column(
@@ -450,8 +526,8 @@ class _SummaryHeader extends StatelessWidget {
         children: [
           Text(
             count == 0
-                ? 'Sem relatos recentes'
-                : '$count relato${count > 1 ? "s" : ""} próximos',
+                ? 'Sem relatos$scope'
+                : '$count relato${count > 1 ? "s" : ""}$scope',
             style: const TextStyle(
               fontFamily: 'Georgia',
               fontSize: 17,
