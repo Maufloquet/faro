@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../core/filters/time_window.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import '../services/location_service.dart';
@@ -25,6 +26,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   GoogleMapController? _map;
   MapType _mapType = MapType.hybrid;
+  TimeWindow _window = TimeWindow.semana;
   final _location = LocationService();
   bool _locating = false;
 
@@ -83,7 +85,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final occurrences = ref.watch(recentOccurrencesProvider);
+    final raw = ref.watch(recentOccurrencesProvider);
+    final filtered = raw.whenData((list) => list.where((o) => _window.includes(o.date)).toList());
 
     return Scaffold(
       body: Stack(
@@ -91,11 +94,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           _Map(
             initialCamera: _salvador,
             mapType: _mapType,
-            occurrences: occurrences.maybeWhen(data: (v) => v, orElse: () => const []),
+            occurrences: filtered.maybeWhen(data: (v) => v, orElse: () => const []),
             onCreated: (c) => _map = c,
             onTap: _openDetail,
           ),
           const _Header(),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 64,
+            left: 12,
+            right: 12,
+            child: _TimeWindowChips(
+              selected: _window,
+              onSelect: (w) => setState(() => _window = w),
+            ),
+          ),
           Positioned(
             right: 14,
             bottom: MediaQuery.of(context).size.height * 0.18 + 12,
@@ -110,8 +122,50 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ],
             ),
           ),
-          _Sheet(occurrences: occurrences, onTapTile: _openDetail),
+          _Sheet(occurrences: filtered, onTapTile: _openDetail),
         ],
+      ),
+    );
+  }
+}
+
+class _TimeWindowChips extends StatelessWidget {
+  final TimeWindow selected;
+  final ValueChanged<TimeWindow> onSelect;
+  const _TimeWindowChips({required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: TimeWindow.values.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final w = TimeWindow.values[i];
+          final isSelected = w == selected;
+          return Material(
+            color: isSelected ? const Color(0xFF2A4A7A) : Colors.white,
+            elevation: 2,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => onSelect(w),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Text(
+                  w.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected ? Colors.white : const Color(0xFF1A1A1A),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
