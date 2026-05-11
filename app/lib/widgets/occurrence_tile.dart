@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/text/string_format.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import 'risk_dot.dart';
@@ -13,7 +14,11 @@ class OccurrenceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final risk = _classifyAge(occurrence.date);
-    final where = occurrence.neighborhood ?? occurrence.city ?? 'Sem localização específica';
+    final neighborhood = titleCasePtBr(occurrence.neighborhood);
+    final city = titleCasePtBr(occurrence.city);
+    final where = neighborhood.isNotEmpty
+        ? neighborhood
+        : (city.isNotEmpty ? city : 'Sem localização específica');
     final what = occurrence.mainReason ?? 'Relato';
     final when = _relativeTime(occurrence.date);
 

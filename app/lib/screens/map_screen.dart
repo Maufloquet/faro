@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import '../services/occurrences_service.dart';
+import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
 import 'help_screen.dart';
 
@@ -34,6 +35,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  Future<void> _openDetail(Occurrence o) async {
+    await _focusOn(o);
+    if (!mounted) return;
+    await OccurrenceDetailSheet.show(context, o);
+  }
+
   void _toggleMapType() {
     setState(() {
       _mapType = _mapType == MapType.hybrid ? MapType.normal : MapType.hybrid;
@@ -52,7 +59,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             mapType: _mapType,
             occurrences: occurrences.maybeWhen(data: (v) => v, orElse: () => const []),
             onCreated: (c) => _map = c,
-            onTap: _focusOn,
+            onTap: _openDetail,
           ),
           const _Header(),
           Positioned(
@@ -63,7 +70,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onTap: _toggleMapType,
             ),
           ),
-          _Sheet(occurrences: occurrences, onTapTile: _focusOn),
+          _Sheet(occurrences: occurrences, onTapTile: _openDetail),
         ],
       ),
     );
