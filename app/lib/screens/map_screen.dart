@@ -490,10 +490,29 @@ class _Map extends StatelessWidget {
       mapToolbarEnabled: false,
       compassEnabled: false,
       markers: asHeatmap ? const {} : _markers(),
+      circles: asHeatmap ? const {} : _uncertaintyCircles(),
       heatmaps: asHeatmap ? _heatmaps() : const {},
       onMapCreated: onCreated,
       onCameraMove: onCameraMove,
     );
+  }
+
+  Set<Circle> _uncertaintyCircles() {
+    // Desenha círculo de incerteza ao redor de ocorrências com geocoding
+    // de centroide de cidade. Reforça visualmente \"aconteceu nessa região,
+    // não nesse ponto exato\" — consistente com nosso princípio editorial
+    // de \"nunca afirmar certeza\".
+    return occurrences.where((o) => o.isCityCentroid).map((o) {
+      final risk = classifyAge(o.date);
+      return Circle(
+        circleId: CircleId('uncertainty-${o.id}'),
+        center: LatLng(o.latitude, o.longitude),
+        radius: 1500, // metros — boa aproximação do raio de um bairro médio
+        fillColor: risk.color.withValues(alpha: 0.10),
+        strokeColor: risk.color.withValues(alpha: 0.40),
+        strokeWidth: 1,
+      );
+    }).toSet();
   }
 
   Set<Marker> _markers() {
