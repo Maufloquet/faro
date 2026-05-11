@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
-import 'screens/map_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/dev_data_source.dart';
 import 'services/occurrences_service.dart';
 
@@ -43,7 +43,7 @@ class FaroApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      home: const MapScreen(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -29,6 +29,30 @@ class LocationService {
       ),
     );
   }
+
+  /// Variante silenciosa: retorna null se permissão ainda não foi concedida
+  /// (sem mostrar prompt). Usada no auto-centro no boot, pra não invadir
+  /// o usuário antes de ele explicitar interesse.
+  Future<Position?> currentIfAlreadyAuthorized() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return null;
+
+    final permission = await Geolocator.checkPermission();
+    final granted = permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+    if (!granted) return null;
+
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 4),
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 class LocationException implements Exception {

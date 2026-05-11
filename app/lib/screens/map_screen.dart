@@ -37,12 +37,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
     _loadMarkers();
+    // Auto-centro silencioso: só se permissão já foi concedida em sessão anterior
+    WidgetsBinding.instance.addPostFrameCallback((_) => _silentCenter());
   }
 
   Future<void> _loadMarkers() async {
     final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
     final icons = await _markerFactory.all(devicePixelRatio: dpr);
     if (mounted) setState(() => _markerIcons = icons);
+  }
+
+  Future<void> _silentCenter() async {
+    final pos = await _location.currentIfAlreadyAuthorized();
+    if (pos == null || !mounted) return;
+    final controller = _map;
+    if (controller == null) return;
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 14),
+      ),
+    );
   }
 
   Future<void> _focusOn(Occurrence o) async {
