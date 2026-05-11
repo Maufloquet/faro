@@ -82,3 +82,7 @@ docs/*.pdf
 out/
 tmp/
 *.bak
+
+# Screenshots do flutter run
+**/flutter_*.png
+
