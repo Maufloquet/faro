@@ -107,6 +107,60 @@ const SOURCES = [
     scope: "salvador",
   },
 
+  // ─── Programas populares / TV (granularidade por bairro, peso menor) ───
+  //
+  // Peso 0.25: historicamente esses canais têm pegada sensacionalista que
+  // amplifica estigma. O classificador Groq filtra por security_related,
+  // mas mantemos peso reduzido pra não dominar o cálculo de risco.
+  {
+    id: "bocao-news",
+    name: "Bocão News",
+    url: "https://www.bocaonews.com.br/rss/principal.xml",
+    enabled: true,
+    weight: 0.30,
+    scope: "salvador",
+  },
+  {
+    id: "gnews-alo-juca",
+    name: "Google News · Alô Juca",
+    url: GOOGLE_NEWS_RSS("\"alô juca\" Salvador"),
+    enabled: true,
+    weight: 0.25,
+    scope: "salvador",
+  },
+  {
+    id: "gnews-balanco-geral",
+    name: "Google News · Balanço Geral BA",
+    url: GOOGLE_NEWS_RSS("\"balanço geral\" Salvador Bahia"),
+    enabled: true,
+    weight: 0.25,
+    scope: "salvador",
+  },
+  {
+    id: "gnews-cidade-alerta",
+    name: "Google News · Cidade Alerta BA",
+    url: GOOGLE_NEWS_RSS("\"cidade alerta\" Salvador Bahia"),
+    enabled: true,
+    weight: 0.25,
+    scope: "salvador",
+  },
+  {
+    id: "gnews-bahia-no-ar",
+    name: "Google News · Bahia no Ar (Aratu)",
+    url: GOOGLE_NEWS_RSS("\"bahia no ar\" Salvador"),
+    enabled: false,
+    weight: 0.25,
+    scope: "salvador",
+  },
+  {
+    id: "gnews-massa",
+    name: "Google News · Massa! (SBT)",
+    url: GOOGLE_NEWS_RSS("\"massa\" SBT Bahia Salvador"),
+    enabled: false,
+    weight: 0.25,
+    scope: "salvador",
+  },
+
   // ─── Nacionais (úteis quando incidente vira pauta nacional) ───
   {
     id: "g1-brasil",
