@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "640150347302",
+    "project_id": "faro-f3472",
+    "storage_bucket": "faro-f3472.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:640150347302:android:5991f96adad90442ae50e7",
+        "android_client_info": {
+          "package_name": "br.com.projetoseg.projeto_seg"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgBPCzdtxN55w6x528Fc20HDRWenqhCig"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

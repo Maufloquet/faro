@@ -10,9 +10,10 @@ import 'services/dev_data_source.dart';
 import 'services/occurrences_service.dart';
 
 /// Modo dev: lê ocorrências do asset local, sem precisar de Firebase.
-/// Vire pra false (ou defina --dart-define=USE_DEV_DATA=false) quando o
-/// Firebase project estiver configurado.
-const bool kUseDevAssetData = bool.fromEnvironment('USE_DEV_DATA', defaultValue: true);
+/// Default agora é FALSE — o app usa Firestore real. Pra rodar offline com
+/// snapshot histórico (assets/dev_occurrences.json), use:
+///   flutter run --dart-define=USE_DEV_DATA=true
+const bool kUseDevAssetData = bool.fromEnvironment('USE_DEV_DATA', defaultValue: false);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

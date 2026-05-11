@@ -31,7 +31,10 @@ const ENABLED_STATES = (process.env.ENABLED_STATES || "BA").split(",").map((s) =
 const PAGE_SIZE = 100;
 const SOURCE = "fogo_cruzado";
 const SOURCE_WEIGHT = 0.7;
-const TTL_HOURS = 24;
+// TTL gravado por doc. App filtra por janela temporal no cliente
+// (TimeWindow chips), então 30 dias dá folga pra cobrir o "30 dias" do
+// filtro mais largo. Cleanup periódico fica pra função separada.
+const TTL_HOURS = 24 * 30;
 
 exports.syncFogoCruzado = onSchedule(
   {
@@ -71,7 +74,6 @@ async function syncState(db, stateAbbr, stateId) {
   });
   const items = data.data || [];
 
-  const now = Date.now();
   const ttlMs = TTL_HOURS * 60 * 60 * 1000;
 
   const batch = db.batch();
@@ -83,8 +85,6 @@ async function syncState(db, stateAbbr, stateId) {
     const ref = db.collection("occurrences").doc(o.id);
     const date = new Date(o.date);
     const expiresAt = new Date(date.getTime() + ttlMs);
-
-    if (expiresAt.getTime() < now) continue;
 
     const geohash = ngeohash.encode(o.latitude, o.longitude, 8);
 
