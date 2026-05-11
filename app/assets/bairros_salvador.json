@@ -1,0 +1,762 @@
+{
+  "Pirajá": {
+    "lat": -12.8997883,
+    "lng": -38.4611127,
+    "source": "OSM"
+  },
+  "Valéria": {
+    "lat": -12.861071,
+    "lng": -38.433227,
+    "source": "OSM"
+  },
+  "Itapuã": {
+    "lat": -12.942418,
+    "lng": -38.35874,
+    "source": "OSM"
+  },
+  "Campinas": {
+    "lat": -12.9190531,
+    "lng": -38.4734324,
+    "source": "OSM"
+  },
+  "São Cristóvão": {
+    "lat": -12.9082767,
+    "lng": -38.3610352,
+    "source": "OSM"
+  },
+  "Barra": {
+    "lat": -13.0064362,
+    "lng": -38.527901,
+    "source": "OSM"
+  },
+  "Ondina": {
+    "lat": -13.010398,
+    "lng": -38.511699,
+    "source": "OSM"
+  },
+  "Ribeira": {
+    "lat": -12.9160999,
+    "lng": -38.4968986,
+    "source": "OSM"
+  },
+  "Comércio": {
+    "lat": -12.969817,
+    "lng": -38.5112709,
+    "source": "OSM"
+  },
+  "Água de Meninos": {
+    "lat": -12.9568381,
+    "lng": -38.5021926,
+    "source": "OSM"
+  },
+  "Monte Serrat": {
+    "lat": -12.9285763,
+    "lng": -38.5135946,
+    "source": "OSM"
+  },
+  "Cabula": {
+    "lat": -12.956494,
+    "lng": -38.4635954,
+    "source": "OSM"
+  },
+  "Itaigara": {
+    "lat": -12.9918205,
+    "lng": -38.4649057,
+    "source": "OSM"
+  },
+  "Stella Maris": {
+    "lat": -12.9377602,
+    "lng": -38.3346758,
+    "source": "OSM"
+  },
+  "Boa Viagem": {
+    "lat": -12.9317767,
+    "lng": -38.5117881,
+    "source": "OSM"
+  },
+  "Plataforma": {
+    "lat": -12.9004393,
+    "lng": -38.4868515,
+    "source": "OSM"
+  },
+  "Lobato": {
+    "lat": -12.9115261,
+    "lng": -38.480543,
+    "source": "OSM"
+  },
+  "São Caetano": {
+    "lat": -12.9327242,
+    "lng": -38.4810964,
+    "source": "OSM"
+  },
+  "Centro": {
+    "lat": -12.986648,
+    "lng": -38.5201085,
+    "source": "OSM"
+  },
+  "Pernambués": {
+    "lat": -12.9699369,
+    "lng": -38.4661334,
+    "source": "OSM"
+  },
+  "Brotas": {
+    "lat": -12.9881887,
+    "lng": -38.4896543,
+    "source": "OSM"
+  },
+  "Boca do Rio": {
+    "lat": -12.9774493,
+    "lng": -38.4279508,
+    "source": "OSM"
+  },
+  "Lapa": {
+    "lat": -12.9820958,
+    "lng": -38.5125511,
+    "source": "OSM"
+  },
+  "Caminho das Árvores": {
+    "lat": -12.9824528,
+    "lng": -38.4583033,
+    "source": "OSM"
+  },
+  "São Tomé de Paripe": {
+    "lat": -12.8175967,
+    "lng": -38.4854044,
+    "source": "OSM"
+  },
+  "Itacaranha": {
+    "lat": -12.8891259,
+    "lng": -38.482089,
+    "source": "OSM"
+  },
+  "Praia Grande": {
+    "lat": -12.8730561,
+    "lng": -38.475688,
+    "source": "OSM"
+  },
+  "Periperi": {
+    "lat": -12.8633545,
+    "lng": -38.4736719,
+    "source": "OSM"
+  },
+  "Coutos": {
+    "lat": -12.8502501,
+    "lng": -38.468478,
+    "source": "OSM"
+  },
+  "Pituaçu": {
+    "lat": -12.9651749,
+    "lng": -38.4143371,
+    "source": "OSM"
+  },
+  "Imbuí": {
+    "lat": -12.9697591,
+    "lng": -38.4350431,
+    "source": "OSM"
+  },
+  "Patamares": {
+    "lat": -12.9469192,
+    "lng": -38.4018961,
+    "source": "OSM"
+  },
+  "Costa Azul": {
+    "lat": -12.9926694,
+    "lng": -38.4447027,
+    "source": "OSM"
+  },
+  "Vitória": {
+    "lat": -12.9929784,
+    "lng": -38.5263187,
+    "source": "OSM"
+  },
+  "Mares": {
+    "lat": -12.9419032,
+    "lng": -38.5011006,
+    "source": "OSM"
+  },
+  "Garcia": {
+    "lat": -12.9924205,
+    "lng": -38.5125908,
+    "source": "OSM"
+  },
+  "Alto do Itaigara": {
+    "lat": -12.9939456,
+    "lng": -38.4730092,
+    "source": "OSM"
+  },
+  "Centro Histórico": {
+    "lat": -12.9743639,
+    "lng": -38.5119147,
+    "source": "OSM"
+  },
+  "Jardim Cajazeiras": {
+    "lat": -12.9173516,
+    "lng": -38.4498777,
+    "source": "OSM"
+  },
+  "São Rafael": {
+    "lat": -12.9366815,
+    "lng": -38.4245897,
+    "source": "OSM"
+  },
+  "Mussurunga": {
+    "lat": -12.9161292,
+    "lng": -38.3750491,
+    "source": "OSM"
+  },
+  "Nazaré": {
+    "lat": -12.9784418,
+    "lng": -38.5076399,
+    "source": "OSM"
+  },
+  "Saúde": {
+    "lat": -12.9725454,
+    "lng": -38.506182,
+    "source": "OSM"
+  },
+  "Santa Cruz": {
+    "lat": -13.0042766,
+    "lng": -38.4754641,
+    "source": "OSM"
+  },
+  "Amaralina": {
+    "lat": -13.0122314,
+    "lng": -38.4733469,
+    "source": "OSM"
+  },
+  "Barris": {
+    "lat": -12.9865471,
+    "lng": -38.5139275,
+    "source": "OSM"
+  },
+  "Parque Cruz Aguiar": {
+    "lat": -13.0082187,
+    "lng": -38.4897172,
+    "source": "OSM"
+  },
+  "Jardim Apipema": {
+    "lat": -13.0048463,
+    "lng": -38.5178178,
+    "source": "OSM"
+  },
+  "Capelinha": {
+    "lat": -12.9307394,
+    "lng": -38.4848672,
+    "source": "OSM"
+  },
+  "Sussuarana": {
+    "lat": -12.9347768,
+    "lng": -38.4460352,
+    "source": "OSM"
+  },
+  "Novo Horizonte": {
+    "lat": -12.9409831,
+    "lng": -38.439391,
+    "source": "OSM"
+  },
+  "Canela": {
+    "lat": -12.9929978,
+    "lng": -38.5210151,
+    "source": "OSM"
+  },
+  "Nova Esperança": {
+    "lat": -12.8426632,
+    "lng": -38.3729276,
+    "source": "OSM"
+  },
+  "Areia Branca": {
+    "lat": -12.8475541,
+    "lng": -38.359295,
+    "source": "OSM"
+  },
+  "Cassange": {
+    "lat": -12.8751229,
+    "lng": -38.3798065,
+    "source": "OSM"
+  },
+  "Bairro da Paz": {
+    "lat": -12.9290087,
+    "lng": -38.3749638,
+    "source": "OSM"
+  },
+  "Alto do Coqueirinho": {
+    "lat": -12.9414165,
+    "lng": -38.3714894,
+    "source": "OSM"
+  },
+  "Pituba": {
+    "lat": -12.9992595,
+    "lng": -38.4554978,
+    "source": "OSM"
+  },
+  "STIEP": {
+    "lat": -12.9802595,
+    "lng": -38.4473109,
+    "source": "OSM"
+  },
+  "Jardim Armação": {
+    "lat": -12.9860764,
+    "lng": -38.4386526,
+    "source": "OSM"
+  },
+  "Porto Seco Pirajá": {
+    "lat": -12.9104078,
+    "lng": -38.4548988,
+    "source": "OSM"
+  },
+  "Dom Avelar": {
+    "lat": -12.9030259,
+    "lng": -38.4487354,
+    "source": "OSM"
+  },
+  "Retiro": {
+    "lat": -12.9569389,
+    "lng": -38.4739341,
+    "source": "OSM"
+  },
+  "IAPI": {
+    "lat": -12.9528018,
+    "lng": -38.4800883,
+    "source": "OSM"
+  },
+  "Lapinha": {
+    "lat": -12.9553714,
+    "lng": -38.499149,
+    "source": "OSM"
+  },
+  "Cidade Nova": {
+    "lat": -12.9639484,
+    "lng": -38.4849824,
+    "source": "OSM"
+  },
+  "Pau Miúdo": {
+    "lat": -12.9599036,
+    "lng": -38.480808,
+    "source": "OSM"
+  },
+  "Santa Mônica": {
+    "lat": -12.94875,
+    "lng": -38.4840299,
+    "source": "OSM"
+  },
+  "Curuzu": {
+    "lat": -12.9457424,
+    "lng": -38.4867286,
+    "source": "OSM"
+  },
+  "Liberdade": {
+    "lat": -12.946662,
+    "lng": -38.4939829,
+    "source": "OSM"
+  },
+  "Pero Vaz": {
+    "lat": -12.9499279,
+    "lng": -38.4886385,
+    "source": "OSM"
+  },
+  "Caixa D'Água": {
+    "lat": -12.9581223,
+    "lng": -38.4941411,
+    "source": "OSM"
+  },
+  "Baixa de Quintas": {
+    "lat": -12.9637829,
+    "lng": -38.4906761,
+    "source": "OSM"
+  },
+  "Palestina": {
+    "lat": -12.8735643,
+    "lng": -38.4164029,
+    "source": "OSM"
+  },
+  "Itinga": {
+    "lat": -12.8802195,
+    "lng": -38.3599894,
+    "source": "OSM"
+  },
+  "Piatã": {
+    "lat": -12.9483348,
+    "lng": -38.3873458,
+    "source": "OSM"
+  },
+  "Praia do Flamengo": {
+    "lat": -12.9189829,
+    "lng": -38.3126964,
+    "source": "OSM"
+  },
+  "Horto Bela Vista": {
+    "lat": -12.9686897,
+    "lng": -38.4741125,
+    "source": "OSM"
+  },
+  "Centro Administrativo da Bahia": {
+    "lat": -12.9491408,
+    "lng": -38.4310335,
+    "source": "OSM"
+  },
+  "Cajazeiras": {
+    "lat": -12.899938,
+    "lng": -38.4081574,
+    "source": "OSM"
+  },
+  "Graça": {
+    "lat": -12.9994381,
+    "lng": -38.5226463,
+    "source": "OSM"
+  },
+  "Uruguai": {
+    "lat": -12.9345334,
+    "lng": -38.4950228,
+    "source": "OSM"
+  },
+  "Vila Ruy Barbosa / Jardim Cruzeiro": {
+    "lat": -12.9316013,
+    "lng": -38.4994948,
+    "source": "OSM"
+  },
+  "Santa Luzia do Lobato": {
+    "lat": -12.9311655,
+    "lng": -38.488087,
+    "source": "OSM"
+  },
+  "Boa Vista de São Caetano": {
+    "lat": -12.9259002,
+    "lng": -38.4765003,
+    "source": "OSM"
+  },
+  "Alto do Peru": {
+    "lat": -12.9373499,
+    "lng": -38.4849384,
+    "source": "OSM"
+  },
+  "Massaranduba": {
+    "lat": -12.9280617,
+    "lng": -38.4965471,
+    "source": "OSM"
+  },
+  "Escada": {
+    "lat": -12.8839138,
+    "lng": -38.4845668,
+    "source": "OSM"
+  },
+  "Rio Sena": {
+    "lat": -12.8792492,
+    "lng": -38.478344,
+    "source": "OSM"
+  },
+  "Alto da Terezinha": {
+    "lat": -12.881484,
+    "lng": -38.4772489,
+    "source": "OSM"
+  },
+  "Paripe": {
+    "lat": -12.8380062,
+    "lng": -38.4692031,
+    "source": "OSM"
+  },
+  "Bonfim": {
+    "lat": -12.9256811,
+    "lng": -38.5082913,
+    "source": "OSM"
+  },
+  "Nordeste de Amaralina": {
+    "lat": -13.0098052,
+    "lng": -38.473546,
+    "source": "OSM"
+  },
+  "Rio Vermelho": {
+    "lat": -13.0100607,
+    "lng": -38.4899605,
+    "source": "OSM"
+  },
+  "Engenho Velho da Federação": {
+    "lat": -13.0002947,
+    "lng": -38.4965017,
+    "source": "OSM"
+  },
+  "Fazenda Grande do Retiro": {
+    "lat": -12.9426093,
+    "lng": -38.4800551,
+    "source": "OSM"
+  },
+  "Alagados": {
+    "lat": -12.93083,
+    "lng": -38.491476,
+    "source": "OSM"
+  },
+  "Matatu": {
+    "lat": -12.971598,
+    "lng": -38.4938709,
+    "source": "OSM"
+  },
+  "Macaúbas": {
+    "lat": -12.9653855,
+    "lng": -38.4958248,
+    "source": "OSM"
+  },
+  "Barbalho": {
+    "lat": -12.9667549,
+    "lng": -38.5001135,
+    "source": "OSM"
+  },
+  "Santo Antônio": {
+    "lat": -12.9654964,
+    "lng": -38.5036352,
+    "source": "OSM"
+  },
+  "Marechal Rondon": {
+    "lat": -12.9124412,
+    "lng": -38.4707046,
+    "source": "OSM"
+  },
+  "Jardim Santo Inácio": {
+    "lat": -12.9293279,
+    "lng": -38.4608991,
+    "source": "OSM"
+  },
+  "Mata Escura": {
+    "lat": -12.9322976,
+    "lng": -38.4583242,
+    "source": "OSM"
+  },
+  "São Gonçalo do Retiro": {
+    "lat": -12.9519704,
+    "lng": -38.4684976,
+    "source": "OSM"
+  },
+  "Federação": {
+    "lat": -12.9952959,
+    "lng": -38.5070634,
+    "source": "OSM"
+  },
+  "Vila São Tomé de Paripe": {
+    "lat": -12.8262799,
+    "lng": -38.48014,
+    "source": "OSM"
+  },
+  "Quilombo do Alto do Tororó": {
+    "lat": -12.8150758,
+    "lng": -38.4840694,
+    "source": "OSM"
+  },
+  "Vale das Pedrinhas": {
+    "lat": -13.0083485,
+    "lng": -38.4823472,
+    "source": "OSM"
+  },
+  "Chapada do Rio Vermelho": {
+    "lat": -13.0053325,
+    "lng": -38.4802303,
+    "source": "OSM"
+  },
+  "Tororó": {
+    "lat": -12.9846057,
+    "lng": -38.5092005,
+    "source": "OSM"
+  },
+  "Resgate": {
+    "lat": -12.9616245,
+    "lng": -38.4638779,
+    "source": "OSM"
+  },
+  "Barreiras": {
+    "lat": -12.9440749,
+    "lng": -38.4583423,
+    "source": "OSM"
+  },
+  "Calabetão": {
+    "lat": -12.9326581,
+    "lng": -38.4697268,
+    "source": "OSM"
+  },
+  "Candeal": {
+    "lat": -12.9945748,
+    "lng": -38.4813605,
+    "source": "OSM"
+  },
+  "Vila Laura": {
+    "lat": -12.9700833,
+    "lng": -38.4879687,
+    "source": "OSM"
+  },
+  "Luiz Anselmo": {
+    "lat": -12.9757196,
+    "lng": -38.4855604,
+    "source": "OSM"
+  },
+  "Santo Agostinho": {
+    "lat": -12.9746874,
+    "lng": -38.4969203,
+    "source": "OSM"
+  },
+  "Loteamento Aquarius": {
+    "lat": -12.9877849,
+    "lng": -38.4522455,
+    "source": "OSM"
+  },
+  "Alto do Cabrito": {
+    "lat": -12.9110698,
+    "lng": -38.4755217,
+    "source": "OSM"
+  },
+  "Boa Vista do Lobato": {
+    "lat": -12.9189384,
+    "lng": -38.4784581,
+    "source": "OSM"
+  },
+  "Jardim das Margaridas": {
+    "lat": -12.8989638,
+    "lng": -38.3580566,
+    "source": "OSM"
+  },
+  "Aeroporto": {
+    "lat": -12.9174425,
+    "lng": -38.3294749,
+    "source": "OSM"
+  },
+  "Horto Florestal": {
+    "lat": -13.0007732,
+    "lng": -38.4874101,
+    "source": "OSM"
+  },
+  "Calabar": {
+    "lat": -13.003251,
+    "lng": -38.5152233,
+    "source": "OSM"
+  },
+  "Alto das Pombas": {
+    "lat": -13.0011662,
+    "lng": -38.5137112,
+    "source": "OSM"
+  },
+  "Ilha de Maré": {
+    "lat": -12.7734006,
+    "lng": -38.5250368,
+    "source": "OSM"
+  },
+  "Chame-Chame": {
+    "lat": -13.0043121,
+    "lng": -38.5203731,
+    "source": "OSM"
+  },
+  "Cajazeiras X": {
+    "lat": -12.8928614,
+    "lng": -38.4114996,
+    "source": "OSM"
+  },
+  "Cajazeiras XI": {
+    "lat": -12.8795528,
+    "lng": -38.4062022,
+    "source": "OSM"
+  },
+  "Fazenda Grande II": {
+    "lat": -12.8916116,
+    "lng": -38.3938909,
+    "source": "OSM"
+  },
+  "Boca da Mata": {
+    "lat": -12.9002501,
+    "lng": -38.3875179,
+    "source": "OSM"
+  },
+  "Ilha dos Frades / Ilha de Santo Antônio": {
+    "lat": -12.7809582,
+    "lng": -38.6397744,
+    "source": "OSM"
+  },
+  "Ilha de Bom Jesus dos Passos": {
+    "lat": -12.761151,
+    "lng": -38.6432934,
+    "source": "OSM"
+  },
+  "Acupe": {
+    "lat": -12.9930829,
+    "lng": -38.4940558,
+    "source": "OSM"
+  },
+  "Boa Vista de Brotas": {
+    "lat": -12.9829256,
+    "lng": -38.5003987,
+    "source": "OSM"
+  },
+  "Engenho Velho de Brotas": {
+    "lat": -12.9878992,
+    "lng": -38.5014496,
+    "source": "OSM"
+  },
+  "Saramandaia": {
+    "lat": -12.9741514,
+    "lng": -38.4686548,
+    "source": "OSM"
+  },
+  "Cosme de Farias": {
+    "lat": -12.9817909,
+    "lng": -38.4877302,
+    "source": "OSM"
+  },
+  "Caminho de Areia": {
+    "lat": -12.9306224,
+    "lng": -38.5045481,
+    "source": "OSM"
+  },
+  "Roma": {
+    "lat": -12.9349632,
+    "lng": -38.5038883,
+    "source": "OSM"
+  },
+  "Calçada": {
+    "lat": -12.9448131,
+    "lng": -38.4988618,
+    "source": "OSM"
+  },
+  "Mangueira": {
+    "lat": -12.9234136,
+    "lng": -38.4990978,
+    "source": "OSM"
+  },
+  "Novo Marotinho": {
+    "lat": -12.9155472,
+    "lng": -38.4248704,
+    "source": "OSM"
+  },
+  "Trobogy": {
+    "lat": -12.9329398,
+    "lng": -38.4008646,
+    "source": "OSM"
+  },
+  "Parque Carvalho": {
+    "lat": -12.8520808,
+    "lng": -38.458279,
+    "source": "OSM"
+  },
+  "João de Barro 1": {
+    "lat": -12.8845372,
+    "lng": -38.4321342,
+    "source": "OSM"
+  },
+  "COHAB": {
+    "lat": -12.9549841,
+    "lng": -38.4353524,
+    "source": "OSM"
+  },
+  "Vila IAPI": {
+    "lat": -12.9548374,
+    "lng": -38.4850544,
+    "source": "OSM"
+  },
+  "Parque São paulo": {
+    "lat": -12.8745224,
+    "lng": -38.3550706,
+    "source": "OSM"
+  },
+  "Condomínio Residencial Ilha de Santorini": {
+    "lat": -12.9352619,
+    "lng": -38.3279447,
+    "source": "OSM"
+  },
+  "Condomínio Stella Maris": {
+    "lat": -12.9349972,
+    "lng": -38.3283216,
+    "source": "OSM"
+  }
+}

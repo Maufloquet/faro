@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../core/filters/time_window.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
+import '../services/bairros_directory.dart';
 import '../services/location_service.dart';
 import '../services/marker_factory.dart';
 import '../services/occurrences_service.dart';
@@ -13,6 +14,7 @@ import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
 import 'areas_screen.dart';
 import 'help_screen.dart';
+import 'search_screen.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -102,6 +104,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  Future<void> _openSearch() async {
+    final result = await Navigator.of(context).push<Bairro>(
+      MaterialPageRoute(builder: (_) => const SearchScreen()),
+    );
+    if (result == null) return;
+    await _focusOnArea(result.lat, result.lng);
+  }
+
   void _toggleMapType() {
     setState(() {
       _mapType = _mapType == MapType.hybrid ? MapType.normal : MapType.hybrid;
@@ -173,7 +183,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onTap: _openDetail,
             onCameraMove: _onCameraMove,
           ),
-          _Header(onFocusArea: _focusOnArea),
+          _Header(onFocusArea: _focusOnArea, onSearch: _openSearch),
           Positioned(
             top: MediaQuery.of(context).padding.top + 64,
             left: 12,
@@ -548,7 +558,8 @@ class _Map extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   final void Function(double lat, double lng)? onFocusArea;
-  const _Header({this.onFocusArea});
+  final VoidCallback? onSearch;
+  const _Header({this.onFocusArea, this.onSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -557,7 +568,7 @@ class _Header extends StatelessWidget {
       left: 12,
       right: 12,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.94),
           borderRadius: BorderRadius.circular(14),
@@ -567,16 +578,25 @@ class _Header extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.travel_explore, size: 18, color: Color(0xFF2A4A7A)),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text(
-                'Faro · relatos próximos a você',
-                style: TextStyle(
-                  fontFamily: 'Georgia',
-                  fontSize: 14.5,
-                  height: 1.2,
-                  color: Color(0xFF1A1A1A),
+            Expanded(
+              child: InkWell(
+                onTap: onSearch,
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, size: 18, color: Color(0xFF2A4A7A)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Buscar bairro em Salvador',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: const Color(0xFF1A1A1A).withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -584,17 +604,16 @@ class _Header extends StatelessWidget {
               icon: const Icon(Icons.insights_outlined, size: 22, color: Color(0xFF555555)),
               tooltip: 'Atividade por área',
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+              constraints: const BoxConstraints(minWidth: 36),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => AreasScreen(onFocus: onFocusArea)),
               ),
             ),
-            const SizedBox(width: 12),
             IconButton(
               icon: const Icon(Icons.help_outline, size: 22, color: Color(0xFF555555)),
               tooltip: 'Como o Faro funciona',
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+              constraints: const BoxConstraints(minWidth: 36),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const HelpScreen()),
               ),
