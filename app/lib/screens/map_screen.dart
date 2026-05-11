@@ -35,6 +35,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final _markerFactory = MarkerFactory();
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
 
+  /// Limite de zoom que separa heatmap (zoom-out) de marcadores individuais.
+  /// Salvador inteira cabe em ~12; bairro em ~14-15. Em 13.5 fica o meio
+  /// termo: cidade ainda mostra heatmap, dou zoom pra ver pin individual.
+  static const double _heatmapZoomThreshold = 13.5;
+  double _zoom = 12;
+
+  bool get _showHeatmap => _zoom < _heatmapZoomThreshold;
+
   bool _matchesFilters(Occurrence o) {
     if (!_window.includes(o.date)) return false;
     if (_activeReasons.isEmpty) return true;
@@ -89,6 +97,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
+  void _onCameraMove(CameraPosition pos) {
+    final wasHeatmap = _showHeatmap;
+    _zoom = pos.zoom;
+    // Só rebuilda quando cruza o limiar — evita rebuild a cada pan/zoom.
+    if (wasHeatmap != _showHeatmap) {
+      setState(() {});
+    }
+  }
+
   Future<void> _centerOnMe() async {
     if (_locating) return;
     setState(() => _locating = true);
@@ -140,8 +157,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             mapType: _mapType,
             occurrences: filtered.maybeWhen(data: (v) => v, orElse: () => const []),
             markerIcons: _markerIcons,
+            asHeatmap: _showHeatmap,
             onCreated: (c) => _map = c,
             onTap: _openDetail,
+            onCameraMove: _onCameraMove,
           ),
           const _Header(),
           Positioned(
@@ -423,16 +442,20 @@ class _Map extends StatelessWidget {
   final MapType mapType;
   final List<Occurrence> occurrences;
   final Map<RiskLevel, BitmapDescriptor>? markerIcons;
+  final bool asHeatmap;
   final ValueChanged<GoogleMapController> onCreated;
   final ValueChanged<Occurrence> onTap;
+  final ValueChanged<CameraPosition> onCameraMove;
 
   const _Map({
     required this.initialCamera,
     required this.mapType,
     required this.occurrences,
     required this.markerIcons,
+    required this.asHeatmap,
     required this.onCreated,
     required this.onTap,
+    required this.onCameraMove,
   });
 
   @override
@@ -445,8 +468,10 @@ class _Map extends StatelessWidget {
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
       compassEnabled: false,
-      markers: _markers(),
+      markers: asHeatmap ? const {} : _markers(),
+      heatmaps: asHeatmap ? _heatmaps() : const {},
       onMapCreated: onCreated,
+      onCameraMove: onCameraMove,
     );
   }
 
@@ -463,6 +488,27 @@ class _Map extends StatelessWidget {
         onTap: () => onTap(o),
       );
     }).toSet();
+  }
+
+  Set<Heatmap> _heatmaps() {
+    if (occurrences.isEmpty) return const {};
+    final points = occurrences
+        .map((o) => WeightedLatLng(LatLng(o.latitude, o.longitude)))
+        .toList(growable: false);
+    return {
+      Heatmap(
+        heatmapId: const HeatmapId('faro_occurrences'),
+        data: points,
+        radius: HeatmapRadius.fromPixels(40),
+        opacity: 0.75,
+        gradient: HeatmapGradient([
+          HeatmapGradientColor(Color(0xFF7E8C9A), 0.0),
+          HeatmapGradientColor(Color(0xFFC9A65A), 0.35),
+          HeatmapGradientColor(Color(0xFFC46A2C), 0.7),
+          HeatmapGradientColor(Color(0xFF9A3C2C), 1.0),
+        ]),
+      ),
+    };
   }
 
   double _fallbackHue(RiskLevel r) {
