@@ -84,10 +84,13 @@ class MarkerFactory {
 /// Helper que classifica idade da ocorrência em [RiskLevel].
 ///
 /// Reutilizado pelo mapa, tile da lista e detail sheet — garante coerência
-/// visual entre as três superfícies.
+/// visual entre as três superfícies. Editorialmente: cinza é reservado pra
+/// histórico (> 7d), não pra "evento de ontem". Algo que aconteceu nessa
+/// semana ainda é relato útil pra decisão.
 RiskLevel classifyAge(DateTime date) {
   final hours = DateTime.now().difference(date).inHours;
-  if (hours < 2) return RiskLevel.confirmedActivity;
-  if (hours < 12) return RiskLevel.lightActivity;
+  if (hours < 6) return RiskLevel.highCorroborated;
+  if (hours < 24) return RiskLevel.confirmedActivity;
+  if (hours < 24 * 7) return RiskLevel.lightActivity;
   return RiskLevel.noRecentReports;
 }
