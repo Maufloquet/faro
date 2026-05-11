@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/text/string_format.dart';
 import '../core/theme/app_theme.dart';
@@ -90,6 +91,21 @@ class OccurrenceDetailSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 22),
+            if (occurrence.externalTitle != null) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Text(
+                  occurrence.externalTitle!,
+                  style: const TextStyle(
+                    fontFamily: 'Georgia',
+                    fontStyle: FontStyle.italic,
+                    fontSize: 14,
+                    height: 1.4,
+                    color: Color(0xFF3A3A3A),
+                  ),
+                ),
+              ),
+            ],
             _LabeledRow(label: 'Tipo de relato', value: what),
             const Divider(height: 1),
             _LabeledRow(label: 'Quando', value: '$when · $relative'),
@@ -100,27 +116,30 @@ class OccurrenceDetailSheet extends StatelessWidget {
               valueColor: risk.color,
             ),
             const Divider(height: 1),
-            _LabeledRow(
-              label: 'Fonte',
-              value: 'Fogo Cruzado',
-              hint: 'Banco público de violência armada (RJ, PE, BA, PA)',
-            ),
+            _SourceRow(occurrence: occurrence),
+            if (occurrence.isCityCentroid) ...[
+              const Divider(height: 1),
+              _LabeledRow(
+                label: 'Localização',
+                value: 'Aproximada (centro da cidade)',
+                hint: 'Notícia não menciona bairro específico. Pin posicionado no centro da cidade.',
+                valueColor: const Color(0xFF8A6A3A),
+              ),
+            ],
             const SizedBox(height: 24),
             const _DisclaimerBox(),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Contestação ainda não disponível — em breve'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    ),
-                    icon: const Icon(Icons.flag_outlined, size: 18),
-                    label: const Text('Contestar relato'),
-                    style: OutlinedButton.styleFrom(
+            if (occurrence.externalUrl != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => _openExternal(context, occurrence.externalUrl!),
+                    icon: const Icon(Icons.open_in_new, size: 18),
+                    label: const Text('Ler matéria completa'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF2A4A7A),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -128,7 +147,25 @@ class OccurrenceDetailSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
+              ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Contestação ainda não disponível — em breve'),
+                    duration: Duration(seconds: 2),
+                  ),
+                ),
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                label: const Text('Contestar relato'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -154,6 +191,52 @@ class OccurrenceDetailSheet extends StatelessWidget {
     final local = date.toLocal();
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(local.day)}/${two(local.month)} às ${two(local.hour)}:${two(local.minute)}';
+  }
+
+  Future<void> _openExternal(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir o link.')),
+      );
+    }
+  }
+}
+
+class _SourceRow extends StatelessWidget {
+  final Occurrence occurrence;
+  const _SourceRow({required this.occurrence});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (occurrence.source) {
+      case OccurrenceSource.fogoCruzado:
+        return const _LabeledRow(
+          label: 'Fonte',
+          value: 'Fogo Cruzado',
+          hint: 'Banco público de violência armada (RJ, PE, BA, PA)',
+        );
+      case OccurrenceSource.media:
+        final providerName = occurrence.sourceName ?? 'Mídia';
+        return _LabeledRow(
+          label: 'Fonte',
+          value: providerName,
+          hint: 'Notícia coletada e classificada automaticamente',
+        );
+      case OccurrenceSource.userReport:
+        return const _LabeledRow(
+          label: 'Fonte',
+          value: 'Relato de usuário',
+          hint: 'Reportado por outro usuário do app',
+        );
+      case OccurrenceSource.unknown:
+        return const _LabeledRow(
+          label: 'Fonte',
+          value: 'Não identificada',
+        );
+    }
   }
 }
 

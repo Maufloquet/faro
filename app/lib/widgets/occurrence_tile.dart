@@ -55,6 +55,10 @@ class OccurrenceTile extends StatelessWidget {
                       color: Color(0xFF6A6A6A),
                     ),
                   ),
+                  if (_sourceBadge(occurrence) != null) ...[
+                    const SizedBox(height: 4),
+                    _sourceBadge(occurrence)!,
+                  ],
                 ],
               ),
             ),
@@ -77,5 +81,58 @@ class OccurrenceTile extends StatelessWidget {
     if (diff.inMinutes < 60) return 'há ${diff.inMinutes}min';
     if (diff.inHours < 24) return 'há ${diff.inHours}h';
     return 'há ${diff.inDays}d';
+  }
+
+  Widget? _sourceBadge(Occurrence o) {
+    final children = <Widget>[];
+    if (o.source == OccurrenceSource.media) {
+      children.add(_pill(
+        icon: Icons.newspaper_outlined,
+        label: o.sourceName ?? 'Mídia',
+        color: const Color(0xFF7A5C2C),
+      ));
+    } else if (o.source == OccurrenceSource.fogoCruzado) {
+      children.add(_pill(
+        icon: Icons.gpp_maybe_outlined,
+        label: 'Fogo Cruzado',
+        color: const Color(0xFF8A3F3F),
+      ));
+    }
+    if (o.isCityCentroid) {
+      children.add(const SizedBox(width: 6));
+      children.add(_pill(
+        icon: Icons.adjust,
+        label: 'localização aprox.',
+        color: const Color(0xFF8A6A3A),
+      ));
+    }
+    if (children.isEmpty) return null;
+    return Wrap(children: children);
+  }
+
+  Widget _pill({required IconData icon, required String label, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.30), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

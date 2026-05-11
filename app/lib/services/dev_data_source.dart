@@ -43,7 +43,7 @@ Occurrence? _mapOne(Map<String, dynamic> o) {
     neighborhood: (o['neighborhood'] as Map<String, dynamic>?)?['name'] as String?,
     mainReason: ((o['contextInfo'] as Map<String, dynamic>?)?['mainReason']
         as Map<String, dynamic>?)?['name'] as String?,
-    source: 'fogo_cruzado',
+    source: OccurrenceSource.fogoCruzado,
     weight: 0.7,
   );
 }
