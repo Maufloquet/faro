@@ -67,11 +67,21 @@ async function classify(title, description) {
     throw new Error(`Gemini retornou resposta vazia: ${JSON.stringify(data).slice(0, 300)}`);
   }
 
+  const cleaned = extractJsonBlock(content);
   try {
-    return JSON.parse(content);
+    return JSON.parse(cleaned);
   } catch (e) {
     throw new Error(`Gemini retornou JSON inválido: ${content.slice(0, 200)}`);
   }
+}
+
+function extractJsonBlock(s) {
+  const fenced = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if (start !== -1 && end > start) return s.slice(start, end + 1);
+  return s.trim();
 }
 
 module.exports = { classify };

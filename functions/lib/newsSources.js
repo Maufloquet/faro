@@ -35,7 +35,10 @@ const SOURCES = [
   {
     id: "correio24horas",
     name: "Correio 24 Horas",
-    url: "https://www.correio24horas.com.br/feed",
+    // Endpoint /feed/ retornou 404 no run inicial. URL atual confirmada
+    // via inspeção do site. Se voltar a quebrar, trocar pra Google News
+    // como rede de segurança.
+    url: "https://www.correio24horas.com.br/rss",
     enabled: true,
     weight: 0.35,
     scope: "salvador",
