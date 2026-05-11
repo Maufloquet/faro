@@ -5,3 +5,4 @@ admin.initializeApp();
 
 // Schedulers
 exports.syncFogoCruzado = require("./lib/fogoCruzadoSync").syncFogoCruzado;
+exports.ingestNewsBahia = require("./lib/newsIngest").ingestNewsBahia;
