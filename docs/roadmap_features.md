@@ -67,6 +67,53 @@ Anotado em 2026-05-11. Ideia: app pode ser ferramenta forte pra entregadores e m
 
 ---
 
+## Passageiros de ônibus (audiência prioritária)
+
+Anotado em 2026-05-11. Audiência mais importante numericamente — maioria da população urbana brasileira anda de ônibus, não Uber/carro. Soluções de mobilidade tendem a esquecer essa galera; Faro tem espaço editorial forte aqui.
+
+### Diferença chave vs motoristas
+
+Pessoa de ônibus geralmente **não pode evitar o trajeto** — quem vai pegar o último ônibus pra casa não tem opção. Produto não pode ser "evite essa rota" → tem que ajudar a **se preparar**.
+
+### Funções planejadas (V2 maduro)
+
+1. **"Vale a pena descer aqui?"** — Antes de descer, usuário consulta o ponto. Tela mostra relatos recentes próximos + tempo a pé até endereço final. Decisão informada: descer ali, no anterior ou no próximo.
+2. **Perfil do ponto de ônibus** — Cada ponto vira nó no mapa (vêm do OpenStreetMap via Overpass). Tap mostra relatos próximos no horário, histórico, alternativas próximas (outro ponto da mesma linha 200m adiante).
+3. **Risco do trecho pós-descida** — Cobre o "perigo mais real": andar do ponto até casa. Selecionando ponto + endereço, app calcula o trecho a pé e sinaliza relatos no caminho. Sugere desvio se for muito carregado.
+4. **Notificação na aproximação** — Usuário tem destino salvo. Quando GPS detecta proximidade, app dispara: "Você está chegando perto do ponto Lapa. Houve 3 relatos próximos nas últimas 12h." Decisão pré-descida com tempo de reagir.
+5. **"Ainda dá tempo de pegar o próximo?"** — Integra com horário GTFS municipal. Quando usuário vê movimentação suspeita no ponto, mostra "próximo ônibus em 8 min" → decide esperar dentro de comércio aberto vs no ponto exposto.
+
+### O que NÃO fazer (cuidado editorial)
+
+- **NÃO criar "ranking de linhas perigosas"** — toda linha que passa por periferia teria badge. Viés territorial enorme.
+- **NÃO estigmatizar ponto isolado** — 1 relato num ponto não é problema do ponto, é do entorno.
+- **NÃO dar veredito "não desça"** — pessoa precisa descer. Damos contexto, não decisão.
+
+### Dados necessários (V2)
+
+| Dado | Fonte | Disponibilidade |
+|---|---|---|
+| Pontos de ônibus | OpenStreetMap (Overpass) | ✅ Grátis, ~30k em Salvador |
+| Linhas/rotas | GTFS da CCR Metrô / SETPS | Parcial — Salvador tem GTFS público |
+| Horário em tempo real | API municipal (BUS RJ tem, Salvador parcial) | Limitado |
+| Endereço final do usuário | Input no app | Privacy-sensitive — local-only |
+
+### Que dá pra fazer já no MVP atual
+
+Curto prazo (sem código novo): **adicionar perfil de uso "passageiro" no /sobre/** — orientar o usuário existente. Algo como:
+
+> "Você é passageiro de ônibus? O Faro hoje ajuda você a avaliar a região do ponto onde vai descer. Use o filtro de 24h e a busca por bairro pra olhar antes de chegar."
+
+Isso cria a expectativa correta e captura usuários desse perfil sem implementar nada novo.
+
+### Antes de implementar V2
+
+1. Conversar com 3-5 passageiros frequentes de Salvador (idealmente em diferentes linhas)
+2. Confirmar disponibilidade dos dados GTFS de Salvador
+3. Validar com transportadora local (CCR Metrô, SETPS) — pode virar parceria B2B
+
+---
+
 ## Features de produto (UX/UI)
 
 ### Notificação por proximidade (estilo Happn)
