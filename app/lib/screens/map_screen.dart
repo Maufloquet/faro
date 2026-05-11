@@ -490,11 +490,61 @@ class _Map extends StatelessWidget {
       mapToolbarEnabled: false,
       compassEnabled: false,
       markers: asHeatmap ? const {} : _markers(),
-      circles: asHeatmap ? const {} : _uncertaintyCircles(),
+      // Heatmap nativo funciona bem no iOS. No Android o suporte é
+      // inconsistente — usamos cluster circles como fallback. Em zoom-in
+      // (asHeatmap=false), só os círculos de incerteza dos centroides.
+      circles: asHeatmap ? _clusterCircles() : _uncertaintyCircles(),
       heatmaps: asHeatmap ? _heatmaps() : const {},
       onMapCreated: onCreated,
       onCameraMove: onCameraMove,
     );
+  }
+
+  Set<Circle> _clusterCircles() {
+    if (occurrences.isEmpty) return const {};
+    // Agrupa por célula de ~5km (1° latitude ≈ 111km, então 0.045° ≈ 5km)
+    final clusters = <String, List<Occurrence>>{};
+    for (final o in occurrences) {
+      final key =
+          '${(o.latitude / 0.045).floor()},${(o.longitude / 0.045).floor()}';
+      clusters.putIfAbsent(key, () => []).add(o);
+    }
+
+    final result = <Circle>{};
+    for (final entry in clusters.entries) {
+      final items = entry.value;
+      final count = items.length;
+      // Centroide ponderado
+      final lat = items.map((o) => o.latitude).fold(0.0, (a, b) => a + b) / count;
+      final lng = items.map((o) => o.longitude).fold(0.0, (a, b) => a + b) / count;
+
+      // Paleta surge-style: amarelo claro → laranja → vermelho conforme densidade
+      Color color;
+      if (count >= 20) {
+        color = const Color(0xFF8B0000);
+      } else if (count >= 10) {
+        color = const Color(0xFFD93030);
+      } else if (count >= 5) {
+        color = const Color(0xFFFF6B3D);
+      } else if (count >= 2) {
+        color = const Color(0xFFFFA646);
+      } else {
+        color = const Color(0xFFFFD56A);
+      }
+
+      // Raio escala com a contagem, com piso e teto
+      final radius = (500 + count * 60.0).clamp(500.0, 2500.0);
+
+      result.add(Circle(
+        circleId: CircleId('cluster-${entry.key}'),
+        center: LatLng(lat, lng),
+        radius: radius,
+        fillColor: color.withValues(alpha: 0.40),
+        strokeColor: color.withValues(alpha: 0.70),
+        strokeWidth: 1,
+      ));
+    }
+    return result;
   }
 
   Set<Circle> _uncertaintyCircles() {
