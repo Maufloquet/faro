@@ -48,6 +48,11 @@ class AboutScreen extends StatelessWidget {
                 'Sua localização é usada apenas para mostrar relatos próximos. Não armazenamos seu histórico individual de trajetos. Dados agregados por região, nunca por pessoa. A política de privacidade completa está disponível em desenvolvimento.',
           ),
           _Section(
+            title: 'Para quem anda de ônibus',
+            body:
+                'Você é passageiro frequente de ônibus? O Faro hoje ajuda você a avaliar a região onde vai descer antes de chegar. Use o filtro de 24h e a busca por bairro pra olhar antecipadamente. Funções específicas pra ponto de ônibus e trecho a pé estão na V2 do roadmap.',
+          ),
+          _Section(
             title: 'Contato',
             body:
                 'Email: faro@example.com (placeholder — em produção será real). Toda contestação de relato é respondida em até 2h durante o beta.',
