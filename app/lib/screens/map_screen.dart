@@ -11,6 +11,7 @@ import '../services/marker_factory.dart';
 import '../services/occurrences_service.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
+import 'areas_screen.dart';
 import 'help_screen.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -91,6 +92,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await OccurrenceDetailSheet.show(context, o);
   }
 
+  Future<void> _focusOnArea(double lat, double lng) async {
+    final controller = _map;
+    if (controller == null) return;
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: LatLng(lat, lng), zoom: 15),
+      ),
+    );
+  }
+
   void _toggleMapType() {
     setState(() {
       _mapType = _mapType == MapType.hybrid ? MapType.normal : MapType.hybrid;
@@ -162,7 +173,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onTap: _openDetail,
             onCameraMove: _onCameraMove,
           ),
-          const _Header(),
+          _Header(onFocusArea: _focusOnArea),
           Positioned(
             top: MediaQuery.of(context).padding.top + 64,
             left: 12,
@@ -536,7 +547,8 @@ class _Map extends StatelessWidget {
 // ============================================================================
 
 class _Header extends StatelessWidget {
-  const _Header();
+  final void Function(double lat, double lng)? onFocusArea;
+  const _Header({this.onFocusArea});
 
   @override
   Widget build(BuildContext context) {
@@ -568,6 +580,16 @@ class _Header extends StatelessWidget {
                 ),
               ),
             ),
+            IconButton(
+              icon: const Icon(Icons.insights_outlined, size: 22, color: Color(0xFF555555)),
+              tooltip: 'Atividade por área',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => AreasScreen(onFocus: onFocusArea)),
+              ),
+            ),
+            const SizedBox(width: 12),
             IconButton(
               icon: const Icon(Icons.help_outline, size: 22, color: Color(0xFF555555)),
               tooltip: 'Como o Faro funciona',
