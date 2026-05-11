@@ -61,7 +61,7 @@ exports.ingestNewsBahia = onSchedule(
     timeZone: "America/Bahia",
     region: "southamerica-east1",
     memory: "512MiB",
-    timeoutSeconds: 300,
+    timeoutSeconds: 540,
     secrets: ["GROQ_API_KEY"],
   },
   async () => {
