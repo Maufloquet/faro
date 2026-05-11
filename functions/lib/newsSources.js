@@ -62,8 +62,10 @@ const SOURCES = [
   {
     id: "bahia-noticias",
     name: "Bahia Notícias",
+    // RSS retornou 404 no primeiro run. URL real desconhecida — desativada
+    // até verificar manualmente em bahianoticias.com.br/rss.
     url: "https://www.bahianoticias.com.br/rss/feed",
-    enabled: true,
+    enabled: false,
     weight: 0.30,
     scope: "salvador",
   },
@@ -118,8 +120,11 @@ const SOURCES = [
   {
     id: "bocao-news",
     name: "Bocão News",
+    // RSS retornou 404 no primeiro run. Desativada — usar Google News
+    // com query \"bocão news\" como rede de segurança até verificar
+    // o endpoint real.
     url: "https://www.bocaonews.com.br/rss/principal.xml",
-    enabled: true,
+    enabled: false,
     weight: 0.30,
     scope: "salvador",
   },
@@ -145,6 +150,14 @@ const SOURCES = [
     url: GOOGLE_NEWS_RSS("\"cidade alerta\" Salvador Bahia"),
     enabled: true,
     weight: 0.25,
+    scope: "salvador",
+  },
+  {
+    id: "gnews-bocao-news",
+    name: "Google News · Bocão News",
+    url: GOOGLE_NEWS_RSS("\"bocão news\" Salvador"),
+    enabled: true,
+    weight: 0.30,
     scope: "salvador",
   },
   {

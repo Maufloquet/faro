@@ -115,23 +115,26 @@ async function ingestFromSource(db, source) {
     }
     result.newItems++;
 
-    // Marca como visto ANTES de classificar — evita reprocessar em caso
-    // de timeout depois. Pior caso: pulamos um item que poderia ser válido.
+    let classification;
+    try {
+      classification = await classify(item.title || "", item.contentSnippet || item.content || "");
+      result.classified++;
+    } catch (e) {
+      // NÃO marca como visto — vamos tentar de novo no próximo run.
+      // Se a falha for transiente (rate limit, instabilidade), recuperamos.
+      // Se for permanente (URL inválida), no máximo loga ruído extra.
+      logger.warn(`Classificação falhou pra ${url}: ${e.message}`);
+      continue;
+    }
+
+    // Só marca como visto depois de classificar com sucesso. Idempotência
+    // do write em occurrences (doc-id determinístico) protege duplicação.
     await seenRef.set({
       source: source.id,
       url,
       title: item.title || "",
       seenAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-
-    let classification;
-    try {
-      classification = await classify(item.title || "", item.contentSnippet || item.content || "");
-      result.classified++;
-    } catch (e) {
-      logger.warn(`Classificação falhou pra ${url}: ${e.message}`);
-      continue;
-    }
 
     if (!classification.security_related) continue;
     if (!classification.neighborhood) continue;
