@@ -39,12 +39,19 @@ const PARSE_TIMEOUT_MS = 15000;
 const MAX_ITEMS_PER_SOURCE = 15;
 const TTL_HOURS = 24 * 30;
 
-const parser = new Parser({
-  timeout: PARSE_TIMEOUT_MS,
-  headers: {
-    "User-Agent": "Faro-NewsIngest/0.1 (+https://github.com/Maufloquet/faro)",
-  },
-});
+// Parser instanciado lazy dentro da função pra não pesar o load global
+// — firebase tenta importar o módulo em 10s pra descobrir as functions.
+let _parser = null;
+function getParser() {
+  if (_parser) return _parser;
+  _parser = new Parser({
+    timeout: PARSE_TIMEOUT_MS,
+    headers: {
+      "User-Agent": "Faro-NewsIngest/0.1 (+https://github.com/Maufloquet/faro)",
+    },
+  });
+  return _parser;
+}
 
 exports.ingestNewsBahia = onSchedule(
   {
@@ -87,7 +94,7 @@ exports.ingestNewsBahia = onSchedule(
 );
 
 async function ingestFromSource(db, source) {
-  const fetched = await parser.parseURL(source.url);
+  const fetched = await getParser().parseURL(source.url);
   const items = (fetched.items || []).slice(0, MAX_ITEMS_PER_SOURCE);
 
   const result = { fetched: items.length, newItems: 0, classified: 0, written: 0, skipped: 0 };
