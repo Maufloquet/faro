@@ -28,10 +28,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   GoogleMapController? _map;
   MapType _mapType = MapType.hybrid;
   TimeWindow _window = TimeWindow.semana;
+  Set<String> _activeReasons = const {};
   final _location = LocationService();
   bool _locating = false;
   final _markerFactory = MarkerFactory();
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
+
+  bool _matchesFilters(Occurrence o) {
+    if (!_window.includes(o.date)) return false;
+    if (_activeReasons.isEmpty) return true;
+    return _activeReasons.contains(o.mainReason);
+  }
 
   @override
   void initState() {
@@ -115,7 +122,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final raw = ref.watch(recentOccurrencesProvider);
-    final filtered = raw.whenData((list) => list.where((o) => _window.includes(o.date)).toList());
+    final windowed = raw.whenData((list) => list.where((o) => _window.includes(o.date)).toList());
+    final filtered = raw.whenData((list) => list.where(_matchesFilters).toList());
 
     return Scaffold(
       body: Stack(
@@ -133,9 +141,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             top: MediaQuery.of(context).padding.top + 64,
             left: 12,
             right: 12,
-            child: _TimeWindowChips(
-              selected: _window,
-              onSelect: (w) => setState(() => _window = w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _TimeWindowChips(
+                  selected: _window,
+                  onSelect: (w) => setState(() => _window = w),
+                ),
+                const SizedBox(height: 8),
+                _ReasonChips(
+                  pool: windowed.maybeWhen(data: (v) => v, orElse: () => const []),
+                  active: _activeReasons,
+                  onToggle: (reason) => setState(() {
+                    final next = Set<String>.from(_activeReasons);
+                    if (next.contains(reason)) {
+                      next.remove(reason);
+                    } else {
+                      next.add(reason);
+                    }
+                    _activeReasons = next;
+                  }),
+                  onClear: () => setState(() => _activeReasons = const {}),
+                ),
+              ],
             ),
           ),
           Positioned(
@@ -161,6 +189,113 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 : null,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ReasonChips extends StatelessWidget {
+  final List<Occurrence> pool;
+  final Set<String> active;
+  final ValueChanged<String> onToggle;
+  final VoidCallback onClear;
+
+  const _ReasonChips({
+    required this.pool,
+    required this.active,
+    required this.onToggle,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final counts = <String, int>{};
+    for (final o in pool) {
+      final r = o.mainReason;
+      if (r == null) continue;
+      counts[r] = (counts[r] ?? 0) + 1;
+    }
+    final entries = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    if (entries.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 32,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: entries.length + (active.isEmpty ? 0 : 1),
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
+        itemBuilder: (_, i) {
+          if (active.isNotEmpty && i == 0) {
+            return _PillChip(
+              label: 'Limpar',
+              icon: Icons.close,
+              color: const Color(0xFF8A3F3F),
+              isSelected: false,
+              onTap: onClear,
+            );
+          }
+          final entry = entries[i - (active.isEmpty ? 0 : 1)];
+          final isSelected = active.contains(entry.key);
+          return _PillChip(
+            label: '${entry.key} · ${entry.value}',
+            isSelected: isSelected,
+            onTap: () => onToggle(entry.key),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PillChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final Color? color;
+  final bool isSelected;
+  final VoidCallback onTap;
+  const _PillChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.icon,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isSelected
+        ? (color ?? const Color(0xFF8A6A3A))
+        : Colors.white;
+    final fg = isSelected ? Colors.white : const Color(0xFF2A2A2A);
+    return Material(
+      color: bg,
+      elevation: 1.5,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 14, color: fg),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
