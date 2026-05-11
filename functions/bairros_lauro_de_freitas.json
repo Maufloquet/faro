@@ -1,0 +1,37 @@
+{
+  "Portão": {
+    "lat": -12.8673412,
+    "lng": -38.306729,
+    "source": "OSM"
+  },
+  "Vilas do Atlântico": {
+    "lat": -12.8861199,
+    "lng": -38.3000456,
+    "source": "OSM"
+  },
+  "Centro": {
+    "lat": -12.8916137,
+    "lng": -38.3267507,
+    "source": "OSM"
+  },
+  "Itinga": {
+    "lat": -12.8905201,
+    "lng": -38.3455045,
+    "source": "OSM"
+  },
+  "Vida Nova": {
+    "lat": -12.8762203,
+    "lng": -38.3329166,
+    "source": "OSM"
+  },
+  "Condominio Foz do Joanes": {
+    "lat": -12.8736644,
+    "lng": -38.2821608,
+    "source": "OSM"
+  },
+  "Parque São paulo": {
+    "lat": -12.8745224,
+    "lng": -38.3550706,
+    "source": "OSM"
+  }
+}

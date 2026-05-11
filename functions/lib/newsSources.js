@@ -124,6 +124,32 @@ const SOURCES = [
     scope: "salvador",
   },
 
+  // ─── RMS — cidades vizinhas de Salvador ───
+  {
+    id: "gnews-violencia-camacari",
+    name: "Google News · violência Camaçari",
+    url: GOOGLE_NEWS_RSS("violência OR assalto OR tiroteio Camaçari"),
+    enabled: true,
+    weight: 0.30,
+    scope: "camacari",
+  },
+  {
+    id: "gnews-violencia-lauro",
+    name: "Google News · violência Lauro de Freitas",
+    url: GOOGLE_NEWS_RSS("violência OR assalto OR tiroteio \"Lauro de Freitas\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "lauro_de_freitas",
+  },
+  {
+    id: "gnews-violencia-simoes",
+    name: "Google News · violência Simões Filho",
+    url: GOOGLE_NEWS_RSS("violência OR assalto OR tiroteio \"Simões Filho\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "simoes_filho",
+  },
+
   // ─── Google News por portal (cobre os RSS diretos quebrados) ───
   {
     id: "gnews-bocao-news",

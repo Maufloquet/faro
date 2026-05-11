@@ -1,0 +1,17 @@
+{
+  "Ponto Parada": {
+    "lat": -12.791377,
+    "lng": -38.4019778,
+    "source": "OSM"
+  },
+  "Centro": {
+    "lat": -12.7907141,
+    "lng": -38.3980069,
+    "source": "OSM"
+  },
+  "Loteamento Major Tapioca": {
+    "lat": -12.7840705,
+    "lng": -38.3911614,
+    "source": "OSM"
+  }
+}

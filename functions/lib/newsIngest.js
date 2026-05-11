@@ -139,13 +139,16 @@ async function ingestFromSource(db, source) {
     });
 
     if (!classification.security_related) continue;
-    if (!classification.neighborhood) continue;
     if ((classification.confidence ?? 0) < 0.55) continue;
-    if (classification.city && !classification.city.toLowerCase().includes("salvador")) continue;
+    // Cidade tem que ser uma das 4 cobertas. resolveBairro depois trata
+    // o caso de bairro ausente caindo no centroide.
+    if (!classification.city) continue;
 
-    const geo = resolveBairro(classification.neighborhood);
+    const geo = resolveBairro(classification.neighborhood, classification.city);
     if (!geo) {
-      logger.info(`Bairro \"${classification.neighborhood}\" não resolvido localmente`);
+      logger.info(
+        `Não resolvido: bairro=\"${classification.neighborhood}\" cidade=\"${classification.city}\"`
+      );
       continue;
     }
 
@@ -162,8 +165,9 @@ async function ingestFromSource(db, source) {
         date: admin.firestore.Timestamp.fromDate(pubDate),
         expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
         state: "Bahia",
-        city: "Salvador",
-        neighborhood: geo.matched,
+        city: classification.city,
+        neighborhood: geo.method === "city-centroid" ? null : geo.matched,
+        geocodeMethod: geo.method,
         mainReason: mapType(classification.occurrence_type),
         source: SOURCE,
         sourceProvider: source.id,
@@ -172,7 +176,6 @@ async function ingestFromSource(db, source) {
         externalUrl: url,
         externalTitle: item.title,
         confidence: classification.confidence,
-        geocodeMethod: geo.method,
         ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }

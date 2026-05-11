@@ -22,20 +22,22 @@ const MODEL = "llama-3.1-8b-instant";
 
 const SYSTEM_PROMPT = `Você é um classificador editorial de notícias de segurança urbana brasileiras.
 
+Cobrimos Salvador e a Região Metropolitana de Salvador (Camaçari, Lauro de Freitas, Simões Filho).
+
 Recebe título + descrição de uma notícia. Retorna APENAS JSON com:
 {
   "security_related": true|false,   // é sobre violência urbana real, não política/economia/esporte?
   "occurrence_type": "tiroteio"|"homicidio"|"roubo"|"acao_policial"|"sequestro"|"agressao"|"outros"|null,
-  "neighborhood": "nome do bairro de Salvador mencionado",  // ou null se não há
-  "city": "Salvador",   // ou outra cidade BA, ou null
+  "neighborhood": "nome do bairro mencionado",  // ou null
+  "city": "Salvador"|"Camaçari"|"Lauro de Freitas"|"Simões Filho"|null,  // só essas 4 ou null se outra
   "confidence": 0.0-1.0  // sua confiança na extração
 }
 
 Regras:
 - Bairros: use o nome exato como mencionado, sem cidade ("Pirajá" não "Pirajá, Salvador")
 - Se a notícia menciona só município sem bairro, neighborhood=null
-- Notícias políticas, comentários, opiniões → security_related=false
-- Notícias de outras cidades fora da Bahia → security_related=true mas city=outra
+- Se cidade é outra (Feira de Santana, Ilhéus, etc), retorne city=null
+- Notícias políticas, comentários, opiniões, esporte → security_related=false
 - Sem campo extra, sem markdown, sem explicação. Apenas o JSON.`;
 
 async function classify(title, description) {

@@ -1,0 +1,252 @@
+{
+  "Guarajuba": {
+    "lat": -12.650358,
+    "lng": -38.0707556,
+    "source": "OSM"
+  },
+  "Itacimirim": {
+    "lat": -12.6115626,
+    "lng": -38.0477754,
+    "source": "OSM"
+  },
+  "Alto da Mira": {
+    "lat": -12.6421277,
+    "lng": -38.09757,
+    "source": "OSM"
+  },
+  "Centro": {
+    "lat": -12.7006157,
+    "lng": -38.3245666,
+    "source": "OSM"
+  },
+  "Beco da Cebola": {
+    "lat": -12.656354,
+    "lng": -38.0941338,
+    "source": "OSM"
+  },
+  "São Bento": {
+    "lat": -12.6593302,
+    "lng": -38.1068183,
+    "source": "OSM"
+  },
+  "Sitio Pica-Pao preto": {
+    "lat": -12.6391967,
+    "lng": -38.0916133,
+    "source": "OSM"
+  },
+  "Orla": {
+    "lat": -12.6440877,
+    "lng": -38.0842561,
+    "source": "OSM"
+  },
+  "Gleba C": {
+    "lat": -12.7126586,
+    "lng": -38.3293215,
+    "source": "OSM"
+  },
+  "Ponto Certo": {
+    "lat": -12.7113049,
+    "lng": -38.3171372,
+    "source": "OSM"
+  },
+  "Piaçavera": {
+    "lat": -12.7145302,
+    "lng": -38.3209579,
+    "source": "OSM"
+  },
+  "Dois de Julho": {
+    "lat": -12.7084581,
+    "lng": -38.322802,
+    "source": "OSM"
+  },
+  "Bela Vista": {
+    "lat": -12.711891,
+    "lng": -38.3200769,
+    "source": "OSM"
+  },
+  "Bairro do 46": {
+    "lat": -12.7083221,
+    "lng": -38.3269863,
+    "source": "OSM"
+  },
+  "Gleba B": {
+    "lat": -12.6935956,
+    "lng": -38.3242108,
+    "source": "OSM"
+  },
+  "Novo Horizonte": {
+    "lat": -12.6976515,
+    "lng": -38.3090054,
+    "source": "OSM"
+  },
+  "Nova Vitória": {
+    "lat": -12.701974,
+    "lng": -38.3150538,
+    "source": "OSM"
+  },
+  "Alto da Cruz": {
+    "lat": -12.6955163,
+    "lng": -38.3289476,
+    "source": "OSM"
+  },
+  "Gleba A": {
+    "lat": -12.6912668,
+    "lng": -38.3357712,
+    "source": "OSM"
+  },
+  "Lama Preta": {
+    "lat": -12.6999833,
+    "lng": -38.3389373,
+    "source": "OSM"
+  },
+  "Parque Satelite": {
+    "lat": -12.6884021,
+    "lng": -38.3267611,
+    "source": "OSM"
+  },
+  "Phoc I": {
+    "lat": -12.714683,
+    "lng": -38.3350652,
+    "source": "OSM"
+  },
+  "Phoc III": {
+    "lat": -12.7199786,
+    "lng": -38.3348721,
+    "source": "OSM"
+  },
+  "Phoc II": {
+    "lat": -12.708529,
+    "lng": -38.3346897,
+    "source": "OSM"
+  },
+  "Gleba E": {
+    "lat": -12.7228666,
+    "lng": -38.3310268,
+    "source": "OSM"
+  },
+  "Parque Verde I": {
+    "lat": -12.718335,
+    "lng": -38.3248684,
+    "source": "OSM"
+  },
+  "Parque verde II": {
+    "lat": -12.7251376,
+    "lng": -38.3249972,
+    "source": "OSM"
+  },
+  "Jardim Limoeiro": {
+    "lat": -12.7043949,
+    "lng": -38.3021348,
+    "source": "OSM"
+  },
+  "Gravatá": {
+    "lat": -12.6878213,
+    "lng": -38.333283,
+    "source": "OSM"
+  },
+  "Reserva Camassarys": {
+    "lat": -12.7086304,
+    "lng": -38.3071272,
+    "source": "OSM"
+  },
+  "Ficam II": {
+    "lat": -12.6895103,
+    "lng": -38.329369,
+    "source": "OSM"
+  },
+  "Ficam I": {
+    "lat": -12.6871751,
+    "lng": -38.3294402,
+    "source": "OSM"
+  },
+  "Mangueiral": {
+    "lat": -12.6851923,
+    "lng": -38.3315676,
+    "source": "OSM"
+  },
+  "Gleba H": {
+    "lat": -12.7101004,
+    "lng": -38.3457606,
+    "source": "OSM"
+  },
+  "Buri Satuba": {
+    "lat": -12.7119529,
+    "lng": -38.3412008,
+    "source": "OSM"
+  },
+  "Triângulo": {
+    "lat": -12.6953678,
+    "lng": -38.3387494,
+    "source": "OSM"
+  },
+  "Santo Antônio": {
+    "lat": -12.6886942,
+    "lng": -38.3504163,
+    "source": "OSM"
+  },
+  "Santa Maria": {
+    "lat": -12.7163062,
+    "lng": -38.3469991,
+    "source": "OSM"
+  },
+  "Polo Industrial": {
+    "lat": -12.6616713,
+    "lng": -38.3145037,
+    "source": "OSM"
+  },
+  "Parque Florestal": {
+    "lat": -12.6894794,
+    "lng": -38.3207922,
+    "source": "OSM"
+  },
+  "Bairro do Natal": {
+    "lat": -12.6942414,
+    "lng": -38.321439,
+    "source": "OSM"
+  },
+  "Condominio Planeta Aqua": {
+    "lat": -12.7180259,
+    "lng": -38.1444669,
+    "source": "OSM"
+  },
+  "Vilas do Jacuipe": {
+    "lat": -12.7062361,
+    "lng": -38.1460306,
+    "source": "OSM"
+  },
+  "Vila Senhor dos Passos": {
+    "lat": -12.7373028,
+    "lng": -38.1679202,
+    "source": "OSM"
+  },
+  "Verdes Horizontes": {
+    "lat": -12.7266214,
+    "lng": -38.3179781,
+    "source": "OSM"
+  },
+  "Parque das Mangabas": {
+    "lat": -12.7320129,
+    "lng": -38.2924934,
+    "source": "OSM"
+  },
+  "Bairro Cristo Redentor": {
+    "lat": -12.685349,
+    "lng": -38.3393783,
+    "source": "OSM"
+  },
+  "Condomínio Sun Park": {
+    "lat": -12.843875,
+    "lng": -38.2793585,
+    "source": "OSM"
+  },
+  "Condomínio Coqueiros": {
+    "lat": -12.8347968,
+    "lng": -38.2776822,
+    "source": "OSM"
+  },
+  "Barra do Jacuípe": {
+    "lat": -12.6919428,
+    "lng": -38.1227116,
+    "source": "OSM"
+  }
+}
