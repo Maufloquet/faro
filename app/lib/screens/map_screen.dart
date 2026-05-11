@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -125,7 +126,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final windowed = raw.whenData((list) => list.where((o) => _window.includes(o.date)).toList());
     final filtered = raw.whenData((list) => list.where(_matchesFilters).toList());
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
       body: Stack(
         children: [
           _Map(
@@ -190,6 +197,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -591,6 +599,7 @@ class _SheetContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sorted = [...items]..sort((a, b) => b.date.compareTo(a.date));
+    final mostRecent = sorted.isNotEmpty ? sorted.first.date : null;
     return ListView(
       controller: scrollController,
       padding: EdgeInsets.zero,
@@ -609,7 +618,7 @@ class _SheetContent extends StatelessWidget {
               ],
             ),
           ),
-        const _Footer(),
+        _Footer(mostRecent: mostRecent),
       ],
     );
   }
@@ -715,21 +724,47 @@ class _Handle extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer();
+  final DateTime? mostRecent;
+  const _Footer({this.mostRecent});
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 18, 16, 32),
-      child: Text(
-        'Fonte: Fogo Cruzado · atualização contínua',
-        style: TextStyle(
-          fontSize: 11.5,
-          color: Color(0xFF8A8A8A),
-          fontStyle: FontStyle.italic,
-        ),
+    final freshness = _freshness(mostRecent);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Fonte: Fogo Cruzado',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: Color(0xFF8A8A8A),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          if (freshness != null) ...[
+            const SizedBox(height: 3),
+            Text(
+              freshness,
+              style: const TextStyle(
+                fontSize: 11.5,
+                color: Color(0xFF8A8A8A),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
       ),
     );
+  }
+
+  String? _freshness(DateTime? d) {
+    if (d == null) return null;
+    final diff = DateTime.now().difference(d);
+    if (diff.inMinutes < 60) return 'Último relato há ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'Último relato há ${diff.inHours}h';
+    return 'Último relato há ${diff.inDays}d';
   }
 }
 
