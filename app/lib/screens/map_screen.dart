@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
+import '../services/location_service.dart';
 import '../services/occurrences_service.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
@@ -24,6 +25,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   GoogleMapController? _map;
   MapType _mapType = MapType.hybrid;
+  final _location = LocationService();
+  bool _locating = false;
 
   Future<void> _focusOn(Occurrence o) async {
     final controller = _map;
@@ -47,6 +50,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
+  Future<void> _centerOnMe() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    try {
+      final pos = await _location.currentPosition();
+      final controller = _map;
+      if (controller != null) {
+        await controller.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15),
+          ),
+        );
+      }
+    } on LocationException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), duration: const Duration(seconds: 3)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível obter sua localização agora.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final occurrences = ref.watch(recentOccurrencesProvider);
@@ -65,9 +99,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           Positioned(
             right: 14,
             bottom: MediaQuery.of(context).size.height * 0.18 + 12,
-            child: _MapTypeToggle(
-              isHybrid: _mapType == MapType.hybrid,
-              onTap: _toggleMapType,
+            child: Column(
+              children: [
+                _MapTypeToggle(
+                  isHybrid: _mapType == MapType.hybrid,
+                  onTap: _toggleMapType,
+                ),
+                const SizedBox(height: 10),
+                _LocateButton(loading: _locating, onTap: _centerOnMe),
+              ],
             ),
           ),
           _Sheet(occurrences: occurrences, onTapTile: _openDetail),
@@ -98,6 +138,42 @@ class _MapTypeToggle extends StatelessWidget {
             size: 22,
             color: const Color(0xFF2A4A7A),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LocateButton extends StatelessWidget {
+  final bool loading;
+  final VoidCallback onTap;
+  const _LocateButton({required this.loading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 4,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: loading ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(11),
+          child: loading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: Color(0xFF2A4A7A),
+                  ),
+                )
+              : const Icon(
+                  Icons.my_location,
+                  size: 22,
+                  color: Color(0xFF2A4A7A),
+                ),
         ),
       ),
     );
