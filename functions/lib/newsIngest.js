@@ -31,7 +31,7 @@ const ngeohash = require("ngeohash");
 const Parser = require("rss-parser");
 
 const { enabledSources } = require("./newsSources");
-const { classify } = require("./groqClient");
+const { classify } = require("./geminiClient");
 const { resolveBairro } = require("./bairrosDict");
 
 const SOURCE = "media";
@@ -53,7 +53,7 @@ exports.ingestNewsBahia = onSchedule(
     region: "southamerica-east1",
     memory: "512MiB",
     timeoutSeconds: 300,
-    secrets: ["GROQ_API_KEY"],
+    secrets: ["GEMINI_API_KEY"],
   },
   async () => {
     const db = admin.firestore();

@@ -1,13 +1,15 @@
 "use strict";
 
 /**
- * Cliente Groq para classificação editorial de notícias.
+ * Cliente Groq — mantido como FALLBACK.
  *
- * Por que Groq: latência baixa, free tier generoso (14k req/dia),
- * Llama 3 70B é suficiente pra essa tarefa de extração estruturada.
+ * Cliente ativo hoje é o geminiClient.js (Gemini Flash 2.5). Razões da
+ * troca documentadas no header daquele arquivo.
  *
- * Quando essa task ficar simples demais pra um modelo grande, podemos
- * trocar pra Llama 3 8B no mesmo cliente (4x mais barato/rápido).
+ * Pra reativar este: substitua o require em newsIngest.js de volta pra
+ * "./groqClient" e troque o secret GEMINI_API_KEY → GROQ_API_KEY.
+ *
+ * @deprecated em favor de geminiClient.js
  */
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
