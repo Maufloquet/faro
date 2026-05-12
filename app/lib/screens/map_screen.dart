@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +48,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   bool get _showHeatmap => _zoom < _heatmapZoomThreshold;
 
+  // Posição atual do usuário pra cálculos de proximidade.
+  LatLng? _userPos;
+  bool _alertDismissed = false;
+
+  /// Raio (em km) pra considerar relato "próximo" do usuário.
+  static const double _proximityRadiusKm = 1.0;
+  static const Duration _proximityRecency = Duration(hours: 6);
+
   bool _matchesFilters(Occurrence o) {
     if (!_window.includes(o.date)) return false;
     if (_activeReasons.isEmpty) return true;
@@ -69,6 +79,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Future<void> _silentCenter() async {
     final pos = await _location.currentIfAlreadyAuthorized();
     if (pos == null || !mounted) return;
+    setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
     final controller = _map;
     if (controller == null) return;
     await controller.animateCamera(
@@ -118,6 +129,34 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
+  List<Occurrence> _proximityAlerts(List<Occurrence> all) {
+    final pos = _userPos;
+    if (pos == null) return const [];
+    final cutoff = DateTime.now().subtract(_proximityRecency);
+    return all
+        .where((o) => o.date.isAfter(cutoff))
+        .where((o) => _haversineKm(pos, LatLng(o.latitude, o.longitude)) <= _proximityRadiusKm)
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  /// Distância aproximada em km entre dois pontos (Haversine).
+  double _haversineKm(LatLng a, LatLng b) {
+    const r = 6371.0;
+    final dLat = _toRad(b.latitude - a.latitude);
+    final dLng = _toRad(b.longitude - a.longitude);
+    final lat1 = _toRad(a.latitude);
+    final lat2 = _toRad(b.latitude);
+    final h = (1 - _cos(dLat)) / 2 +
+        _cos(lat1) * _cos(lat2) * (1 - _cos(dLng)) / 2;
+    return 2 * r * _asin(_sqrt(h));
+  }
+
+  double _toRad(double d) => d * 3.141592653589793 / 180.0;
+  double _cos(double v) => math.cos(v);
+  double _asin(double v) => math.asin(v);
+  double _sqrt(double v) => math.sqrt(v);
+
   void _onCameraMove(CameraPosition pos) {
     final wasHeatmap = _showHeatmap;
     _zoom = pos.zoom;
@@ -132,6 +171,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     setState(() => _locating = true);
     try {
       final pos = await _location.currentPosition();
+      if (mounted) setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
       final controller = _map;
       if (controller != null) {
         await controller.animateCamera(
@@ -163,6 +203,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final raw = ref.watch(recentOccurrencesProvider);
     final windowed = raw.whenData((list) => list.where((o) => _window.includes(o.date)).toList());
     final filtered = raw.whenData((list) => list.where(_matchesFilters).toList());
+    final allList = raw.maybeWhen(data: (v) => v, orElse: () => const <Occurrence>[]);
+    final alerts = _alertDismissed ? const <Occurrence>[] : _proximityAlerts(allList);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -184,8 +226,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onCameraMove: _onCameraMove,
           ),
           _Header(onFocusArea: _focusOnArea, onSearch: _openSearch),
+          if (alerts.isNotEmpty)
+            _ProximityBanner(
+              alerts: alerts,
+              onTap: () => _openDetail(alerts.first),
+              onDismiss: () => setState(() => _alertDismissed = true),
+            ),
           Positioned(
-            top: MediaQuery.of(context).padding.top + 64,
+            top: MediaQuery.of(context).padding.top + 64 + (alerts.isNotEmpty ? 76 : 0),
             left: 12,
             right: 12,
             child: Column(
@@ -624,6 +672,98 @@ class _Map extends StatelessWidget {
 // ============================================================================
 // Header
 // ============================================================================
+
+// ============================================================================
+// Proximity banner — alerta editorial quando há relato recente próximo
+// ============================================================================
+
+class _ProximityBanner extends StatelessWidget {
+  final List<Occurrence> alerts;
+  final VoidCallback onTap;
+  final VoidCallback onDismiss;
+  const _ProximityBanner({
+    required this.alerts,
+    required this.onTap,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final n = alerts.length;
+    final freshest = alerts.first;
+    final diff = DateTime.now().difference(freshest.date);
+    String when;
+    if (diff.inMinutes < 60) {
+      when = 'há ${diff.inMinutes} min';
+    } else {
+      when = 'há ${diff.inHours}h';
+    }
+    final headline = n == 1
+        ? 'Novo relato perto de você'
+        : '$n relatos próximos nas últimas 6h';
+    final subtext = n == 1
+        ? '${freshest.mainReason ?? "Relato"} · $when'
+        : 'Mais recente: ${freshest.mainReason ?? "relato"} · $when';
+
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 60,
+      left: 12,
+      right: 12,
+      child: Material(
+        color: const Color(0xFFC46A2C),
+        borderRadius: BorderRadius.circular(14),
+        elevation: 6,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+            child: Row(
+              children: [
+                const Icon(Icons.notifications_active_outlined,
+                    size: 22, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        headline,
+                        style: const TextStyle(
+                          fontFamily: 'Georgia',
+                          fontSize: 14.5,
+                          height: 1.2,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtext,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.2,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18, color: Colors.white),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Dispensar',
+                  onPressed: onDismiss,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _Header extends StatelessWidget {
   final void Function(double lat, double lng)? onFocusArea;
