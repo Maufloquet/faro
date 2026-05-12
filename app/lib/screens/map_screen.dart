@@ -11,6 +11,7 @@ import '../models/occurrence.dart';
 import '../services/bairros_directory.dart';
 import '../services/location_service.dart';
 import '../services/marker_factory.dart';
+import '../services/messaging_service.dart';
 import '../services/occurrences_service.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
@@ -36,7 +37,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   TimeWindow _window = TimeWindow.semana;
   Set<String> _activeReasons = const {};
   final _location = LocationService();
+  final _messaging = MessagingService();
   bool _locating = false;
+  bool _messagingReady = false;
   final _markerFactory = MarkerFactory();
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
 
@@ -81,12 +84,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (pos == null || !mounted) return;
     setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
     final controller = _map;
-    if (controller == null) return;
-    await controller.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 14),
-      ),
-    );
+    if (controller != null) {
+      await controller.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 14),
+        ),
+      );
+    }
+    _ensureMessaging(pos.latitude, pos.longitude);
+  }
+
+  /// Setup do FCM: pede permissão (1x), assina tópico da região atual.
+  /// Idempotente — pode ser chamado várias vezes.
+  Future<void> _ensureMessaging(double lat, double lng) async {
+    if (!_messagingReady) {
+      final ok = await _messaging.initialize();
+      if (!ok) return;
+      _messagingReady = true;
+    }
+    final cell = geohash5Of(lat, lng);
+    await _messaging.subscribeToRegion(cell);
   }
 
   Future<void> _focusOn(Occurrence o) async {
@@ -180,6 +197,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ),
         );
       }
+      _ensureMessaging(pos.latitude, pos.longitude);
     } on LocationException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
