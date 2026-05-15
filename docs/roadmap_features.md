@@ -126,8 +126,8 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 **Cuidados editoriais:** rate-limiting (máx 3 notificações/h), linguagem calibrada ("Novo relato a 200m" nunca "PERIGO!"), opt-in claro.
 
 ### Cluster manager (alternativa/complemento ao heatmap)
-**Status:** TODO
-**Detalhes:** Quando zoom > 14.5 mas ainda há muitos pinos amontoados, agrupar em badges com contagem. `google_maps_cluster_manager_2` ou implementação custom por geohash.
+**Status:** Implementado em 2026-05-14 (custom, sem dep externa)
+**Detalhes:** Entre zoom 14.5 e 17 (`_heatmapZoomThreshold` → `_clusterCeilingZoom`), agrupa por célula dimensionada pra ~80px na tela. Cluster vira badge com count + anel da cor do `RiskLevel` máximo. Tap zoom-in 2 níveis. Ícones pré-bakeados (45 = 9 strings × 5 risks) em `ClusterMarkerFactory`. Rebuild via `onCameraIdle` quando zoom muda > 0.3.
 
 ### Sistema de contestação real
 **Status:** placeholder hoje (SnackBar)

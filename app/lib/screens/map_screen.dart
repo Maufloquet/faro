@@ -10,6 +10,7 @@ import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
+import '../services/cluster_marker_factory.dart';
 import '../services/location_service.dart';
 import '../services/marker_factory.dart';
 import '../services/messaging_service.dart';
@@ -19,6 +20,28 @@ import '../widgets/occurrence_tile.dart';
 import 'areas_screen.dart';
 import 'help_screen.dart';
 import 'search_screen.dart';
+
+/// Nó do mapa pós-clustering. Pode ser um relato isolado ou um cluster
+/// agregando vários relatos próximos.
+class _MapNode {
+  final double lat;
+  final double lng;
+  final List<Occurrence> members; // length 1 = single, >1 = cluster
+  _MapNode(this.lat, this.lng, this.members);
+
+  bool get isCluster => members.length > 1;
+  int get count => members.length;
+
+  /// Cluster herda o risco do relato mais recente (maior RiskLevel).
+  RiskLevel get risk {
+    RiskLevel max = RiskLevel.noRecentReports;
+    for (final m in members) {
+      final r = classifyAge(m.date);
+      if (r.index > max.index) max = r;
+    }
+    return max;
+  }
+}
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -42,15 +65,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _locating = false;
   bool _messagingReady = false;
   final _markerFactory = MarkerFactory();
+  final _clusterFactory = ClusterMarkerFactory();
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
+  Map<String, BitmapDescriptor>? _clusterIcons;
 
   /// Limite de zoom que separa heatmap (zoom-out) de marcadores individuais.
   /// Salvador inteira cabe em ~12; bairro em ~14-15. Em 14.5 fica natural:
   /// vista de cidade/zona mostra heatmap, zoom de rua mostra markers.
   static const double _heatmapZoomThreshold = 14.5;
+  /// Zoom acima do qual NÃO agrupamos mais — usuário pediu street-level,
+  /// queremos ver cada relato individualmente.
+  static const double _clusterCeilingZoom = 17.0;
   double _zoom = 12;
 
   bool get _showHeatmap => _zoom < _heatmapZoomThreshold;
+  bool get _shouldCluster => _zoom >= _heatmapZoomThreshold && _zoom < _clusterCeilingZoom;
 
   // Posição atual do usuário pra cálculos de proximidade.
   LatLng? _userPos;
@@ -84,7 +113,48 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Future<void> _loadMarkers() async {
     final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
     final icons = await _markerFactory.all(devicePixelRatio: dpr);
-    if (mounted) setState(() => _markerIcons = icons);
+    final clusters = await _clusterFactory.all(devicePixelRatio: dpr);
+    if (mounted) {
+      setState(() {
+        _markerIcons = icons;
+        _clusterIcons = clusters;
+      });
+    }
+  }
+
+  /// Agrupa ocorrências em nós (single ou cluster) pra um dado zoom.
+  /// Acima de [_clusterCeilingZoom], todos viram nós individuais.
+  /// Entre [_heatmapZoomThreshold] e [_clusterCeilingZoom], células
+  /// dimensionadas pra ~80px na tela agrupam relatos próximos.
+  List<_MapNode> _buildNodes(List<Occurrence> occurrences) {
+    if (!_shouldCluster || occurrences.isEmpty) {
+      return [for (final o in occurrences) _MapNode(o.latitude, o.longitude, [o])];
+    }
+    // 1° de latitude ≈ 111320m. 1 pixel em zoom Z ≈ 156543 * cos(lat) / 2^Z metros.
+    // Pra ~80px de raio de agregação:
+    final lat0 = _salvador.target.latitude;
+    final metersPerPixel = 156543.034 * math.cos(lat0 * math.pi / 180.0) / math.pow(2, _zoom);
+    final cellMeters = 80 * metersPerPixel;
+    final cellDeg = cellMeters / 111320.0;
+
+    final cells = <String, List<Occurrence>>{};
+    for (final o in occurrences) {
+      final key = '${(o.latitude / cellDeg).floor()},${(o.longitude / cellDeg).floor()}';
+      cells.putIfAbsent(key, () => []).add(o);
+    }
+    final nodes = <_MapNode>[];
+    for (final group in cells.values) {
+      if (group.length == 1) {
+        final o = group.first;
+        nodes.add(_MapNode(o.latitude, o.longitude, group));
+      } else {
+        // Centroide simples (média de lat/lng)
+        final lat = group.fold(0.0, (a, o) => a + o.latitude) / group.length;
+        final lng = group.fold(0.0, (a, o) => a + o.longitude) / group.length;
+        nodes.add(_MapNode(lat, lng, group));
+      }
+    }
+    return nodes;
   }
 
   Future<void> _silentCenter() async {
@@ -187,6 +257,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   double _asin(double v) => math.asin(v);
   double _sqrt(double v) => math.sqrt(v);
 
+  /// Zoom efetivamente refletido no último rebuild — usado pra decidir se o
+  /// onCameraIdle precisa disparar setState (clusters dependem do zoom).
+  double _renderedZoom = 12;
+
   void _onCameraMove(CameraPosition pos) {
     final wasHeatmap = _showHeatmap;
     _zoom = pos.zoom;
@@ -199,6 +273,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (wasHeatmap != _showHeatmap) {
       setState(() {});
     }
+  }
+
+  /// Disparado quando o usuário solta o mapa. Atualiza clusters se o zoom
+  /// mudou o suficiente pra valer um rebuild.
+  void _onCameraIdle() {
+    if ((_zoom - _renderedZoom).abs() > 0.3) {
+      _renderedZoom = _zoom;
+      setState(() {});
+    }
+  }
+
+  /// Tap em cluster: aproxima a câmera no centroide. Se já está perto do
+  /// teto de cluster, foca rasante pra individualizar.
+  Future<void> _onTapCluster(_MapNode node) async {
+    final controller = _map;
+    if (controller == null) return;
+    final targetZoom = (_zoom + 2).clamp(_heatmapZoomThreshold + 0.5, 18.0);
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: LatLng(node.lat, node.lng), zoom: targetZoom),
+      ),
+    );
   }
 
   Future<void> _centerOnMe() async {
@@ -239,6 +335,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final raw = ref.watch(recentOccurrencesProvider);
     final windowed = raw.whenData((list) => list.where((o) => _window.includes(o.date)).toList());
     final filtered = raw.whenData((list) => list.where(_matchesFilters).toList());
+    final filteredList = filtered.maybeWhen(data: (v) => v, orElse: () => const <Occurrence>[]);
+    final nodes = _buildNodes(filteredList);
     final allList = raw.maybeWhen(data: (v) => v, orElse: () => const <Occurrence>[]);
     final alerts = _alertDismissed ? const <Occurrence>[] : _proximityAlerts(allList);
 
@@ -263,12 +361,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           _Map(
             initialCamera: _salvador,
             mapType: _mapType,
-            occurrences: filtered.maybeWhen(data: (v) => v, orElse: () => const []),
+            occurrences: filteredList,
+            nodes: nodes,
             markerIcons: _markerIcons,
+            clusterIcons: _clusterIcons,
             asHeatmap: _showHeatmap,
             onCreated: (c) => _map = c,
             onTap: (o) => _openDetail(o, OccurrenceOpenEntry.marker),
+            onTapCluster: _onTapCluster,
             onCameraMove: _onCameraMove,
+            onCameraIdle: _onCameraIdle,
           ),
           _Header(onFocusArea: _focusOnArea, onSearch: _openSearch),
           if (alerts.isNotEmpty)
@@ -573,21 +675,29 @@ class _Map extends StatelessWidget {
   final CameraPosition initialCamera;
   final MapType mapType;
   final List<Occurrence> occurrences;
+  final List<_MapNode> nodes;
   final Map<RiskLevel, BitmapDescriptor>? markerIcons;
+  final Map<String, BitmapDescriptor>? clusterIcons;
   final bool asHeatmap;
   final ValueChanged<GoogleMapController> onCreated;
   final ValueChanged<Occurrence> onTap;
+  final ValueChanged<_MapNode> onTapCluster;
   final ValueChanged<CameraPosition> onCameraMove;
+  final VoidCallback onCameraIdle;
 
   const _Map({
     required this.initialCamera,
     required this.mapType,
     required this.occurrences,
+    required this.nodes,
     required this.markerIcons,
+    required this.clusterIcons,
     required this.asHeatmap,
     required this.onCreated,
     required this.onTap,
+    required this.onTapCluster,
     required this.onCameraMove,
+    required this.onCameraIdle,
   });
 
   @override
@@ -608,6 +718,7 @@ class _Map extends StatelessWidget {
       heatmaps: asHeatmap ? _heatmaps() : const {},
       onMapCreated: onCreated,
       onCameraMove: onCameraMove,
+      onCameraIdle: onCameraIdle,
     );
   }
 
@@ -678,17 +789,39 @@ class _Map extends StatelessWidget {
 
   Set<Marker> _markers() {
     final icons = markerIcons;
-    return occurrences.map((o) {
-      final risk = classifyAge(o.date);
-      final icon = icons?[risk] ?? BitmapDescriptor.defaultMarkerWithHue(_fallbackHue(risk));
-      return Marker(
-        markerId: MarkerId(o.id),
-        position: LatLng(o.latitude, o.longitude),
-        icon: icon,
-        anchor: const Offset(0.5, 0.5),
-        onTap: () => onTap(o),
-      );
-    }).toSet();
+    final clusters = clusterIcons;
+    final result = <Marker>{};
+    for (var i = 0; i < nodes.length; i++) {
+      final node = nodes[i];
+      if (node.isCluster) {
+        // Cluster: badge com count. Se os ícones de cluster ainda não
+        // resolveram (1º frame após startup), cai pra um single marker
+        // colorido pela risk-level máxima do grupo.
+        final key = ClusterMarkerFactory.keyFor(node.count, node.risk);
+        final icon = clusters?[key] ??
+            icons?[node.risk] ??
+            BitmapDescriptor.defaultMarkerWithHue(_fallbackHue(node.risk));
+        result.add(Marker(
+          markerId: MarkerId('cluster-$i-${node.lat.toStringAsFixed(4)}-${node.lng.toStringAsFixed(4)}'),
+          position: LatLng(node.lat, node.lng),
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          onTap: () => onTapCluster(node),
+        ));
+      } else {
+        final o = node.members.first;
+        final risk = classifyAge(o.date);
+        final icon = icons?[risk] ?? BitmapDescriptor.defaultMarkerWithHue(_fallbackHue(risk));
+        result.add(Marker(
+          markerId: MarkerId(o.id),
+          position: LatLng(o.latitude, o.longitude),
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          onTap: () => onTap(o),
+        ));
+      }
+    }
+    return result;
   }
 
   Set<Heatmap> _heatmaps() {
