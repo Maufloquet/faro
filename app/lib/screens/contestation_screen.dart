@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/text/string_format.dart';
 import '../models/occurrence.dart';
+import '../services/analytics_service.dart';
 import '../services/contestation_service.dart';
 
 /// Tela de contestação de relato.
@@ -22,6 +23,12 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
   ContestationReason? _reason;
   final _detailController = TextEditingController();
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreen('contestation');
+  }
 
   @override
   void dispose() {

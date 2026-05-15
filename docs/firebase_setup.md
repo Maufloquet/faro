@@ -241,7 +241,7 @@ Definidos em `app/lib/services/analytics_service.dart`. **Sem PII** — sem coor
 
 | Evento | Quando | Parâmetros |
 |---|---|---|
-| `screen_view` | Entrada em tela rastreada (map por ora) | `screen_name` |
+| `screen_view` | Entrada em tela (map, areas, search, help, about, contestation, onboarding) | `screen_name` |
 | `occurrence_open` | Usuário abre detalhe de relato | `entry` (marker\|list\|proximity_banner), `source`, `age_bucket` |
 | `filter_applied` | Chip de tempo ou motivo tocado | `kind` (time_window\|reason), `value` opcional |
 | `max_zoom` | Novo zoom máximo da sessão | `zoom` (arredondado) |

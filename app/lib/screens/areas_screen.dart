@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/filters/time_window.dart';
 import '../core/stats/area_activity.dart';
 import '../core/text/string_format.dart';
+import '../services/analytics_service.dart';
 import '../services/occurrences_service.dart';
 
 /// Tela "Atividade recente por área".
@@ -23,6 +24,12 @@ class AreasScreen extends ConsumerStatefulWidget {
 
 class _AreasScreenState extends ConsumerState<AreasScreen> {
   TimeWindow _window = TimeWindow.semana;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreen('areas');
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../services/analytics_service.dart';
 import 'about_screen.dart';
 
 /// Tela de ajuda — explica o produto sem ser onboarding obrigatório.
 ///
 /// Acessível via ícone "?" na app bar do mapa. Inspirada no padrão
 /// {name}_help_screen.dart adotado em outros apps do autor.
-class HelpScreen extends StatelessWidget {
+class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
+
+  @override
+  State<HelpScreen> createState() => _HelpScreenState();
+}
+
+class _HelpScreenState extends State<HelpScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreen('help');
+  }
 
   @override
   Widget build(BuildContext context) {

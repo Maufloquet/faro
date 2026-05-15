@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../services/analytics_service.dart';
+
 /// Tela /sobre/ — transparência editorial pública.
 ///
 /// Lista fontes de dados, princípios e contato. Acessível pela tela de
 /// ajuda. Mantém o tom editorial: honesta sobre limitações.
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreen('about');
+  }
 
   @override
   Widget build(BuildContext context) {

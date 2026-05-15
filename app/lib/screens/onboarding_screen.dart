@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/analytics_service.dart';
 import 'map_screen.dart';
 
 /// Onboarding de UMA tela, bloqueante na primeira abertura.
@@ -25,6 +26,12 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _agreed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreen('onboarding');
+  }
 
   Future<void> _complete() async {
     final prefs = await SharedPreferences.getInstance();

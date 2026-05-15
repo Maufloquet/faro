@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
 
 /// Tela de busca por bairro de Salvador.
@@ -17,6 +18,12 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _controller = TextEditingController();
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreen('search');
+  }
 
   @override
   void dispose() {
