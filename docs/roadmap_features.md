@@ -162,8 +162,8 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 **TODO:** Build iOS no PR, deploy automático de Cloud Functions em main, fastlane pra TestFlight/Play Console.
 
 ### Crashlytics + Analytics
-**Status:** TODO
-**Detalhes:** Firebase Crashlytics + Firebase Analytics + GA4. Métricas-chave: retenção D1/D7/D30, frequência de uso, profundidade de zoom, taxa de tap em marker.
+**Status:** Implementado em 2026-05-14 (falta passo manual no Xcode pra Run Script — ver `docs/firebase_setup.md` §11)
+**Detalhes:** Firebase Crashlytics + Firebase Analytics. Eventos custom sem PII: `occurrence_open`, `filter_applied`, `max_zoom`, `proximity_alert_shown/tapped`. Retenção D1/D7/D30 auto via `session_start`. Wrapper em `app/lib/services/analytics_service.dart`. Crashes só em release (debug desligado pra não poluir métricas).
 
 ---
 

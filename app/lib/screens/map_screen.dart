@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../core/filters/time_window.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
+import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
 import '../services/location_service.dart';
 import '../services/marker_factory.dart';
@@ -55,6 +56,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   LatLng? _userPos;
   bool _alertDismissed = false;
 
+  // Telemetria de zoom: log apenas quando bate um novo máximo de sessão.
+  double _maxZoomLogged = 0;
+  // Última quantidade de alertas de proximidade reportada — evita logar
+  // repetidamente o mesmo banner enquanto o usuário olha.
+  int _lastAlertCountLogged = 0;
+
   /// Raio (em km) pra considerar relato "próximo" do usuário.
   static const double _proximityRadiusKm = 1.0;
   static const Duration _proximityRecency = Duration(hours: 6);
@@ -69,6 +76,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
     _loadMarkers();
+    AnalyticsService.instance.logScreen('map');
     // Auto-centro silencioso: só se permissão já foi concedida em sessão anterior
     WidgetsBinding.instance.addPostFrameCallback((_) => _silentCenter());
   }
@@ -116,7 +124,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Future<void> _openDetail(Occurrence o) async {
+  Future<void> _openDetail(Occurrence o, OccurrenceOpenEntry entry) async {
+    AnalyticsService.instance.occurrenceOpen(
+      entry: entry,
+      source: o.source,
+      age: DateTime.now().difference(o.date),
+    );
     await _focusOn(o);
     if (!mounted) return;
     await OccurrenceDetailSheet.show(context, o);
@@ -177,6 +190,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _onCameraMove(CameraPosition pos) {
     final wasHeatmap = _showHeatmap;
     _zoom = pos.zoom;
+    // Telemetria: registra novo máximo de sessão, arredondado pra evitar spam.
+    if (_zoom > _maxZoomLogged + 1) {
+      _maxZoomLogged = _zoom;
+      AnalyticsService.instance.maxZoomReached(_zoom);
+    }
     // Só rebuilda quando cruza o limiar — evita rebuild a cada pan/zoom.
     if (wasHeatmap != _showHeatmap) {
       setState(() {});
@@ -224,6 +242,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final allList = raw.maybeWhen(data: (v) => v, orElse: () => const <Occurrence>[]);
     final alerts = _alertDismissed ? const <Occurrence>[] : _proximityAlerts(allList);
 
+    // Loga o banner apenas na transição 0→N (mesma sessão, mesmo conjunto
+    // não loga de novo). Evita poluir Analytics com cada rebuild.
+    if (alerts.length != _lastAlertCountLogged) {
+      _lastAlertCountLogged = alerts.length;
+      if (alerts.isNotEmpty) {
+        AnalyticsService.instance.proximityAlertShown(alerts.length);
+      }
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -240,14 +267,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             markerIcons: _markerIcons,
             asHeatmap: _showHeatmap,
             onCreated: (c) => _map = c,
-            onTap: _openDetail,
+            onTap: (o) => _openDetail(o, OccurrenceOpenEntry.marker),
             onCameraMove: _onCameraMove,
           ),
           _Header(onFocusArea: _focusOnArea, onSearch: _openSearch),
           if (alerts.isNotEmpty)
             _ProximityBanner(
               alerts: alerts,
-              onTap: () => _openDetail(alerts.first),
+              onTap: () {
+                AnalyticsService.instance.proximityAlertTapped();
+                _openDetail(alerts.first, OccurrenceOpenEntry.proximityBanner);
+              },
               onDismiss: () => setState(() => _alertDismissed = true),
             ),
           Positioned(
@@ -259,22 +289,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               children: [
                 _TimeWindowChips(
                   selected: _window,
-                  onSelect: (w) => setState(() => _window = w),
+                  onSelect: (w) {
+                    setState(() => _window = w);
+                    AnalyticsService.instance.filterApplied(
+                      kind: 'time_window',
+                      value: w.name,
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 _ReasonChips(
                   pool: windowed.maybeWhen(data: (v) => v, orElse: () => const []),
                   active: _activeReasons,
-                  onToggle: (reason) => setState(() {
-                    final next = Set<String>.from(_activeReasons);
-                    if (next.contains(reason)) {
-                      next.remove(reason);
-                    } else {
-                      next.add(reason);
-                    }
-                    _activeReasons = next;
-                  }),
-                  onClear: () => setState(() => _activeReasons = const {}),
+                  onToggle: (reason) {
+                    setState(() {
+                      final next = Set<String>.from(_activeReasons);
+                      if (next.contains(reason)) {
+                        next.remove(reason);
+                      } else {
+                        next.add(reason);
+                      }
+                      _activeReasons = next;
+                    });
+                    AnalyticsService.instance.filterApplied(kind: 'reason');
+                  },
+                  onClear: () {
+                    setState(() => _activeReasons = const {});
+                    AnalyticsService.instance.filterApplied(
+                      kind: 'reason',
+                      value: 'clear',
+                    );
+                  },
                 ),
               ],
             ),
@@ -296,7 +341,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           _Sheet(
             occurrences: filtered,
             window: _window,
-            onTapTile: _openDetail,
+            onTapTile: (o) => _openDetail(o, OccurrenceOpenEntry.list),
             onExpandWindow: _window != TimeWindow.tudo
                 ? () => setState(() => _window = TimeWindow.tudo)
                 : null,

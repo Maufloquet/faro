@@ -167,3 +167,85 @@ Aguardar log de "Sync BA: N ocorrências" no `firebase functions:log`. Conferir 
 **Custo está disparando**
 - A Cloud Function só roda a cada 30 min, custo mensal estimado < R$ 50 com 1k usuários
 - Se subiu muito, verificar se não tem outro caller forçando syncFogoCruzado em loop
+
+---
+
+## 11. Crashlytics + Analytics
+
+O app loga crashes (release) e eventos editoriais de uso (sem PII).
+
+### Habilitar no console
+
+1. <https://console.firebase.google.com/project/faro/crashlytics> → **Ativar Crashlytics**
+2. <https://console.firebase.google.com/project/faro/analytics> → confirmar que Analytics está ativo (foi habilitado no passo 1 se você marcou)
+
+### Android
+
+Já configurado em `app/android/`:
+- Plugin `com.google.firebase.crashlytics` v3.0.2 no `settings.gradle.kts`
+- Aplicado em `app/build.gradle.kts`
+
+Nada a fazer manualmente. Build release sobe os symbols automaticamente.
+
+### iOS (Run Script — obrigatório)
+
+Crashlytics no iOS precisa de uma build phase que sobe os dSYMs após cada compilação. **Tem que abrir o Xcode pra fazer isso uma vez:**
+
+1. Abrir `app/ios/Runner.xcworkspace` no Xcode
+2. Selecionar target **Runner** → aba **Build Phases**
+3. Clicar **+ → New Run Script Phase**
+4. Renomear pra **Firebase Crashlytics Upload Symbols**
+5. Em "Run only when installing", deixar **desmarcado**
+6. No script, colar:
+
+```bash
+"${PODS_ROOT}/FirebaseCrashlytics/run"
+```
+
+7. Em "Input Files" (importante pro Xcode 15+):
+
+```
+${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}
+$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)
+```
+
+8. Salvar (⌘S), fechar Xcode.
+
+### Verificar que funciona
+
+**Crashlytics** (precisa ser **release** — em debug a coleta é desligada):
+
+```bash
+flutter run --release
+# no app, gerar um crash de teste: alguma tela com botão que chama
+# FirebaseCrashlytics.instance.crash() temporariamente.
+```
+
+Crash aparece no painel em ~5 min: <https://console.firebase.google.com/project/faro/crashlytics>.
+
+**Analytics** (também só em release):
+
+DebugView (live): no painel Analytics → Debug View. Pra forçar device aparecer:
+
+```bash
+# Android
+adb shell setprop debug.firebase.analytics.app br.com.projetoseg.projeto_seg
+
+# iOS
+# adicionar -FIRDebugEnabled nos argumentos de execução do Xcode
+```
+
+### Eventos custom registrados
+
+Definidos em `app/lib/services/analytics_service.dart`. **Sem PII** — sem coordenadas, sem IDs, sem texto livre:
+
+| Evento | Quando | Parâmetros |
+|---|---|---|
+| `screen_view` | Entrada em tela rastreada (map por ora) | `screen_name` |
+| `occurrence_open` | Usuário abre detalhe de relato | `entry` (marker\|list\|proximity_banner), `source`, `age_bucket` |
+| `filter_applied` | Chip de tempo ou motivo tocado | `kind` (time_window\|reason), `value` opcional |
+| `max_zoom` | Novo zoom máximo da sessão | `zoom` (arredondado) |
+| `proximity_alert_shown` | Banner de proximidade aparece | `count` (clamp 1-50) |
+| `proximity_alert_tapped` | Usuário toca o banner | — |
+
+Retenção D1/D7/D30 é calculada automaticamente pelo Firebase Analytics a partir do `session_start` (não precisa logar nada).
