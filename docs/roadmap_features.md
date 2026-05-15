@@ -2,7 +2,9 @@
 
 Banco de ideias estruturado, atualizado quando aparecem propostas que não cabem agora mas valem registro.
 
-Status atual (sessão de 2026-05-11): MVP funcional com dados reais do Fogo Cruzado em Salvador, todos os componentes editoriais (mapa, lista, detalhe, filtros, áreas, sobre, ajuda) prontos.
+Status atual (sessão de 2026-05-14): MVP **tecnicamente pronto pra beta fechado**. Falta apenas setup manual do usuário (Run Script Xcode + secrets GitHub) e itens externos (jurídico, INPI, conselho editorial). Gate da Fase 1 ("Beta fechado, retenção D7 > 30%") só pode ser medido após convidar usuários reais.
+
+**Itens fechados nesta sessão:** Crashlytics + Analytics com cobertura completa de screen_view, cluster manager (zoom 14.5-17), CI/CD com build iOS + deploy auto de Functions + preflight de secrets, suite real de 28 testes substituindo o placeholder, roadmap sincronizado.
 
 ---
 
@@ -118,53 +120,59 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 
 ### Notificação por proximidade (estilo Happn)
 **Peso:** alto — listado como P0 do MVP no relatório §8.1
-**Status:** TODO
-**Abordagem híbrida:**
-- Fase 1.5: Push direcionado server-side (FCM topic por geohash precisão 5). Cloud Function publica em tópico da região quando ocorrência nova entra.
-- Fase 2: Geofence client-side pra 5-10 relatos mais próximos (alerta local rápido sem servidor).
-
-**Cuidados editoriais:** rate-limiting (máx 3 notificações/h), linguagem calibrada ("Novo relato a 200m" nunca "PERIGO!"), opt-in claro.
+**Status:** Implementado em 2026-05-11
+**Detalhes:** Banner in-app `_ProximityBanner` quando há relato em raio de 1km nas últimas 6h (commit 1f88bd9). Push direcionado server-side via FCM topic por geohash precisão 5 + Cloud Function `proximityAlert.onOccurrenceCreated` (commit 3cfd822). Geofence client-side (Fase 2) ainda TODO.
 
 ### Cluster manager (alternativa/complemento ao heatmap)
 **Status:** Implementado em 2026-05-14 (custom, sem dep externa)
 **Detalhes:** Entre zoom 14.5 e 17 (`_heatmapZoomThreshold` → `_clusterCeilingZoom`), agrupa por célula dimensionada pra ~80px na tela. Cluster vira badge com count + anel da cor do `RiskLevel` máximo. Tap zoom-in 2 níveis. Ícones pré-bakeados (45 = 9 strings × 5 risks) em `ClusterMarkerFactory`. Rebuild via `onCameraIdle` quando zoom muda > 0.3.
 
 ### Sistema de contestação real
-**Status:** placeholder hoje (SnackBar)
-**Detalhes:** Cloud Function que recebe contestação, marca o report como contestado, notifica revisão. Workflow de moderação com SLA de 2h.
+**Status:** Implementado em 2026-05-11 (commit be7e650)
+**Detalhes:** Tela `ContestationScreen` com 5 motivos pré-prontos + campo livre. `ContestationService` (Riverpod) escreve em Firestore via Anonymous Auth — usuário sem cadastro mas com UID estável. Workflow de moderação server-side (Cloud Function pra agregar contestações e marcar relato como contestado) ainda TODO.
 
 ### Onboarding de 1 tela com aceite de termos
-**Status:** TODO
-**Detalhes:** Tela única bloqueante na primeira abertura: aceite breve dos termos + 2 frases-âncora ("não dizemos que está seguro", "complementa sua atenção, não substitui"). Não onboarding multi-tela (causa abandono).
+**Status:** Implementado em 2026-05-11 (commit 3d9950c)
+**Detalhes:** `OnboardingScreen` bloqueante na 1ª abertura, aceite explícito via checkbox + `shared_preferences` persiste. Frases-âncora editoriais ("não dizemos que está seguro", "complementa atenção, não substitui").
 
 ### Modo offline com cache regional
-**Status:** TODO (V3)
-**Detalhes:** Última versão do risk-score regional cacheada via Firestore offline persistence. Útil pra túneis, áreas sem sinal.
+**Status:** Implementado em 2026-05-11 (commit fc9a942)
+**Detalhes:** Firestore offline persistence habilitado em `main.dart` com `cacheSizeBytes: CACHE_SIZE_UNLIMITED`. App sem sinal ainda mostra último snapshot sincronizado. Cache estruturado por região (V3) ainda TODO.
 
 ---
 
 ## Infraestrutura e processo
 
 ### Cleanup periódico de occurrences antigas
-**Status:** TODO
-**Detalhes:** Função separada que roda diariamente, deleta docs com expiresAt < now - buffer. Mantém Firestore enxuto.
+**Status:** Implementado em 2026-05-11 (commit 90050ae)
+**Detalhes:** Scheduler `cleanupOccurrences` em `functions/lib/` roda diariamente, deleta docs com `expiresAt < now`. Inclui também cleanup de `news_seen` antigo.
 
 ### Backfill histórico
-**Status:** TODO
-**Detalhes:** Job único que pega históricos do Fogo Cruzado (90 dias para trás) e popula `historicalBaseline` por região. Útil pro cálculo de "tendência" (variação sobre baseline).
+**Status:** Implementado em 2026-05-11 (commit 9240153, one-shot manual)
+**Detalhes:** `backfillFogoCruzado` (HTTP function manual) puxa histórico do Fogo Cruzado e popula `occurrences`. `historicalBaseline` agregado por região (pra cálculo de "tendência") ainda TODO — só a ingestão crua foi feita.
 
 ### Geo-hash queries no Firestore (V2)
-**Status:** TODO
-**Detalhes:** Quando base passar de 10k docs, queries por viewport via geohash range fica mais rápido que `where date >`. Mudar `OccurrencesService.recent()` pra também filtrar por geohash baseado em LatLngBounds do mapa.
+**Status:** Server-side pronto, client-side prematuro
+**Detalhes:** Campo `geohash` (precisão 8 via `ngeohash`) já é escrito em todos os 3 paths server-side (`fogoCruzadoSync`, `fogoCruzadoBackfill`, `newsIngest`). O `OccurrencesService.recent()` do app ainda usa `where date > cutoff limit(500)` — só vale migrar quando passar de ~10k docs, hoje o batch cobre Salvador com folga. Reabrir quando densidade aumentar.
 
 ### CI/CD completo
-**Status:** parcial (analyze + test + Android APK + **iOS no-codesign** no PR; **deploy auto Functions+Firestore** em push main com aprovação manual via environment "production")
-**TODO:** fastlane pra TestFlight/Play Console (próximo passo — automatizar publicação binária).
-**Setup pendente manual:** criar secrets `FIREBASE_SERVICE_ACCOUNT` + `GCP_PROJECT_ID` + environment `production` — passo a passo em `docs/firebase_setup.md` §12.
+**Status:** Implementado em 2026-05-14 (commits 2c9d884, fd8bdf9)
+**Cobertura atual:**
+- PR: `flutter analyze` + `flutter test` (28 testes reais, suite plantada no commit 61db9ef) + Android APK debug + **iOS no-codesign**
+- Main: deploy auto de Functions + Firestore rules/indexes, com **preflight de secrets** (skipa gracefully se ainda não foram configurados) e environment "production" opcional pra aprovação manual
+- Actions todas em `@v5` (sem Node 20 deprecation)
+**TODO:** fastlane pra TestFlight/Play Console (publicação binária) — exige Apple Developer cert + App Store Connect API key + Play Console service account.
+**Setup pendente manual** (você precisa fazer):
+- Secrets `FIREBASE_SERVICE_ACCOUNT` + `GCP_PROJECT_ID` no GitHub
+- Environment `production` (opcional, recomendado) com required reviewer
+- Passo a passo em `docs/firebase_setup.md` §12
 
 ### Crashlytics + Analytics
-**Status:** Implementado em 2026-05-14 (falta passo manual no Xcode pra Run Script — ver `docs/firebase_setup.md` §11)
-**Detalhes:** Firebase Crashlytics + Firebase Analytics. Eventos custom sem PII: `occurrence_open`, `filter_applied`, `max_zoom`, `proximity_alert_shown/tapped`. Retenção D1/D7/D30 auto via `session_start`. Wrapper em `app/lib/services/analytics_service.dart`. Crashes só em release (debug desligado pra não poluir métricas).
+**Status:** Implementado em 2026-05-14 (commit a27223f + 8f02bad)
+**Detalhes:** Firebase Crashlytics + Firebase Analytics. Eventos custom sem PII: `screen_view` (map, areas, search, help, about, contestation, onboarding), `occurrence_open` (entry × source × age_bucket), `filter_applied`, `max_zoom`, `proximity_alert_shown/tapped`. Retenção D1/D7/D30 auto via `session_start`. Wrapper em `app/lib/services/analytics_service.dart`. Crashes só em release (debug desligado pra não poluir métricas).
+**Setup pendente manual** (você precisa fazer):
+- Ativar Crashlytics no console Firebase
+- Build phase "Run Script" no Xcode pra upload de dSYM (iOS) — passo a passo em `docs/firebase_setup.md` §11
 
 ---
 
