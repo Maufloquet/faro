@@ -1,6 +1,7 @@
 name: Deploy Functions
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -17,17 +18,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Job de preflight: decide se o deploy deve rodar. Se os secrets não
+  # estiverem configurados, o job termina verde mas com warning e o job
+  # de deploy é pulado. Evita poluir a aba Actions com vermelho enquanto
+  # o usuário ainda não terminou o setup descrito em docs/firebase_setup.md §12.
+  preflight:
+    name: Verificar secrets
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          if [ -z "$SA" ] || [ -z "$PID" ]; then
+            echo "::warning::Secrets FIREBASE_SERVICE_ACCOUNT e/ou GCP_PROJECT_ID não configurados — deploy pulado. Setup em docs/firebase_setup.md §12."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy:
     name: Deploy Functions + Firestore rules/indexes
+    needs: preflight
+    if: needs.preflight.outputs.ready == 'true'
     runs-on: ubuntu-latest
-    # Secret precisa estar no environment "production" — Settings → Environments
-    # no GitHub. Garante que só pushes na main com aprovação (se configurada)
-    # disparam deploy.
+    # Environment "production" — opcional. Se criado em Settings → Environments
+    # com required reviewers, força aprovação manual antes do deploy.
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
