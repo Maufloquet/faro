@@ -249,3 +249,81 @@ Definidos em `app/lib/services/analytics_service.dart`. **Sem PII** — sem coor
 | `proximity_alert_tapped` | Usuário toca o banner | — |
 
 Retenção D1/D7/D30 é calculada automaticamente pelo Firebase Analytics a partir do `session_start` (não precisa logar nada).
+
+---
+
+## 12. CI/CD (GitHub Actions)
+
+Dois workflows em `.github/workflows/`:
+
+| Workflow | Trigger | O que faz |
+|---|---|---|
+| `flutter.yml` | PR ou push em `app/**` | `flutter analyze`, `flutter test`, build APK debug (ubuntu), build iOS no-codesign (macos) |
+| `functions-deploy.yml` | Push em `main` tocando `functions/**`, `infra/firestore.*`, ou `firebase.json` | Deploy Functions + Firestore rules/indexes |
+
+### Setup do deploy automático
+
+O deploy precisa de dois secrets no repo. Settings → Secrets and variables → Actions → New repository secret:
+
+#### 1. `FIREBASE_SERVICE_ACCOUNT` (JSON inteiro)
+
+Gerar service account com escopos mínimos pra deploy:
+
+```bash
+# Substituir <PROJECT_ID> pelo ID real (provavelmente "faro")
+gcloud iam service-accounts create faro-deploy \
+  --display-name "Faro CI deploy" \
+  --project <PROJECT_ID>
+
+# Permissões mínimas pra deploy de functions + firestore rules/indexes:
+for role in \
+  roles/firebase.admin \
+  roles/cloudfunctions.admin \
+  roles/iam.serviceAccountUser \
+  roles/artifactregistry.writer \
+  roles/cloudbuild.builds.builder
+do
+  gcloud projects add-iam-policy-binding <PROJECT_ID> \
+    --member="serviceAccount:faro-deploy@<PROJECT_ID>.iam.gserviceaccount.com" \
+    --role="$role"
+done
+
+# Baixar a chave JSON
+gcloud iam service-accounts keys create faro-deploy.json \
+  --iam-account faro-deploy@<PROJECT_ID>.iam.gserviceaccount.com
+```
+
+Copiar o **conteúdo inteiro** do arquivo `faro-deploy.json` e colar no secret `FIREBASE_SERVICE_ACCOUNT`. Depois **deletar o JSON local** (`rm faro-deploy.json`) — ele não precisa ficar no disco.
+
+#### 2. `GCP_PROJECT_ID`
+
+O ID do projeto Firebase/GCP (provavelmente `faro`).
+
+#### 3. Environment "production" (opcional mas recomendado)
+
+Settings → Environments → New environment → `production`. Configurar:
+- **Required reviewers:** seu user. Garante que cada deploy passa por aprovação manual antes de rodar.
+- **Deployment branches:** só `main`.
+
+Sem esse environment o secret precisa ser repository-wide e qualquer PR malicioso poderia tentar usá-lo.
+
+### Verificar que funciona
+
+1. Push trivial em `functions/` (ex: comentário no `index.js`)
+2. Aba Actions do repo → workflow "Deploy Functions" deve aparecer
+3. Se environment estiver configurado, vai pedir aprovação
+4. Após aprovar, deve rodar 3-5 min e terminar verde
+5. `firebase functions:log` mostra as funções deployadas
+
+### Troubleshooting
+
+**"Permission denied on functions deploy"**
+- Service account não tem `roles/cloudfunctions.admin` ou `roles/iam.serviceAccountUser`
+- Reaplicar o for-loop acima
+
+**"Failed to authenticate"**
+- JSON do secret pode estar mal copiado (faltando newline final, aspas extras)
+- Re-criar o secret colando direto do `cat faro-deploy.json` no clipboard
+
+**"Build iOS falha por pod install"**
+- Cache do CocoaPods pode estar bagunçado. No workflow `flutter.yml` job `build-ios`, adicionar passo `cd ios && pod repo update` antes do build (deixei fora por padrão pra economizar tempo de runner — só inclui se quebrar)

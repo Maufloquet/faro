@@ -1,0 +1,61 @@
+name: Deploy Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/**'
+      - 'infra/firestore.rules'
+      - 'infra/firestore.indexes.json'
+      - 'firebase.json'
+      - '.github/workflows/functions-deploy.yml'
+
+# Cancela deploys anteriores em fila se um push novo chegar — não vale
+# rodar deploy do commit N-1 se já tem o N esperando.
+concurrency:
+  group: functions-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Functions + Firestore rules/indexes
+    runs-on: ubuntu-latest
+    # Secret precisa estar no environment "production" — Settings → Environments
+    # no GitHub. Garante que só pushes na main com aprovação (se configurada)
+    # disparam deploy.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install functions deps
+        working-directory: functions
+        run: npm ci
+
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools
+
+      # Service account JSON em arquivo temporário — GOOGLE_APPLICATION_CREDENTIALS
+      # aponta pra ele. firebase-tools autentica via ADC sem precisar de
+      # `firebase login:ci` (deprecated).
+      - name: Write service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+
+      - name: Deploy Functions
+        env:
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+        run: firebase deploy --only functions --project "$GCP_PROJECT" --non-interactive --force
+
+      - name: Deploy Firestore rules + indexes
+        env:
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+        run: firebase deploy --only firestore --project "$GCP_PROJECT" --non-interactive

@@ -62,3 +62,28 @@ jobs:
 
       - name: Build APK (debug)
         run: flutter build apk --debug --dart-define=USE_DEV_DATA=true
+
+  build-ios:
+    name: Build iOS (no-codesign)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      # Build iOS sem assinatura — valida que o projeto compila, pods
+      # resolvem e nada quebrou na camada Swift/Obj-C. Não roda em device,
+      # então não precisa de Apple Developer cert nem provisioning.
+      - name: Build iOS
+        env:
+          MAPS_API_KEY: PLACEHOLDER_CI
+        run: flutter build ios --no-codesign --debug --dart-define=USE_DEV_DATA=true

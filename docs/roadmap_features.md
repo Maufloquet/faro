@@ -158,8 +158,9 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 **Detalhes:** Quando base passar de 10k docs, queries por viewport via geohash range fica mais rápido que `where date >`. Mudar `OccurrencesService.recent()` pra também filtrar por geohash baseado em LatLngBounds do mapa.
 
 ### CI/CD completo
-**Status:** parcial (analyze + test + Android build APK no push)
-**TODO:** Build iOS no PR, deploy automático de Cloud Functions em main, fastlane pra TestFlight/Play Console.
+**Status:** parcial (analyze + test + Android APK + **iOS no-codesign** no PR; **deploy auto Functions+Firestore** em push main com aprovação manual via environment "production")
+**TODO:** fastlane pra TestFlight/Play Console (próximo passo — automatizar publicação binária).
+**Setup pendente manual:** criar secrets `FIREBASE_SERVICE_ACCOUNT` + `GCP_PROJECT_ID` + environment `production` — passo a passo em `docs/firebase_setup.md` §12.
 
 ### Crashlytics + Analytics
 **Status:** Implementado em 2026-05-14 (falta passo manual no Xcode pra Run Script — ver `docs/firebase_setup.md` §11)
