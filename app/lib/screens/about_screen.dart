@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import '../services/analytics_service.dart';
 import '../services/background_location_service.dart';
 import '../services/local_notification_service.dart';
@@ -29,55 +30,48 @@ class _AboutScreenState extends State<AboutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sobre o Faro', style: TextStyle(fontFamily: 'Georgia')),
+        title: Text(FaroStrings.aboutTitle, style: const TextStyle(fontFamily: 'Georgia')),
         elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: const [
-          _BackgroundAlertsToggle(),
-          SizedBox(height: 12),
-          _ReferenceLocationCard(),
-          SizedBox(height: 18),
+        children: [
+          const _BackgroundAlertsToggle(),
+          const SizedBox(height: 12),
+          const _ReferenceLocationCard(),
+          const SizedBox(height: 18),
           _Section(
-            title: 'O que somos',
-            body:
-                'Um assistente de decisão urbana em tempo real. Mostramos o que está acontecendo perto de você combinando fontes públicas e (futuramente) relatos de usuários. Não somos um mapa de crimes. Não substituímos sua atenção.',
+            title: FaroStrings.aboutSectionWhatWeAreTitle,
+            body: FaroStrings.aboutSectionWhatWeAreBody,
           ),
           _Section(
-            title: 'O que não somos',
-            body:
-                'Não somos um produto de garantia. Nunca dizemos "está seguro". A única mensagem possível em uma região sem relatos é "sem relatos recentes" — silêncio nos dados não é silêncio nas ruas. Mantenha atenção sempre.',
+            title: FaroStrings.aboutSectionWhatWeAreNotTitle,
+            body: FaroStrings.aboutSectionWhatWeAreNotBody,
           ),
           _Section(
-            title: 'Sem cadastro',
-            body:
-                'Você não precisa criar conta. Não pedimos seu nome, email ou telefone. Seu uso é anônimo. Não rastreamos seu trajeto. Você abre o app e já está usando — é assim por princípio, não por descuido.',
+            title: FaroStrings.aboutSectionNoSignupTitle,
+            body: FaroStrings.aboutSectionNoSignupBody,
           ),
           _Section(
-            title: 'Fontes de dados',
-            body:
-                'Hoje: Fogo Cruzado (banco público de violência armada — RJ, PE, BA, PA) + matérias de jornais locais (G1, A Tarde, Correio 24h, iBahia, Bahia Notícias, Tribuna da Bahia, releases da SSP-BA) processadas por IA pra extrair bairro, tipo de relato e linha de ônibus. Próximas: relatos de usuários com validação coletiva e canais públicos do Telegram. Cada fonte com peso diferente.',
+            title: FaroStrings.aboutSectionSourcesTitle,
+            body: FaroStrings.aboutSectionSourcesBody,
           ),
           _Section(
-            title: 'Privacidade',
-            body:
-                'Sua localização é usada apenas para mostrar relatos próximos. Não armazenamos seu histórico individual de trajetos. Dados agregados por região, nunca por pessoa. A política de privacidade completa está disponível em desenvolvimento.',
+            title: FaroStrings.aboutSectionPrivacyTitle,
+            body: FaroStrings.aboutSectionPrivacyBody,
           ),
-          _TechDetailsExpansion(),
-          SizedBox(height: 18),
+          const _TechDetailsExpansion(),
+          const SizedBox(height: 18),
           _Section(
-            title: 'Como usar o Faro',
-            body:
-                'A tela "Como o Faro funciona" tem caminhos práticos por perfil: passageiro de ônibus, motorista de aplicativo, entregador, visitante. Toque no ícone de informação no canto superior do mapa.',
+            title: FaroStrings.aboutSectionHowToUseTitle,
+            body: FaroStrings.aboutSectionHowToUseBody,
           ),
           _Section(
-            title: 'Contato',
-            body:
-                'Email: faro@example.com (placeholder — em produção será real). Toda contestação de relato é respondida em até 2h durante o beta.',
+            title: FaroStrings.aboutSectionContactTitle,
+            body: FaroStrings.aboutSectionContactBody,
           ),
-          SizedBox(height: 24),
-          _Version(),
+          const SizedBox(height: 24),
+          const _Version(),
         ],
       ),
     );
@@ -157,14 +151,14 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
 
       final locOk = await _ensureAlwaysLocation();
       if (!locOk) {
-        if (mounted) _showInfo('Permissão de localização "Sempre" necessária.');
+        if (mounted) _showInfo(FaroStrings.aboutPermLocationAlwaysNeeded);
         return;
       }
 
       await LocalNotificationService.instance.initialize();
       final notifOk = await LocalNotificationService.instance.requestPermission();
       if (!notifOk) {
-        if (mounted) _showInfo('Permissão de notificação necessária.');
+        if (mounted) _showInfo(FaroStrings.aboutPermNotifNeeded);
         return;
       }
 
@@ -172,7 +166,7 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
       final started = await BackgroundLocationService.instance.start();
       if (!mounted) return;
       setState(() => _enabled = started);
-      if (!started) _showInfo('Não foi possível iniciar o monitoramento agora.');
+      if (!started) _showInfo(FaroStrings.aboutBgAlertsStartFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -220,9 +214,9 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Alertar com o app fechado',
-                  style: TextStyle(
+                Text(
+                  FaroStrings.aboutBgAlertsTitle,
+                  style: const TextStyle(
                     fontFamily: 'Georgia',
                     fontSize: 15,
                     color: FaroColors.textPrimary,
@@ -231,8 +225,8 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
                 const SizedBox(height: 4),
                 Text(
                   _enabled
-                      ? 'Faro está atento à sua região. Avisa se houver relatos recentes próximos.'
-                      : 'Receba uma notificação ao entrar em regiões com relatos recentes. Usa GPS em segundo plano.',
+                      ? FaroStrings.aboutBgAlertsBodyOn
+                      : FaroStrings.aboutBgAlertsBodyOff,
                   style: const TextStyle(
                     fontSize: 12.5,
                     height: 1.45,
@@ -291,7 +285,7 @@ class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
-        _showInfo('Permissão de localização necessária pra salvar este local.');
+        _showInfo(FaroStrings.aboutRefLocationNeeded);
         return;
       }
 
@@ -305,44 +299,46 @@ class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
         ReferenceLocation(lat: pos.latitude, lng: pos.longitude, label: label),
       );
       await _load();
-      if (mounted) _showInfo('Local salvo. Faro vai te avisar de relatos por aqui.');
+      if (mounted) _showInfo(FaroStrings.aboutRefSaved);
     } catch (e) {
-      _showInfo('Não foi possível salvar agora. Tente novamente.');
+      _showInfo(FaroStrings.aboutRefSaveFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<String?> _askLabel() async {
-    final controller = TextEditingController(text: _current?.label ?? 'Hotel');
+    final controller = TextEditingController(
+      text: _current?.label ?? FaroStrings.aboutRefDialogDefault,
+    );
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Como chamar este local?',
-          style: TextStyle(fontFamily: FaroFonts.serifEditorial, fontSize: 18),
+        title: Text(
+          FaroStrings.aboutRefDialogTitle,
+          style: const TextStyle(fontFamily: FaroFonts.serifEditorial, fontSize: 18),
         ),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Hotel, Casa, Trabalho...',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: FaroStrings.aboutRefDialogHint,
+            border: const OutlineInputBorder(),
           ),
           maxLength: 40,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
+            child: Text(FaroStrings.aboutRefCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: FaroColors.primary),
             onPressed: () {
               final v = controller.text.trim();
-              Navigator.of(ctx).pop(v.isEmpty ? 'Local salvo' : v);
+              Navigator.of(ctx).pop(v.isEmpty ? FaroStrings.aboutRefDialogFallback : v);
             },
-            child: const Text('Salvar'),
+            child: Text(FaroStrings.aboutRefSave),
           ),
         ],
       ),
@@ -352,7 +348,7 @@ class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
   Future<void> _remove() async {
     await ReferenceLocationService.instance.clear();
     await _load();
-    if (mounted) _showInfo('Local removido.');
+    if (mounted) _showInfo(FaroStrings.aboutRefRemoved);
   }
 
   void _showInfo(String msg) {
@@ -385,9 +381,9 @@ class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Local de referência',
-                      style: TextStyle(
+                    Text(
+                      FaroStrings.aboutRefTitle,
+                      style: const TextStyle(
                         fontFamily: FaroFonts.serifEditorial,
                         fontSize: 15,
                         color: FaroColors.textPrimary,
@@ -396,8 +392,8 @@ class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
                     const SizedBox(height: 4),
                     Text(
                       r == null
-                          ? 'Salve um lugar fixo (hotel, casa, trabalho) e o Faro avisa quando aparecer relato por lá — mesmo se você estiver longe agora.'
-                          : '${r.label} · alertando o entorno deste ponto',
+                          ? FaroStrings.aboutRefEmpty
+                          : FaroStrings.aboutRefActive(r.label),
                       style: const TextStyle(
                         fontSize: 12.5,
                         height: 1.45,
@@ -419,7 +415,7 @@ class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
                   style: TextButton.styleFrom(
                     foregroundColor: FaroColors.destructive,
                   ),
-                  child: const Text('Remover'),
+                  child: Text(FaroStrings.aboutRefRemove),
                 ),
               const SizedBox(width: 4),
               FilledButton.icon(
@@ -429,7 +425,9 @@ class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                 ),
                 icon: const Icon(Icons.my_location, size: 16),
-                label: Text(r == null ? 'Usar minha localização' : 'Trocar'),
+                label: Text(
+                  r == null ? FaroStrings.aboutRefUseCurrent : FaroStrings.aboutRefSwap,
+                ),
               ),
             ],
           ),
@@ -455,41 +453,38 @@ class _TechDetailsExpansion extends StatelessWidget {
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
       ),
-      child: const ExpansionTile(
+      child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
-        childrenPadding: EdgeInsets.only(top: 8),
+        childrenPadding: const EdgeInsets.only(top: 8),
         title: Text(
-          'Detalhes técnicos',
-          style: TextStyle(
+          FaroStrings.aboutTechDetailsTitle,
+          style: const TextStyle(
             fontFamily: FaroFonts.serifEditorial,
             fontSize: 17,
             color: FaroColors.textPrimary,
           ),
         ),
         subtitle: Padding(
-          padding: EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.only(top: 4),
           child: Text(
-            'Como classificamos risco · viés algorítmico · fonte da densidade',
-            style: TextStyle(fontSize: 12.5, color: FaroColors.textSoft),
+            FaroStrings.aboutTechDetailsSubtitle,
+            style: const TextStyle(fontSize: 12.5, color: FaroColors.textSoft),
           ),
         ),
         iconColor: FaroColors.editorialBrown,
         collapsedIconColor: FaroColors.editorialBrown,
         children: [
           _Section(
-            title: 'Como classificamos o risco',
-            body:
-                'Combinamos peso da fonte, idade do relato e densidade de confirmações. Reportes antigos perdem peso automaticamente. Múltiplas fontes independentes corroborando elevam o nível. Uma única fonte isolada nunca sustenta classificação alta.',
+            title: FaroStrings.aboutTechRiskTitle,
+            body: FaroStrings.aboutTechRiskBody,
           ),
           _Section(
-            title: 'Sobre viés algorítmico',
-            body:
-                'Periferias têm mais policiamento e mais cobertura de mídia — não necessariamente mais crime real. Mais boletins em uma região indicam mais visibilidade, não mais risco. Quando não temos dados suficientes em uma área, dizemos isso explicitamente, em vez de assumir que é seguro.',
+            title: FaroStrings.aboutTechBiasTitle,
+            body: FaroStrings.aboutTechBiasBody,
           ),
           _Section(
-            title: 'Densidade populacional (em construção)',
-            body:
-                'Quando exibimos "relatos por 10 mil habitantes" em um bairro, usamos população do Censo IBGE 2010 (via PMS/SEMOP), porque o Censo 2022 ainda não publicou agregação por bairro para Salvador. Bairros sem dado de população não mostram normalização — preferimos silêncio honesto a número inventado.',
+            title: FaroStrings.aboutTechDensityTitle,
+            body: FaroStrings.aboutTechDensityBody,
           ),
         ],
       ),
@@ -502,10 +497,10 @@ class _Version extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Text(
-        'Faro · v0.1.0 (alpha)',
-        style: TextStyle(
+        FaroStrings.aboutVersion,
+        style: const TextStyle(
           fontSize: 12,
           color: Color(0xFF8A8A8A),
           fontStyle: FontStyle.italic,
