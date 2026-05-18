@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../core/filters/time_window.dart';
-import '../models/occurrence.dart';
-
 import '../core/design/tokens.dart';
+import '../core/filters/time_window.dart';
+import '../core/i18n/faro_strings.dart';
+import '../models/occurrence.dart';
 
 /// Pílula compacta que substitui as 2 fileiras de chips no topo do mapa.
 /// Mostra estado atual ("7 dias · todos os tipos") e abre o sheet ao tocar.
@@ -24,10 +24,10 @@ class FilterPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasReasons = activeReasons.isNotEmpty;
     final reasonsLabel = activeReasons.isEmpty
-        ? 'todos os tipos'
+        ? FaroStrings.filterAllTypes
         : activeReasons.length == 1
             ? activeReasons.first
-            : '${activeReasons.first} +${activeReasons.length - 1}';
+            : FaroStrings.filterMore(activeReasons.first, activeReasons.length - 1);
 
     return Material(
       color: hasReasons ? FaroColors.primary : Colors.white,
@@ -48,7 +48,7 @@ class FilterPill extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '${window.label} · $reasonsLabel',
+                '${FaroStrings.timeWindowLabel(window)} · $reasonsLabel',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -152,9 +152,9 @@ class _FilterSheetState extends State<FilterSheet> {
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
-              'Período',
-              style: TextStyle(
+            Text(
+              FaroStrings.filterPeriod,
+              style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: FaroColors.textSoft,
@@ -166,7 +166,7 @@ class _FilterSheetState extends State<FilterSheet> {
               spacing: 8,
               children: TimeWindow.values
                   .map((w) => _Chip(
-                        label: w.label,
+                        label: FaroStrings.timeWindowLabel(w),
                         selected: w == _window,
                         onTap: () => setState(() => _window = w),
                       ))
@@ -176,9 +176,9 @@ class _FilterSheetState extends State<FilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Tipo de relato',
-                  style: TextStyle(
+                Text(
+                  FaroStrings.filterReason,
+                  style: const TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: FaroColors.textSoft,
@@ -192,17 +192,17 @@ class _FilterSheetState extends State<FilterSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       visualDensity: VisualDensity.compact,
                     ),
-                    child: const Text('Limpar', style: TextStyle(fontSize: 12.5)),
+                    child: Text(FaroStrings.filterClear, style: const TextStyle(fontSize: 12.5)),
                   ),
               ],
             ),
             const SizedBox(height: 4),
             if (reasonEntries.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'Sem tipos com relatos neste período.',
-                  style: TextStyle(fontSize: 13, color: FaroColors.textHint),
+                  FaroStrings.filterReasonEmpty,
+                  style: const TextStyle(fontSize: 13, color: FaroColors.textHint),
                 ),
               )
             else
@@ -239,7 +239,7 @@ class _FilterSheetState extends State<FilterSheet> {
                   ),
                   textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
-                child: const Text('Aplicar'),
+                child: Text(FaroStrings.filterApply),
               ),
             ),
           ],

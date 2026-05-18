@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../screens/trajectory_screen.dart';
-
 import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
+import '../screens/trajectory_screen.dart';
 
 /// Botão circular que abre o sheet de camadas. Substitui os botões
 /// individuais de "mapa/satélite" e "pontos de ônibus" — fica mais
@@ -110,9 +110,9 @@ class _LayersSheetState extends State<LayersSheet> {
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
-              'Tipo de mapa',
-              style: TextStyle(
+            Text(
+              FaroStrings.layersMapType,
+              style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: FaroColors.textSoft,
@@ -124,7 +124,7 @@ class _LayersSheetState extends State<LayersSheet> {
               children: [
                 Expanded(
                   child: _SegmentChoice(
-                    label: 'Padrão',
+                    label: FaroStrings.layersMapTypeNormal,
                     selected: _mapType == MapType.normal,
                     onTap: () => setState(() => _mapType = MapType.normal),
                   ),
@@ -132,7 +132,7 @@ class _LayersSheetState extends State<LayersSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _SegmentChoice(
-                    label: 'Satélite',
+                    label: FaroStrings.layersMapTypeHybrid,
                     selected: _mapType == MapType.hybrid,
                     onTap: () => setState(() => _mapType = MapType.hybrid),
                   ),
@@ -140,9 +140,9 @@ class _LayersSheetState extends State<LayersSheet> {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Camadas',
-              style: TextStyle(
+            Text(
+              FaroStrings.layersLayers,
+              style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: FaroColors.textSoft,
@@ -155,19 +155,19 @@ class _LayersSheetState extends State<LayersSheet> {
               onChanged: (v) => setState(() => _showBusStops = v),
               activeThumbColor: FaroColors.primary,
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Pontos de ônibus',
-                style: TextStyle(fontSize: 14.5, color: FaroColors.textPrimary),
+              title: Text(
+                FaroStrings.layersBusStops,
+                style: const TextStyle(fontSize: 14.5, color: FaroColors.textPrimary),
               ),
-              subtitle: const Text(
-                'Visíveis ao aproximar o mapa (zoom de rua)',
-                style: TextStyle(fontSize: 12, color: FaroColors.textSoft),
+              subtitle: Text(
+                FaroStrings.layersBusStopsHint,
+                style: const TextStyle(fontSize: 12, color: FaroColors.textSoft),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Ver',
-              style: TextStyle(
+            Text(
+              FaroStrings.layersView,
+              style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: FaroColors.textSoft,
@@ -184,29 +184,29 @@ class _LayersSheetState extends State<LayersSheet> {
                   MaterialPageRoute(builder: (_) => const TrajectoryScreen()),
                 );
               },
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.history, size: 20, color: FaroColors.primary),
-                    SizedBox(width: 12),
+                    const Icon(Icons.history, size: 20, color: FaroColors.primary),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Seu trajeto',
-                            style: TextStyle(fontSize: 14.5, color: FaroColors.textPrimary),
+                            FaroStrings.layersTrajectoryTitle,
+                            style: const TextStyle(fontSize: 14.5, color: FaroColors.textPrimary),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            'Áreas com relatos por onde você passou nos últimos 7 dias',
-                            style: TextStyle(fontSize: 12, color: FaroColors.textSoft),
+                            FaroStrings.layersTrajectoryHint,
+                            style: const TextStyle(fontSize: 12, color: FaroColors.textSoft),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, size: 20, color: FaroColors.textSoft),
+                    const Icon(Icons.chevron_right, size: 20, color: FaroColors.textSoft),
                   ],
                 ),
               ),
@@ -226,7 +226,7 @@ class _LayersSheetState extends State<LayersSheet> {
                   ),
                   textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
-                child: const Text('Aplicar'),
+                child: Text(FaroStrings.layersApply),
               ),
             ),
           ],

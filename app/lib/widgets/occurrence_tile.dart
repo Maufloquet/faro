@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import '../core/text/string_format.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import 'risk_dot.dart';
-
-import '../core/design/tokens.dart';
 
 class OccurrenceTile extends StatelessWidget {
   final Occurrence occurrence;
@@ -20,8 +20,8 @@ class OccurrenceTile extends StatelessWidget {
     final city = titleCasePtBr(occurrence.city);
     final where = neighborhood.isNotEmpty
         ? neighborhood
-        : (city.isNotEmpty ? city : 'Sem localização específica');
-    final what = occurrence.mainReason ?? 'Relato';
+        : (city.isNotEmpty ? city : FaroStrings.occNoLocation);
+    final what = occurrence.mainReason ?? FaroStrings.occReportFallback;
     final when = _relativeTime(occurrence.date);
 
     return InkWell(
@@ -80,9 +80,9 @@ class OccurrenceTile extends StatelessWidget {
 
   String _relativeTime(DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inMinutes < 60) return 'há ${diff.inMinutes}min';
-    if (diff.inHours < 24) return 'há ${diff.inHours}h';
-    return 'há ${diff.inDays}d';
+    if (diff.inMinutes < 60) return FaroStrings.occRelMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return FaroStrings.occRelHours(diff.inHours);
+    return FaroStrings.occRelDays(diff.inDays);
   }
 
   Widget? _sourceBadge(Occurrence o) {
@@ -90,13 +90,13 @@ class OccurrenceTile extends StatelessWidget {
     if (o.source == OccurrenceSource.media) {
       children.add(_pill(
         icon: Icons.newspaper_outlined,
-        label: o.sourceName ?? 'Mídia',
+        label: o.sourceName ?? FaroStrings.occMediaFallback,
         color: FaroColors.editorialBrown,
       ));
     } else if (o.source == OccurrenceSource.fogoCruzado) {
       children.add(_pill(
         icon: Icons.gpp_maybe_outlined,
-        label: 'Fogo Cruzado',
+        label: FaroStrings.occFogoCruzadoLabel,
         color: FaroColors.destructive,
       ));
     }
@@ -104,7 +104,7 @@ class OccurrenceTile extends StatelessWidget {
       children.add(const SizedBox(width: 6));
       children.add(_pill(
         icon: Icons.adjust,
-        label: 'localização aprox.',
+        label: FaroStrings.occApproxLocation,
         color: FaroColors.editorialOcher,
       ));
     }

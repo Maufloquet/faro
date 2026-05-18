@@ -2,6 +2,9 @@ library;
 
 import 'package:flutter/widgets.dart';
 
+import '../filters/time_window.dart';
+import '../theme/app_theme.dart';
+
 /// Camada simples de tradução pras frases críticas do Faro.
 ///
 /// Por que não usar `flutter_localizations` + ARB: pra ~30 strings é
@@ -168,6 +171,150 @@ class FaroStrings {
   static String get aboutTechDensityBody => _t('about.tech.density.body');
 
   static String get aboutVersion => _t('about.version');
+
+  // ─── Enums localizados (TimeWindow, RiskLevel) ────────────────────────
+  static String timeWindowLabel(TimeWindow w) {
+    switch (w) {
+      case TimeWindow.hoje:
+        return _t('window.today');
+      case TimeWindow.semana:
+        return _t('window.week');
+      case TimeWindow.mes:
+        return _t('window.month');
+      case TimeWindow.tudo:
+        return _t('window.all');
+    }
+  }
+
+  static String riskLabel(RiskLevel r) {
+    switch (r) {
+      case RiskLevel.noData:
+        return _t('risk.no_data');
+      case RiskLevel.noRecentReports:
+        return _t('risk.no_recent');
+      case RiskLevel.lightActivity:
+        return _t('risk.light');
+      case RiskLevel.confirmedActivity:
+        return _t('risk.confirmed');
+      case RiskLevel.highCorroborated:
+        return _t('risk.high');
+    }
+  }
+
+  // ─── Mapa (header, snackbars, marcadores) ─────────────────────────────
+  static String get mapSearchHint => _t('map.search_hint');
+  static String get mapAreasTooltip => _t('map.areas_tooltip');
+  static String get mapLocationFailed => _t('map.location_failed');
+  static String get mapBusStop => _t('map.bus_stop');
+  static String get mapBusStopShelter => _t('map.bus_stop.shelter');
+  static String get mapBusStopBench => _t('map.bus_stop.bench');
+  static String get mapBusStopLit => _t('map.bus_stop.lit');
+  static String get mapBusStopNoInfra => _t('map.bus_stop.no_infra');
+
+  // ─── Bottom sheet do mapa ─────────────────────────────────────────────
+  static String get sheetLoading => _t('sheet.loading');
+  static String sheetError(String detail) =>
+      _t('sheet.error').replaceAll('{e}', detail);
+  static String get sheetScopeAll => _t('sheet.scope.all');
+  static String sheetScopeIn(String window) =>
+      _t('sheet.scope.in').replaceAll('{window}', window);
+  static String sheetEmptyTitle(String scope) =>
+      _t('sheet.empty.title').replaceAll('{scope}', scope);
+  static String get sheetEmptyBody => _t('sheet.empty.body');
+  static String get sheetEmptyButton => _t('sheet.empty.button');
+  static String sheetSummaryEmpty(String scope) =>
+      _t('sheet.summary.empty').replaceAll('{scope}', scope);
+  static String sheetSummaryCount(int count, String scope) {
+    final key = count == 1 ? 'sheet.summary.one' : 'sheet.summary.many';
+    return _t(key)
+        .replaceAll('{count}', count.toString())
+        .replaceAll('{scope}', scope);
+  }
+  static String get sheetSummaryDisclaimer => _t('sheet.summary.disclaimer');
+  static String get sheetFooterSource => _t('sheet.footer.source');
+  static String sheetFooterFreshMinutes(int min) =>
+      _t('sheet.footer.fresh_min').replaceAll('{n}', min.toString());
+  static String sheetFooterFreshHours(int h) =>
+      _t('sheet.footer.fresh_h').replaceAll('{n}', h.toString());
+  static String sheetFooterFreshDays(int d) =>
+      _t('sheet.footer.fresh_d').replaceAll('{n}', d.toString());
+
+  // ─── Filtros (pill + sheet) ───────────────────────────────────────────
+  static String get filterAllTypes => _t('filter.all_types');
+  static String filterMore(String first, int extra) =>
+      _t('filter.more')
+          .replaceAll('{first}', first)
+          .replaceAll('{n}', extra.toString());
+  static String get filterPeriod => _t('filter.period');
+  static String get filterReason => _t('filter.reason');
+  static String get filterClear => _t('filter.clear');
+  static String get filterReasonEmpty => _t('filter.reason_empty');
+  static String get filterApply => _t('filter.apply');
+
+  // ─── Camadas (layers sheet) ───────────────────────────────────────────
+  static String get layersMapType => _t('layers.map_type');
+  static String get layersMapTypeNormal => _t('layers.map_type.normal');
+  static String get layersMapTypeHybrid => _t('layers.map_type.hybrid');
+  static String get layersLayers => _t('layers.layers');
+  static String get layersBusStops => _t('layers.bus_stops');
+  static String get layersBusStopsHint => _t('layers.bus_stops.hint');
+  static String get layersView => _t('layers.view');
+  static String get layersTrajectoryTitle => _t('layers.trajectory.title');
+  static String get layersTrajectoryHint => _t('layers.trajectory.hint');
+  static String get layersApply => _t('layers.apply');
+
+  // ─── Banner de proximidade ────────────────────────────────────────────
+  static String get bannerOneTitle => _t('banner.one_title');
+  static String bannerManyTitle(int n) =>
+      _t('banner.many_title').replaceAll('{n}', n.toString());
+  static String bannerOneSubtext(String reason, String when) =>
+      _t('banner.one_subtext')
+          .replaceAll('{reason}', reason)
+          .replaceAll('{when}', when);
+  static String bannerManySubtext(String reason, String when) =>
+      _t('banner.many_subtext')
+          .replaceAll('{reason}', reason)
+          .replaceAll('{when}', when);
+  static String get bannerReportFallback => _t('banner.report_fallback');
+  static String get bannerReportFallbackLower => _t('banner.report_fallback_lower');
+  static String bannerWhenMinutes(int m) =>
+      _t('banner.when_min').replaceAll('{n}', m.toString());
+  static String bannerWhenHours(int h) =>
+      _t('banner.when_h').replaceAll('{n}', h.toString());
+  static String get bannerDismiss => _t('banner.dismiss');
+
+  // ─── Ocorrência (tile + detail sheet) ─────────────────────────────────
+  static String get occNoLocation => _t('occ.no_location');
+  static String get occReportFallback => _t('occ.report_fallback');
+  static String occRelMinutes(int m) =>
+      _t('occ.rel_min').replaceAll('{n}', m.toString());
+  static String occRelHours(int h) =>
+      _t('occ.rel_h').replaceAll('{n}', h.toString());
+  static String occRelDays(int d) =>
+      _t('occ.rel_d').replaceAll('{n}', d.toString());
+  static String get occMediaFallback => _t('occ.media_fallback');
+  static String get occFogoCruzadoLabel => _t('occ.fogo_cruzado');
+  static String get occApproxLocation => _t('occ.approx_location');
+  static String get occLabelReason => _t('occ.label.reason');
+  static String get occLabelWhen => _t('occ.label.when');
+  static String get occLabelVisual => _t('occ.label.visual');
+  static String get occLabelBusLine => _t('occ.label.bus_line');
+  static String get occLabelBusLineHint => _t('occ.label.bus_line_hint');
+  static String get occLabelLocation => _t('occ.label.location');
+  static String get occApproxValue => _t('occ.approx_value');
+  static String get occApproxHint => _t('occ.approx_hint');
+  static String get occReadFullStory => _t('occ.read_full');
+  static String get occChallenge => _t('occ.challenge');
+  static String get occOpenLinkFailed => _t('occ.open_link_failed');
+  static String get occChallengeSubmitted => _t('occ.challenge_submitted');
+  static String get occLabelSource => _t('occ.label.source');
+  static String get occSourceFcHint => _t('occ.source.fc_hint');
+  static String get occSourceMediaHint => _t('occ.source.media_hint');
+  static String get occSourceUserValue => _t('occ.source.user_value');
+  static String get occSourceUserHint => _t('occ.source.user_hint');
+  static String get occSourceUnknown => _t('occ.source.unknown');
+  static String get occAbsoluteAt => _t('occ.absolute_at');
+  static String get occDisclaimer => _t('occ.disclaimer');
 }
 
 const Map<String, Map<String, String>> _table = {
@@ -294,6 +441,97 @@ const Map<String, Map<String, String>> _table = {
     'about.tech.density.body':
         'Quando exibimos "relatos por 10 mil habitantes" em um bairro, usamos população do Censo IBGE 2010 (via PMS/SEMOP), porque o Censo 2022 ainda não publicou agregação por bairro para Salvador. Bairros sem dado de população não mostram normalização — preferimos silêncio honesto a número inventado.',
     'about.version': 'Faro · v0.1.0 (alpha)',
+    'window.today': 'Hoje',
+    'window.week': '7 dias',
+    'window.month': '30 dias',
+    'window.all': 'Tudo',
+    'risk.no_data': 'Sem dados suficientes nesta região',
+    'risk.no_recent': 'Sem relatos nas últimas 24h',
+    'risk.light': 'Relatos esparsos. Atenção.',
+    'risk.confirmed': 'Relatos confirmados. Avaliar rota alternativa.',
+    'risk.high': 'Múltiplos relatos. Evitar se possível.',
+    'map.search_hint': 'Buscar bairro em Salvador',
+    'map.areas_tooltip': 'Atividade por área',
+    'map.location_failed': 'Não foi possível obter sua localização agora.',
+    'map.bus_stop': 'Ponto de ônibus',
+    'map.bus_stop.shelter': 'cobertura',
+    'map.bus_stop.bench': 'banco',
+    'map.bus_stop.lit': 'iluminação',
+    'map.bus_stop.no_infra': 'sem dados de infraestrutura',
+    'sheet.loading': 'Carregando relatos…',
+    'sheet.error': 'Erro ao carregar: {e}',
+    'sheet.scope.all': 'no histórico carregado',
+    'sheet.scope.in': 'em {window}',
+    'sheet.empty.title': 'Sem relatos {scope}.',
+    'sheet.empty.body':
+        'Isso não significa que está seguro — significa que ninguém reportou nada nessa janela. Mantenha atenção.',
+    'sheet.empty.button': 'Ver tudo o que temos',
+    'sheet.summary.empty': 'Sem relatos{scope}',
+    'sheet.summary.one': '{count} relato{scope}',
+    'sheet.summary.many': '{count} relatos{scope}',
+    'sheet.summary.disclaimer': 'Sem garantia de segurança. Apenas o que foi reportado.',
+    'sheet.footer.source': 'Fonte: Fogo Cruzado',
+    'sheet.footer.fresh_min': 'Último relato há {n} min',
+    'sheet.footer.fresh_h': 'Último relato há {n}h',
+    'sheet.footer.fresh_d': 'Último relato há {n}d',
+    'filter.all_types': 'todos os tipos',
+    'filter.more': '{first} +{n}',
+    'filter.period': 'Período',
+    'filter.reason': 'Tipo de relato',
+    'filter.clear': 'Limpar',
+    'filter.reason_empty': 'Sem tipos com relatos neste período.',
+    'filter.apply': 'Aplicar',
+    'layers.map_type': 'Tipo de mapa',
+    'layers.map_type.normal': 'Padrão',
+    'layers.map_type.hybrid': 'Satélite',
+    'layers.layers': 'Camadas',
+    'layers.bus_stops': 'Pontos de ônibus',
+    'layers.bus_stops.hint': 'Visíveis ao aproximar o mapa (zoom de rua)',
+    'layers.view': 'Ver',
+    'layers.trajectory.title': 'Seu trajeto',
+    'layers.trajectory.hint':
+        'Áreas com relatos por onde você passou nos últimos 7 dias',
+    'layers.apply': 'Aplicar',
+    'banner.one_title': 'Novo relato perto de você',
+    'banner.many_title': '{n} relatos próximos nas últimas 6h',
+    'banner.one_subtext': '{reason} · {when}',
+    'banner.many_subtext': 'Mais recente: {reason} · {when}',
+    'banner.report_fallback': 'Relato',
+    'banner.report_fallback_lower': 'relato',
+    'banner.when_min': 'há {n} min',
+    'banner.when_h': 'há {n}h',
+    'banner.dismiss': 'Dispensar',
+    'occ.no_location': 'Sem localização específica',
+    'occ.report_fallback': 'Relato',
+    'occ.rel_min': 'há {n} min',
+    'occ.rel_h': 'há {n}h',
+    'occ.rel_d': 'há {n}d',
+    'occ.media_fallback': 'Mídia',
+    'occ.fogo_cruzado': 'Fogo Cruzado',
+    'occ.approx_location': 'localização aprox.',
+    'occ.label.reason': 'Tipo de relato',
+    'occ.label.when': 'Quando',
+    'occ.label.visual': 'Estado visual',
+    'occ.label.bus_line': 'Linha de ônibus',
+    'occ.label.bus_line_hint':
+        'Linha mencionada na matéria. Pode ser apenas uma referência geográfica — não significa que toda corrida desta linha tem o mesmo risco.',
+    'occ.label.location': 'Localização',
+    'occ.approx_value': 'Aproximada (centro da cidade)',
+    'occ.approx_hint':
+        'Notícia não menciona bairro específico. Pin posicionado no centro da cidade.',
+    'occ.read_full': 'Ler matéria completa',
+    'occ.challenge': 'Contestar relato',
+    'occ.open_link_failed': 'Não foi possível abrir o link.',
+    'occ.challenge_submitted': 'Contestação enviada. Será revisada em até 2h.',
+    'occ.label.source': 'Fonte',
+    'occ.source.fc_hint': 'Banco público de violência armada (RJ, PE, BA, PA)',
+    'occ.source.media_hint': 'Notícia coletada e classificada automaticamente',
+    'occ.source.user_value': 'Relato de usuário',
+    'occ.source.user_hint': 'Reportado por outro usuário do app',
+    'occ.source.unknown': 'Não identificada',
+    'occ.absolute_at': 'às',
+    'occ.disclaimer':
+        'Relato baseado em fonte pública. O Faro não garante segurança em nenhuma região — só comunica o que foi reportado. Erros acontecem.',
   },
   'en': {
     'onboarding.headline': 'Welcome to Faro',
@@ -415,6 +653,97 @@ const Map<String, Map<String, String>> _table = {
     'about.tech.density.body':
         'When we display "reports per 10k inhabitants" in a neighborhood, we use IBGE 2010 Census population (via PMS/SEMOP), because the 2022 Census has not yet published neighborhood-level aggregation for Salvador. Neighborhoods without population data show no normalization — we prefer honest silence over invented numbers.',
     'about.version': 'Faro · v0.1.0 (alpha)',
+    'window.today': 'Today',
+    'window.week': '7 days',
+    'window.month': '30 days',
+    'window.all': 'All',
+    'risk.no_data': 'Not enough data in this area',
+    'risk.no_recent': 'No reports in the last 24h',
+    'risk.light': 'Scattered reports. Stay alert.',
+    'risk.confirmed': 'Confirmed reports. Consider an alternative route.',
+    'risk.high': 'Multiple reports. Avoid if possible.',
+    'map.search_hint': 'Search neighborhood in Salvador',
+    'map.areas_tooltip': 'Activity by area',
+    'map.location_failed': 'Could not get your location right now.',
+    'map.bus_stop': 'Bus stop',
+    'map.bus_stop.shelter': 'shelter',
+    'map.bus_stop.bench': 'bench',
+    'map.bus_stop.lit': 'lit',
+    'map.bus_stop.no_infra': 'no infrastructure data',
+    'sheet.loading': 'Loading reports…',
+    'sheet.error': 'Loading error: {e}',
+    'sheet.scope.all': 'in the loaded history',
+    'sheet.scope.in': 'in {window}',
+    'sheet.empty.title': 'No reports {scope}.',
+    'sheet.empty.body':
+        'This does not mean it is safe — it means nobody reported anything in this window. Stay alert.',
+    'sheet.empty.button': 'See everything we have',
+    'sheet.summary.empty': 'No reports{scope}',
+    'sheet.summary.one': '{count} report{scope}',
+    'sheet.summary.many': '{count} reports{scope}',
+    'sheet.summary.disclaimer': 'No safety guarantee. Only what has been reported.',
+    'sheet.footer.source': 'Source: Fogo Cruzado',
+    'sheet.footer.fresh_min': 'Latest report {n} min ago',
+    'sheet.footer.fresh_h': 'Latest report {n}h ago',
+    'sheet.footer.fresh_d': 'Latest report {n}d ago',
+    'filter.all_types': 'all types',
+    'filter.more': '{first} +{n}',
+    'filter.period': 'Period',
+    'filter.reason': 'Report type',
+    'filter.clear': 'Clear',
+    'filter.reason_empty': 'No types with reports in this period.',
+    'filter.apply': 'Apply',
+    'layers.map_type': 'Map type',
+    'layers.map_type.normal': 'Standard',
+    'layers.map_type.hybrid': 'Satellite',
+    'layers.layers': 'Layers',
+    'layers.bus_stops': 'Bus stops',
+    'layers.bus_stops.hint': 'Visible when zoomed in (street level)',
+    'layers.view': 'View',
+    'layers.trajectory.title': 'Your trajectory',
+    'layers.trajectory.hint':
+        'Areas with reports that you passed through in the last 7 days',
+    'layers.apply': 'Apply',
+    'banner.one_title': 'New report near you',
+    'banner.many_title': '{n} reports nearby in the last 6h',
+    'banner.one_subtext': '{reason} · {when}',
+    'banner.many_subtext': 'Most recent: {reason} · {when}',
+    'banner.report_fallback': 'Report',
+    'banner.report_fallback_lower': 'report',
+    'banner.when_min': '{n} min ago',
+    'banner.when_h': '{n}h ago',
+    'banner.dismiss': 'Dismiss',
+    'occ.no_location': 'No specific location',
+    'occ.report_fallback': 'Report',
+    'occ.rel_min': '{n} min ago',
+    'occ.rel_h': '{n}h ago',
+    'occ.rel_d': '{n}d ago',
+    'occ.media_fallback': 'Media',
+    'occ.fogo_cruzado': 'Fogo Cruzado',
+    'occ.approx_location': 'approx. location',
+    'occ.label.reason': 'Report type',
+    'occ.label.when': 'When',
+    'occ.label.visual': 'Visual state',
+    'occ.label.bus_line': 'Bus line',
+    'occ.label.bus_line_hint':
+        'Line mentioned in the news article. May only be a geographic reference — it does not mean every ride on this line carries the same risk.',
+    'occ.label.location': 'Location',
+    'occ.approx_value': 'Approximate (city center)',
+    'occ.approx_hint':
+        'The news did not mention a specific neighborhood. Pin placed at the city center.',
+    'occ.read_full': 'Read full story',
+    'occ.challenge': 'Challenge this report',
+    'occ.open_link_failed': 'Could not open the link.',
+    'occ.challenge_submitted': 'Dispute submitted. Will be reviewed within 2h.',
+    'occ.label.source': 'Source',
+    'occ.source.fc_hint': 'Public armed-violence database (RJ, PE, BA, PA)',
+    'occ.source.media_hint': 'News collected and classified automatically',
+    'occ.source.user_value': 'User report',
+    'occ.source.user_hint': 'Reported by another app user',
+    'occ.source.unknown': 'Unidentified',
+    'occ.absolute_at': 'at',
+    'occ.disclaimer':
+        'Report based on a public source. Faro does not guarantee safety in any area — it only communicates what has been reported. Mistakes happen.',
   },
   'es': {
     'onboarding.headline': 'Bienvenido a Faro',
@@ -538,5 +867,96 @@ const Map<String, Map<String, String>> _table = {
     'about.tech.density.body':
         'Cuando mostramos "reportes por 10 mil habitantes" en un barrio, usamos población del Censo IBGE 2010 (vía PMS/SEMOP), porque el Censo 2022 aún no publica agregación por barrio para Salvador. Barrios sin dato de población no muestran normalización — preferimos silencio honesto a un número inventado.',
     'about.version': 'Faro · v0.1.0 (alpha)',
+    'window.today': 'Hoy',
+    'window.week': '7 días',
+    'window.month': '30 días',
+    'window.all': 'Todo',
+    'risk.no_data': 'Datos insuficientes en esta zona',
+    'risk.no_recent': 'Sin reportes en las últimas 24h',
+    'risk.light': 'Reportes dispersos. Atención.',
+    'risk.confirmed': 'Reportes confirmados. Evalúa una ruta alternativa.',
+    'risk.high': 'Múltiples reportes. Evita si es posible.',
+    'map.search_hint': 'Buscar barrio en Salvador',
+    'map.areas_tooltip': 'Actividad por zona',
+    'map.location_failed': 'No fue posible obtener tu ubicación ahora.',
+    'map.bus_stop': 'Parada de autobús',
+    'map.bus_stop.shelter': 'techo',
+    'map.bus_stop.bench': 'banco',
+    'map.bus_stop.lit': 'iluminación',
+    'map.bus_stop.no_infra': 'sin datos de infraestructura',
+    'sheet.loading': 'Cargando reportes…',
+    'sheet.error': 'Error al cargar: {e}',
+    'sheet.scope.all': 'en el historial cargado',
+    'sheet.scope.in': 'en {window}',
+    'sheet.empty.title': 'Sin reportes {scope}.',
+    'sheet.empty.body':
+        'Esto no significa que sea seguro — significa que nadie reportó nada en esta ventana. Mantén la atención.',
+    'sheet.empty.button': 'Ver todo lo que tenemos',
+    'sheet.summary.empty': 'Sin reportes{scope}',
+    'sheet.summary.one': '{count} reporte{scope}',
+    'sheet.summary.many': '{count} reportes{scope}',
+    'sheet.summary.disclaimer': 'Sin garantía de seguridad. Solo lo que fue reportado.',
+    'sheet.footer.source': 'Fuente: Fogo Cruzado',
+    'sheet.footer.fresh_min': 'Último reporte hace {n} min',
+    'sheet.footer.fresh_h': 'Último reporte hace {n}h',
+    'sheet.footer.fresh_d': 'Último reporte hace {n}d',
+    'filter.all_types': 'todos los tipos',
+    'filter.more': '{first} +{n}',
+    'filter.period': 'Período',
+    'filter.reason': 'Tipo de reporte',
+    'filter.clear': 'Limpiar',
+    'filter.reason_empty': 'Sin tipos con reportes en este período.',
+    'filter.apply': 'Aplicar',
+    'layers.map_type': 'Tipo de mapa',
+    'layers.map_type.normal': 'Estándar',
+    'layers.map_type.hybrid': 'Satélite',
+    'layers.layers': 'Capas',
+    'layers.bus_stops': 'Paradas de autobús',
+    'layers.bus_stops.hint': 'Visibles al acercar el mapa (nivel calle)',
+    'layers.view': 'Ver',
+    'layers.trajectory.title': 'Tu recorrido',
+    'layers.trajectory.hint':
+        'Zonas con reportes por donde pasaste en los últimos 7 días',
+    'layers.apply': 'Aplicar',
+    'banner.one_title': 'Nuevo reporte cerca de ti',
+    'banner.many_title': '{n} reportes cercanos en las últimas 6h',
+    'banner.one_subtext': '{reason} · {when}',
+    'banner.many_subtext': 'Más reciente: {reason} · {when}',
+    'banner.report_fallback': 'Reporte',
+    'banner.report_fallback_lower': 'reporte',
+    'banner.when_min': 'hace {n} min',
+    'banner.when_h': 'hace {n}h',
+    'banner.dismiss': 'Descartar',
+    'occ.no_location': 'Sin ubicación específica',
+    'occ.report_fallback': 'Reporte',
+    'occ.rel_min': 'hace {n} min',
+    'occ.rel_h': 'hace {n}h',
+    'occ.rel_d': 'hace {n}d',
+    'occ.media_fallback': 'Medios',
+    'occ.fogo_cruzado': 'Fogo Cruzado',
+    'occ.approx_location': 'ubic. aprox.',
+    'occ.label.reason': 'Tipo de reporte',
+    'occ.label.when': 'Cuándo',
+    'occ.label.visual': 'Estado visual',
+    'occ.label.bus_line': 'Línea de autobús',
+    'occ.label.bus_line_hint':
+        'Línea mencionada en la noticia. Puede ser solo una referencia geográfica — no significa que cada viaje de esta línea tenga el mismo riesgo.',
+    'occ.label.location': 'Ubicación',
+    'occ.approx_value': 'Aproximada (centro de la ciudad)',
+    'occ.approx_hint':
+        'La noticia no menciona un barrio específico. Pin ubicado en el centro de la ciudad.',
+    'occ.read_full': 'Leer noticia completa',
+    'occ.challenge': 'Impugnar reporte',
+    'occ.open_link_failed': 'No fue posible abrir el enlace.',
+    'occ.challenge_submitted': 'Impugnación enviada. Será revisada en hasta 2h.',
+    'occ.label.source': 'Fuente',
+    'occ.source.fc_hint': 'Base pública de violencia armada (RJ, PE, BA, PA)',
+    'occ.source.media_hint': 'Noticia recolectada y clasificada automáticamente',
+    'occ.source.user_value': 'Reporte de usuario',
+    'occ.source.user_hint': 'Reportado por otro usuario de la app',
+    'occ.source.unknown': 'No identificada',
+    'occ.absolute_at': 'a las',
+    'occ.disclaimer':
+        'Reporte basado en una fuente pública. Faro no garantiza la seguridad de ninguna zona — solo comunica lo que fue reportado. Los errores pasan.',
   },
 };

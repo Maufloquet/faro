@@ -7,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../core/filters/time_window.dart';
 import '../core/geo/haversine.dart';
+import '../core/i18n/faro_strings.dart';
 import '../core/theme/app_theme.dart';
 import '../models/bus_stop.dart';
 import '../models/occurrence.dart';
@@ -291,9 +292,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível obter sua localização agora.'),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(FaroStrings.mapLocationFailed),
+          duration: const Duration(seconds: 3),
         ),
       );
     } finally {
@@ -614,7 +615,7 @@ class _Map extends StatelessWidget {
           alpha: 0.7,
           flat: true,
           infoWindow: InfoWindow(
-            title: s.name ?? 'Ponto de ônibus',
+            title: s.name ?? FaroStrings.mapBusStop,
             snippet: _busStopTags(s),
           ),
         ),
@@ -623,10 +624,10 @@ class _Map extends StatelessWidget {
 
   String _busStopTags(BusStop s) {
     final tags = <String>[];
-    if (s.shelter) tags.add('cobertura');
-    if (s.bench) tags.add('banco');
-    if (s.lit) tags.add('iluminação');
-    return tags.isEmpty ? 'sem dados de infraestrutura' : tags.join(' · ');
+    if (s.shelter) tags.add(FaroStrings.mapBusStopShelter);
+    if (s.bench) tags.add(FaroStrings.mapBusStopBench);
+    if (s.lit) tags.add(FaroStrings.mapBusStopLit);
+    return tags.isEmpty ? FaroStrings.mapBusStopNoInfra : tags.join(' · ');
   }
 
   Set<Heatmap> _heatmaps() {
@@ -707,7 +708,7 @@ class _Header extends StatelessWidget {
                       const Icon(Icons.search, size: 18, color: FaroColors.primary),
                       const SizedBox(width: 8),
                       Text(
-                        'Buscar bairro em Salvador',
+                        FaroStrings.mapSearchHint,
                         style: TextStyle(
                           fontSize: 14,
                           color: FaroColors.textPrimary.withValues(alpha: 0.6),
@@ -720,7 +721,7 @@ class _Header extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.insights_outlined, size: 22, color: FaroColors.textMuted),
-              tooltip: 'Atividade por área',
+              tooltip: FaroStrings.mapAreasTooltip,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36),
               onPressed: () => Navigator.of(context).push(
@@ -729,7 +730,7 @@ class _Header extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.help_outline, size: 22, color: FaroColors.textMuted),
-              tooltip: 'Como o Faro funciona',
+              tooltip: FaroStrings.helpTitle,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36),
               onPressed: () => Navigator.of(context).push(
@@ -783,8 +784,8 @@ class _Sheet extends StatelessWidget {
               onTapTile: onTapTile,
               onExpandWindow: onExpandWindow,
             ),
-            loading: () => const _SheetSimple(message: 'Carregando relatos…'),
-            error: (e, _) => _SheetSimple(message: 'Erro ao carregar: $e'),
+            loading: () => _SheetSimple(message: FaroStrings.sheetLoading),
+            error: (e, _) => _SheetSimple(message: FaroStrings.sheetError('$e')),
           ),
         );
       },
@@ -842,14 +843,16 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scope = window == TimeWindow.tudo ? 'no histórico carregado' : 'em ${window.label.toLowerCase()}';
+    final scope = window == TimeWindow.tudo
+        ? FaroStrings.sheetScopeAll
+        : FaroStrings.sheetScopeIn(FaroStrings.timeWindowLabel(window).toLowerCase());
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Sem relatos $scope.',
+            FaroStrings.sheetEmptyTitle(scope),
             style: const TextStyle(
               fontFamily: 'Georgia',
               fontSize: 15.5,
@@ -858,16 +861,16 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Isso não significa que está seguro — significa que ninguém reportou nada nessa janela. Mantenha atenção.',
-            style: TextStyle(fontSize: 13, height: 1.5, color: FaroColors.textMuted),
+          Text(
+            FaroStrings.sheetEmptyBody,
+            style: const TextStyle(fontSize: 13, height: 1.5, color: FaroColors.textMuted),
           ),
           if (onExpandWindow != null) ...[
             const SizedBox(height: 14),
             OutlinedButton.icon(
               onPressed: onExpandWindow,
               icon: const Icon(Icons.history, size: 16),
-              label: const Text('Ver tudo o que temos'),
+              label: Text(FaroStrings.sheetEmptyButton),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -887,7 +890,9 @@ class _SummaryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scope = window == TimeWindow.tudo ? '' : ' · ${window.label.toLowerCase()}';
+    final scope = window == TimeWindow.tudo
+        ? ''
+        : ' · ${FaroStrings.timeWindowLabel(window).toLowerCase()}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
       child: Column(
@@ -895,8 +900,8 @@ class _SummaryHeader extends StatelessWidget {
         children: [
           Text(
             count == 0
-                ? 'Sem relatos$scope'
-                : '$count relato${count > 1 ? "s" : ""}$scope',
+                ? FaroStrings.sheetSummaryEmpty(scope)
+                : FaroStrings.sheetSummaryCount(count, scope),
             style: const TextStyle(
               fontFamily: 'Georgia',
               fontSize: 17,
@@ -905,9 +910,9 @@ class _SummaryHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Sem garantia de segurança. Apenas o que foi reportado.',
-            style: TextStyle(fontSize: 12, height: 1.3, color: FaroColors.textSoft),
+          Text(
+            FaroStrings.sheetSummaryDisclaimer,
+            style: const TextStyle(fontSize: 12, height: 1.3, color: FaroColors.textSoft),
           ),
         ],
       ),
@@ -946,9 +951,9 @@ class _Footer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Fonte: Fogo Cruzado',
-            style: TextStyle(
+          Text(
+            FaroStrings.sheetFooterSource,
+            style: const TextStyle(
               fontSize: 11.5,
               color: FaroColors.textHint,
               fontStyle: FontStyle.italic,
@@ -973,9 +978,9 @@ class _Footer extends StatelessWidget {
   String? _freshness(DateTime? d) {
     if (d == null) return null;
     final diff = DateTime.now().difference(d);
-    if (diff.inMinutes < 60) return 'Último relato há ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'Último relato há ${diff.inHours}h';
-    return 'Último relato há ${diff.inDays}d';
+    if (diff.inMinutes < 60) return FaroStrings.sheetFooterFreshMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return FaroStrings.sheetFooterFreshHours(diff.inHours);
+    return FaroStrings.sheetFooterFreshDays(diff.inDays);
   }
 }
 

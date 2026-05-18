@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n/faro_strings.dart';
 import '../models/occurrence.dart';
 
 DateTime _systemNow() => DateTime.now();
@@ -34,15 +35,17 @@ class ProximityBanner extends StatelessWidget {
     final freshest = alerts.first;
     final diff = now().difference(freshest.date);
     final when = diff.inMinutes < 60
-        ? 'há ${diff.inMinutes} min'
-        : 'há ${diff.inHours}h';
+        ? FaroStrings.bannerWhenMinutes(diff.inMinutes)
+        : FaroStrings.bannerWhenHours(diff.inHours);
 
     final headline = n == 1
-        ? 'Novo relato perto de você'
-        : '$n relatos próximos nas últimas 6h';
+        ? FaroStrings.bannerOneTitle
+        : FaroStrings.bannerManyTitle(n);
     final subtext = n == 1
-        ? '${freshest.mainReason ?? "Relato"} · $when'
-        : 'Mais recente: ${freshest.mainReason ?? "relato"} · $when';
+        ? FaroStrings.bannerOneSubtext(
+            freshest.mainReason ?? FaroStrings.bannerReportFallback, when)
+        : FaroStrings.bannerManySubtext(
+            freshest.mainReason ?? FaroStrings.bannerReportFallbackLower, when);
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + 60,
@@ -92,7 +95,7 @@ class ProximityBanner extends StatelessWidget {
                   icon: const Icon(Icons.close, size: 18, color: Colors.white),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  tooltip: 'Dispensar',
+                  tooltip: FaroStrings.bannerDismiss,
                   onPressed: onDismiss,
                 ),
               ],

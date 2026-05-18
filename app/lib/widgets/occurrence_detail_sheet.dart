@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import '../core/text/string_format.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import '../screens/contestation_screen.dart';
 import 'risk_dot.dart';
-
-import '../core/design/tokens.dart';
 
 /// Sheet modal mostrado quando o usuário toca em um marker ou item da lista.
 ///
@@ -35,7 +35,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
     final risk = _classify(occurrence.date);
     final where = titleCasePtBr(occurrence.neighborhood);
     final city = titleCasePtBr(occurrence.city);
-    final what = occurrence.mainReason ?? 'Relato';
+    final what = occurrence.mainReason ?? FaroStrings.occReportFallback;
     final when = _absoluteTime(occurrence.date);
     final relative = _relativeTime(occurrence.date);
 
@@ -69,7 +69,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        where.isNotEmpty ? where : 'Sem localização específica',
+                        where.isNotEmpty ? where : FaroStrings.occNoLocation,
                         style: const TextStyle(
                           fontFamily: 'Georgia',
                           fontSize: 22,
@@ -109,13 +109,13 @@ class OccurrenceDetailSheet extends StatelessWidget {
                 ),
               ),
             ],
-            _LabeledRow(label: 'Tipo de relato', value: what),
+            _LabeledRow(label: FaroStrings.occLabelReason, value: what),
             const Divider(height: 1),
-            _LabeledRow(label: 'Quando', value: '$when · $relative'),
+            _LabeledRow(label: FaroStrings.occLabelWhen, value: '$when · $relative'),
             const Divider(height: 1),
             _LabeledRow(
-              label: 'Estado visual',
-              value: risk.label,
+              label: FaroStrings.occLabelVisual,
+              value: FaroStrings.riskLabel(risk),
               valueColor: risk.color,
             ),
             const Divider(height: 1),
@@ -123,17 +123,17 @@ class OccurrenceDetailSheet extends StatelessWidget {
             if (occurrence.hasBusLines) ...[
               const Divider(height: 1),
               _LabeledRow(
-                label: 'Linha de ônibus',
+                label: FaroStrings.occLabelBusLine,
                 value: occurrence.busLines.join(', '),
-                hint: 'Linha mencionada na matéria. Pode ser apenas uma referência geográfica — não significa que toda corrida desta linha tem o mesmo risco.',
+                hint: FaroStrings.occLabelBusLineHint,
               ),
             ],
             if (occurrence.isCityCentroid) ...[
               const Divider(height: 1),
-              const _LabeledRow(
-                label: 'Localização',
-                value: 'Aproximada (centro da cidade)',
-                hint: 'Notícia não menciona bairro específico. Pin posicionado no centro da cidade.',
+              _LabeledRow(
+                label: FaroStrings.occLabelLocation,
+                value: FaroStrings.occApproxValue,
+                hint: FaroStrings.occApproxHint,
                 valueColor: FaroColors.editorialOcher,
               ),
             ],
@@ -148,7 +148,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: () => _openExternal(context, occurrence.externalUrl!),
                     icon: const Icon(Icons.open_in_new, size: 18),
-                    label: const Text('Ler matéria completa'),
+                    label: Text(FaroStrings.occReadFullStory),
                     style: FilledButton.styleFrom(
                       backgroundColor: FaroColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -164,7 +164,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _openContestation(context),
                 icon: const Icon(Icons.flag_outlined, size: 18),
-                label: const Text('Contestar relato'),
+                label: Text(FaroStrings.occChallenge),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -188,15 +188,15 @@ class OccurrenceDetailSheet extends StatelessWidget {
 
   String _relativeTime(DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inMinutes < 60) return 'há ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'há ${diff.inHours}h';
-    return 'há ${diff.inDays}d';
+    if (diff.inMinutes < 60) return FaroStrings.occRelMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return FaroStrings.occRelHours(diff.inHours);
+    return FaroStrings.occRelDays(diff.inDays);
   }
 
   String _absoluteTime(DateTime date) {
     final local = date.toLocal();
     String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(local.day)}/${two(local.month)} às ${two(local.hour)}:${two(local.minute)}';
+    return '${two(local.day)}/${two(local.month)} ${FaroStrings.occAbsoluteAt} ${two(local.hour)}:${two(local.minute)}';
   }
 
   Future<void> _openExternal(BuildContext context, String url) async {
@@ -205,7 +205,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível abrir o link.')),
+        SnackBar(content: Text(FaroStrings.occOpenLinkFailed)),
       );
     }
   }
@@ -219,9 +219,9 @@ class OccurrenceDetailSheet extends StatelessWidget {
     );
     if (submitted == true) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Contestação enviada. Será revisada em até 2h.'),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(FaroStrings.occChallengeSubmitted),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -236,28 +236,28 @@ class _SourceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (occurrence.source) {
       case OccurrenceSource.fogoCruzado:
-        return const _LabeledRow(
-          label: 'Fonte',
-          value: 'Fogo Cruzado',
-          hint: 'Banco público de violência armada (RJ, PE, BA, PA)',
+        return _LabeledRow(
+          label: FaroStrings.occLabelSource,
+          value: FaroStrings.occFogoCruzadoLabel,
+          hint: FaroStrings.occSourceFcHint,
         );
       case OccurrenceSource.media:
-        final providerName = occurrence.sourceName ?? 'Mídia';
+        final providerName = occurrence.sourceName ?? FaroStrings.occMediaFallback;
         return _LabeledRow(
-          label: 'Fonte',
+          label: FaroStrings.occLabelSource,
           value: providerName,
-          hint: 'Notícia coletada e classificada automaticamente',
+          hint: FaroStrings.occSourceMediaHint,
         );
       case OccurrenceSource.userReport:
-        return const _LabeledRow(
-          label: 'Fonte',
-          value: 'Relato de usuário',
-          hint: 'Reportado por outro usuário do app',
+        return _LabeledRow(
+          label: FaroStrings.occLabelSource,
+          value: FaroStrings.occSourceUserValue,
+          hint: FaroStrings.occSourceUserHint,
         );
       case OccurrenceSource.unknown:
-        return const _LabeledRow(
-          label: 'Fonte',
-          value: 'Não identificada',
+        return _LabeledRow(
+          label: FaroStrings.occLabelSource,
+          value: FaroStrings.occSourceUnknown,
         );
     }
   }
@@ -338,9 +338,9 @@ class _DisclaimerBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: FaroColors.sandBorder),
       ),
-      child: const Text(
-        'Relato baseado em fonte pública. O Faro não garante segurança em nenhuma região — só comunica o que foi reportado. Erros acontecem.',
-        style: TextStyle(fontSize: 12.5, height: 1.5, color: FaroColors.textMuted),
+      child: Text(
+        FaroStrings.occDisclaimer,
+        style: const TextStyle(fontSize: 12.5, height: 1.5, color: FaroColors.textMuted),
       ),
     );
   }
