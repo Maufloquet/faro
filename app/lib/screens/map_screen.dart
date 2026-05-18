@@ -17,6 +17,7 @@ import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
 import '../services/cluster_engine.dart';
 import '../services/cluster_marker_factory.dart';
+import '../services/driving_arrow_factory.dart';
 import '../services/location_service.dart';
 import '../services/marker_factory.dart';
 import '../services/messaging_service.dart';
@@ -56,8 +57,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _messagingReady = false;
   final _markerFactory = MarkerFactory();
   final _clusterFactory = ClusterMarkerFactory();
+  final _drivingArrowFactory = DrivingArrowFactory();
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
   Map<String, BitmapDescriptor>? _clusterIcons;
+  BitmapDescriptor? _drivingArrowIcon;
+
+  /// Heading (rumo) reportado pelo GPS na última leitura. Em graus, 0 = norte.
+  /// Só é confiável em movimento — usamos `_drivingArrowRotation` que zera
+  /// quando o usuário está parado, evitando giros aleatórios.
+  double _drivingArrowRotation = 0;
 
   double _zoom = 12;
 
@@ -137,7 +145,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
     ).listen((pos) async {
       if (!mounted) return;
-      setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
+      setState(() {
+        _userPos = LatLng(pos.latitude, pos.longitude);
+        // Heading parado é ruidoso (gira aleatório). Só atualizamos se
+        // a velocidade reportada indica deslocamento real (≥ 3 m/s ≈ 11 km/h).
+        if (pos.speed >= 3 && pos.heading >= 0) {
+          _drivingArrowRotation = pos.heading;
+        }
+      });
       final controller = _map;
       if (controller != null) {
         await controller.animateCamera(
@@ -155,16 +170,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _stopDrivingFollow() {
     _drivingSub?.cancel();
     _drivingSub = null;
+    if (mounted) setState(() => _drivingArrowRotation = 0);
   }
 
   Future<void> _loadMarkers() async {
     final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
     final icons = await _markerFactory.all(devicePixelRatio: dpr);
     final clusters = await _clusterFactory.all(devicePixelRatio: dpr);
+    final arrow = await _drivingArrowFactory.build(devicePixelRatio: dpr);
     if (mounted) {
       setState(() {
         _markerIcons = icons;
         _clusterIcons = clusters;
+        _drivingArrowIcon = arrow;
       });
     }
   }
@@ -422,6 +440,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             clusterIcons: _clusterIcons,
             asHeatmap: _showHeatmap,
             busStops: busStops,
+            drivingActive: ref.watch(drivingModeProvider),
+            drivingArrowIcon: _drivingArrowIcon,
+            drivingPos: _userPos,
+            drivingRotation: _drivingArrowRotation,
             onCreated: (c) => _map = c,
             onTap: (o) => _openDetail(o, OccurrenceOpenEntry.marker),
             onTapCluster: _onTapCluster,
@@ -539,6 +561,10 @@ class _Map extends StatelessWidget {
   final Map<String, BitmapDescriptor>? clusterIcons;
   final bool asHeatmap;
   final List<BusStop> busStops;
+  final bool drivingActive;
+  final BitmapDescriptor? drivingArrowIcon;
+  final LatLng? drivingPos;
+  final double drivingRotation;
   final ValueChanged<GoogleMapController> onCreated;
   final ValueChanged<Occurrence> onTap;
   final ValueChanged<MapNode> onTapCluster;
@@ -554,6 +580,10 @@ class _Map extends StatelessWidget {
     required this.clusterIcons,
     required this.asHeatmap,
     required this.busStops,
+    required this.drivingActive,
+    required this.drivingArrowIcon,
+    required this.drivingPos,
+    required this.drivingRotation,
     required this.onCreated,
     required this.onTap,
     required this.onTapCluster,
@@ -566,12 +596,16 @@ class _Map extends StatelessWidget {
     return GoogleMap(
       initialCameraPosition: initialCamera,
       mapType: mapType,
-      myLocationEnabled: true,
+      // Em modo direção, escondemos o dot azul nativo pra não duplicar
+      // com a seta de carro custom.
+      myLocationEnabled: !drivingActive,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
       compassEnabled: false,
-      markers: asHeatmap ? const {} : {..._markers(), ..._busStopMarkers()},
+      markers: asHeatmap
+          ? const {}
+          : {..._markers(), ..._busStopMarkers(), ..._drivingMarker()},
       // Heatmap nativo funciona bem no iOS. No Android o suporte é
       // inconsistente — usamos cluster circles como fallback. Em zoom-in
       // (asHeatmap=false), só os círculos de incerteza dos centroides.
@@ -683,6 +717,24 @@ class _Map extends StatelessWidget {
       }
     }
     return result;
+  }
+
+  Set<Marker> _drivingMarker() {
+    if (!drivingActive) return const {};
+    final pos = drivingPos;
+    final icon = drivingArrowIcon;
+    if (pos == null || icon == null) return const {};
+    return {
+      Marker(
+        markerId: const MarkerId('driving-arrow'),
+        position: pos,
+        icon: icon,
+        rotation: drivingRotation,
+        anchor: const Offset(0.5, 0.5),
+        flat: true, // gira com o bitmap, não com a câmera
+        zIndexInt: 999,
+      ),
+    };
   }
 
   Set<Marker> _busStopMarkers() {
