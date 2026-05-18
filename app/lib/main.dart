@@ -13,7 +13,10 @@ import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'services/analytics_service.dart';
+import 'services/background_location_service.dart';
+import 'services/density_service.dart';
 import 'services/dev_data_source.dart';
+import 'services/local_notification_service.dart';
 import 'services/occurrences_service.dart';
 
 /// Modo dev: lê ocorrências do asset local, sem precisar de Firebase.
@@ -69,6 +72,22 @@ Future<void> main() async {
           if (kDebugMode) debugPrint('[Faro] anonymous sign-in falhou: $e');
         }
       }
+
+      // Notificações locais (canal + permissão pré-checada). O prompt de
+      // permissão só é disparado no toggle do /sobre/.
+      await LocalNotificationService.instance.initialize();
+
+      // Camada 7 — densidade populacional por bairro. Carrega asset JSON
+      // pra normalizar "relatos por 10k habitantes". Falha silenciosa: se
+      // o asset não carregar, populationFor retorna null e a UI esconde.
+      unawaited(DensityService.instance.initialize().catchError((Object e) {
+        if (kDebugMode) debugPrint('[Faro] density init falhou: $e');
+      }));
+
+      // Background location tracking: só inicia se o usuário já fez opt-in
+      // numa sessão anterior. Caso contrário fica dormindo até toggle no
+      // /sobre/. Roda em fire-and-forget pra não atrasar o boot.
+      unawaited(_resumeBackgroundTracking());
     } else if (kDebugMode) {
       debugPrint('[Faro] modo dev: lendo ocorrências de assets/, sem Firebase.');
     }
@@ -87,6 +106,16 @@ Future<void> main() async {
       debugPrint('[Faro] unhandled zone error: $error\n$stack');
     }
   });
+}
+
+Future<void> _resumeBackgroundTracking() async {
+  try {
+    if (await BackgroundLocationService.isOptedIn()) {
+      await BackgroundLocationService.instance.start();
+    }
+  } catch (e) {
+    if (kDebugMode) debugPrint('[Faro] resume bg tracking falhou: $e');
+  }
 }
 
 class FaroApp extends StatelessWidget {

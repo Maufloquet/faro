@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "source": "IBGE Censo Demográfico 2010 (consolidado por bairro via PMS/SEMOP)",
+    "note": "Camada 7 — em construção. Censo 2022 ainda não publicou agregação bairro-granular para Salvador. Estimativas usadas para normalização editorial 'relatos por 10k habitantes'. Bairros não listados retornam null e a UI esconde a normalização (preferimos silêncio honesto a número inventado).",
+    "updated": "2026-05-16"
+  },
+  "Itapuã": 123000,
+  "Periperi": 88000,
+  "São Cristóvão": 85000,
+  "Brotas": 80000,
+  "Pirajá": 75000,
+  "Tancredo Neves": 75000,
+  "Pituba": 73000,
+  "Mussurunga": 70000,
+  "Federação": 64000,
+  "Cabula": 55000,
+  "Liberdade": 52000,
+  "Boca do Rio": 48000,
+  "Sussuarana": 38000,
+  "Centro": 30000,
+  "Rio Vermelho": 30000,
+  "Plataforma": 40000,
+  "Paripe": 50000,
+  "Castelo Branco": 20000,
+  "Ribeira": 25000,
+  "Barra": 25000
+}

@@ -2,9 +2,11 @@
 
 Banco de ideias estruturado, atualizado quando aparecem propostas que não cabem agora mas valem registro.
 
-Status atual (sessão de 2026-05-14): MVP **tecnicamente pronto pra beta fechado**. Falta apenas setup manual do usuário (Run Script Xcode + secrets GitHub) e itens externos (jurídico, INPI, conselho editorial). Gate da Fase 1 ("Beta fechado, retenção D7 > 30%") só pode ser medido após convidar usuários reais.
+Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado, com tracking Waze-like fechado**. Falta apenas setup manual do usuário (Run Script Xcode dSYM) e itens externos (jurídico, INPI, conselho editorial). Secrets do GitHub e Crashlytics no console já foram aplicados. Gate da Fase 1 ("Beta fechado, retenção D7 > 30%") só pode ser medido após convidar usuários reais.
 
-**Itens fechados nesta sessão:** Crashlytics + Analytics com cobertura completa de screen_view, cluster manager (zoom 14.5-17), CI/CD com build iOS + deploy auto de Functions + preflight de secrets, suite real de 28 testes substituindo o placeholder, roadmap sincronizado.
+**Itens fechados nesta sessão (2026-05-16):** Background location tracking (estilo Waze) com opt-in progressivo no `/sobre/`, FCM resubscribe ao cruzar célula geohash5, catch-up via query Firestore por relatos recentes na nova célula, notificações locais com copy editorial. Camada 7 (IBGE) adicionada — densidade populacional por bairro de Salvador.
+
+**Itens fechados em 2026-05-14:** Crashlytics + Analytics com cobertura completa de screen_view, cluster manager (zoom 14.5-17), CI/CD com build iOS + deploy auto de Functions + preflight de secrets, suite real de 28 testes substituindo o placeholder, roadmap sincronizado.
 
 ---
 
@@ -29,6 +31,21 @@ Status atual (sessão de 2026-05-14): MVP **tecnicamente pronto pra beta fechado
 **Status:** rebaixado de crítico — Fogo Cruzado supre o piloto
 **Peso no score:** 0.5
 **Detalhes:** Auditoria caso a caso. SSP-BA via Transparência Bahia (painel, sem API estruturada). ISP-RJ tem dados abertos maduros. SDS-PE via Fogo Cruzado.
+
+### Camada 6 — OSM Overpass (contexto urbano)
+**Status:** planejada, não implementada
+**Peso editorial:** alto — destrava o discurso "Faro mostra infraestrutura, não veredito"
+**Detalhes:** Pontos de ônibus, iluminação pública (`highway:lit`), delegacias, hospitais, comércio 24h via Overpass API. Sem API key, grátis. Visualização opcional como toggle no mapa. Combina com features V2 de passageiros de ônibus.
+
+### Camada 7 — IBGE: densidade populacional por bairro
+**Status:** Implementado parcial em 2026-05-16 (top-20 bairros de Salvador)
+**Peso editorial:** crítico — blinda Faro de viés territorial
+**Detalhes:**
+- Asset estático `app/assets/bairros_pop_salvador.json` com 20 bairros do Censo IBGE 2010 (PMS/SEMOP). Censo 2022 ainda não publicou agregação bairro-granular pra Salvador.
+- `DensityService` (singleton, asset-based) carrega no boot e expõe `populationFor(bairro)` + `per10kInhabitants(bairro, count)`.
+- Normalização "relatos por 10k habitantes" disponível pra UI usar onde fizer sentido. Bairros sem dado retornam null — UI esconde a normalização (preferimos silêncio honesto a número inventado).
+- Seção "Densidade populacional (em construção)" no `/sobre/` documenta limitação.
+- **TODO**: expandir pra 157 bairros de Salvador (parsing manual ou scraping SEMOP); adicionar Camaçari/Lauro/Simões; quando Censo 2022 sair com agregação bairro, atualizar fonte; expor o `per10kInhabitants` em `AreasScreen` e no detalhe do relato.
 
 ---
 
@@ -118,10 +135,19 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 
 ## Features de produto (UX/UI)
 
-### Notificação por proximidade (estilo Happn)
+### Notificação por proximidade (estilo Waze)
 **Peso:** alto — listado como P0 do MVP no relatório §8.1
-**Status:** Implementado em 2026-05-11
-**Detalhes:** Banner in-app `_ProximityBanner` quando há relato em raio de 1km nas últimas 6h (commit 1f88bd9). Push direcionado server-side via FCM topic por geohash precisão 5 + Cloud Function `proximityAlert.onOccurrenceCreated` (commit 3cfd822). Geofence client-side (Fase 2) ainda TODO.
+**Status:** Implementado em 2026-05-16 (Fase 2 fechada)
+**Detalhes:**
+- Banner in-app `_ProximityBanner` quando há relato em raio de 1km nas últimas 6h (commit 1f88bd9).
+- Push direcionado server-side via FCM topic por geohash precisão 5 + Cloud Function `proximityAlert.onOccurrenceCreated` (commit 3cfd822).
+- **Background tracking (Waze-like)**: `BackgroundLocationService` abre `Geolocator.getPositionStream` com filtro de distância 500m, recalcula geohash5 a cada movimento e resubscreve o tópico FCM da nova célula. Em iOS usa `AppleSettings.allowBackgroundLocationUpdates`; em Android usa `AndroidSettings.foregroundNotificationConfig` (notif persistente exigida pelo SO).
+- **Catch-up**: ao mudar de geohash5, consulta Firestore por relatos < 6h na nova célula. Se houver, dispara `LocalNotificationService` com copy editorial ("X relatos próximos a você nas últimas 6h"). Range query no campo `geohash` precisão 8 com sentinel ``.
+- **Opt-in progressivo**: toggle no `/sobre/` (`_BackgroundAlertsToggle`). Pede `LocationPermission.always` + permissão de notif. Recusa preserva o comportamento foreground-only. Persiste em `SharedPreferences` (`bg_location_enabled_v1`).
+- **iOS Info.plist**: `UIBackgroundModes` = `fetch`, `location`, `remote-notification`.
+- **Android Manifest**: `ACCESS_BACKGROUND_LOCATION`, `FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, etc.
+- **Bateria**: ~2-3%/h em movimento contínuo, ~0%/h parado (stream pausado por `pauseLocationUpdatesAutomatically`).
+- **Testes**: `background_location_service_test.dart` cobre opt-in lifecycle e dedupe de geohash5; `local_notification_service_test.dart` cobre singleton + no-op em count≤0.
 
 ### Cluster manager (alternativa/complemento ao heatmap)
 **Status:** Implementado em 2026-05-14 (custom, sem dep externa)
