@@ -19,6 +19,8 @@ import '../services/marker_factory.dart';
 import '../services/messaging_service.dart';
 import '../services/occurrences_service.dart';
 import '../services/osm_service.dart';
+import '../widgets/filter_sheet.dart';
+import '../widgets/layers_sheet.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
 import '../widgets/proximity_banner.dart';
@@ -176,10 +178,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await _focusOnArea(result.lat, result.lng);
   }
 
-  void _toggleMapType() {
+  Future<void> _openFilterSheet(List<Occurrence> pool) async {
+    final result = await FilterSheet.show(
+      context,
+      window: _window,
+      reasons: _activeReasons,
+      pool: pool,
+    );
+    if (result == null || !mounted) return;
     setState(() {
-      _mapType = _mapType == MapType.hybrid ? MapType.normal : MapType.hybrid;
+      _window = result.window;
+      _activeReasons = result.reasons;
     });
+    unawaited(AnalyticsService.instance.filterApplied(
+      kind: 'filter_sheet',
+      value: '${result.window.name}|${result.reasons.length}',
+    ));
+  }
+
+  Future<void> _openLayersSheet() async {
+    final result = await LayersSheet.show(
+      context,
+      mapType: _mapType,
+      showBusStops: _showBusStops,
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _mapType = result.mapType;
+      _showBusStops = result.showBusStops;
+    });
+    unawaited(AnalyticsService.instance.filterApplied(
+      kind: 'layers',
+      value: '${result.mapType.name}|busStops=${result.showBusStops}',
+    ));
   }
 
   List<Occurrence> _proximityAlerts(List<Occurrence> all) {
@@ -335,45 +366,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 64 + (alerts.isNotEmpty ? 76 : 0),
             left: 12,
-            right: 12,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _TimeWindowChips(
-                  selected: _window,
-                  onSelect: (w) {
-                    setState(() => _window = w);
-                    AnalyticsService.instance.filterApplied(
-                      kind: 'time_window',
-                      value: w.name,
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                _ReasonChips(
-                  pool: windowed.maybeWhen(data: (v) => v, orElse: () => const []),
-                  active: _activeReasons,
-                  onToggle: (reason) {
-                    setState(() {
-                      final next = Set<String>.from(_activeReasons);
-                      if (next.contains(reason)) {
-                        next.remove(reason);
-                      } else {
-                        next.add(reason);
-                      }
-                      _activeReasons = next;
-                    });
-                    AnalyticsService.instance.filterApplied(kind: 'reason');
-                  },
-                  onClear: () {
-                    setState(() => _activeReasons = const {});
-                    AnalyticsService.instance.filterApplied(
-                      kind: 'reason',
-                      value: 'clear',
-                    );
-                  },
-                ),
-              ],
+            child: FilterPill(
+              window: _window,
+              activeReasons: _activeReasons,
+              onTap: () => _openFilterSheet(
+                windowed.maybeWhen(data: (v) => v, orElse: () => const []),
+              ),
             ),
           ),
           Positioned(
@@ -381,20 +379,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             bottom: MediaQuery.of(context).size.height * 0.18 + 12,
             child: Column(
               children: [
-                _MapTypeToggle(
-                  isHybrid: _mapType == MapType.hybrid,
-                  onTap: _toggleMapType,
-                ),
-                const SizedBox(height: 10),
-                _BusStopsToggle(
-                  active: _showBusStops,
-                  onTap: () {
-                    setState(() => _showBusStops = !_showBusStops);
-                    AnalyticsService.instance.filterApplied(
-                      kind: 'bus_stops',
-                      value: _showBusStops ? 'on' : 'off',
-                    );
-                  },
+                LayersButton(
+                  hasActiveLayers: _mapType == MapType.hybrid || _showBusStops,
+                  onTap: _openLayersSheet,
                 ),
                 const SizedBox(height: 10),
                 _LocateButton(loading: _locating, onTap: _centerOnMe),
@@ -412,209 +399,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ],
       ),
     ),
-    );
-  }
-}
-
-class _ReasonChips extends StatelessWidget {
-  final List<Occurrence> pool;
-  final Set<String> active;
-  final ValueChanged<String> onToggle;
-  final VoidCallback onClear;
-
-  const _ReasonChips({
-    required this.pool,
-    required this.active,
-    required this.onToggle,
-    required this.onClear,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final counts = <String, int>{};
-    for (final o in pool) {
-      final r = o.mainReason;
-      if (r == null) continue;
-      counts[r] = (counts[r] ?? 0) + 1;
-    }
-    final entries = counts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    if (entries.isEmpty) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 32,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: entries.length + (active.isEmpty ? 0 : 1),
-        separatorBuilder: (_, _) => const SizedBox(width: 6),
-        itemBuilder: (_, i) {
-          if (active.isNotEmpty && i == 0) {
-            return _PillChip(
-              label: 'Limpar',
-              icon: Icons.close,
-              color: const Color(0xFF8A3F3F),
-              isSelected: false,
-              onTap: onClear,
-            );
-          }
-          final entry = entries[i - (active.isEmpty ? 0 : 1)];
-          final isSelected = active.contains(entry.key);
-          return _PillChip(
-            label: '${entry.key} · ${entry.value}',
-            isSelected: isSelected,
-            onTap: () => onToggle(entry.key),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _PillChip extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final Color? color;
-  final bool isSelected;
-  final VoidCallback onTap;
-  const _PillChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.icon,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = isSelected
-        ? (color ?? const Color(0xFF8A6A3A))
-        : Colors.white;
-    final fg = isSelected ? Colors.white : const Color(0xFF2A2A2A);
-    return Material(
-      color: bg,
-      elevation: 1.5,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 14, color: fg),
-                const SizedBox(width: 4),
-              ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: fg,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TimeWindowChips extends StatelessWidget {
-  final TimeWindow selected;
-  final ValueChanged<TimeWindow> onSelect;
-  const _TimeWindowChips({required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: TimeWindow.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final w = TimeWindow.values[i];
-          final isSelected = w == selected;
-          return Material(
-            color: isSelected ? const Color(0xFF2A4A7A) : Colors.white,
-            elevation: 2,
-            borderRadius: BorderRadius.circular(18),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => onSelect(w),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                child: Text(
-                  w.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isSelected ? Colors.white : const Color(0xFF1A1A1A),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _MapTypeToggle extends StatelessWidget {
-  final bool isHybrid;
-  final VoidCallback onTap;
-  const _MapTypeToggle({required this.isHybrid, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      elevation: 4,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(11),
-          child: Icon(
-            isHybrid ? Icons.map_outlined : Icons.satellite_alt_outlined,
-            size: 22,
-            color: const Color(0xFF2A4A7A),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BusStopsToggle extends StatelessWidget {
-  final bool active;
-  final VoidCallback onTap;
-  const _BusStopsToggle({required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: active ? const Color(0xFF2A4A7A) : Colors.white,
-      elevation: 4,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(11),
-          child: Icon(
-            Icons.directions_bus_outlined,
-            size: 22,
-            color: active ? Colors.white : const Color(0xFF2A4A7A),
-          ),
-        ),
-      ),
     );
   }
 }
