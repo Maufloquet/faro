@@ -93,7 +93,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Modo direção: stream contínuo de posição que move a câmera. Inicia
   /// quando o usuário ativa o toggle no drawer; cancela ao desativar.
   StreamSubscription<Position>? _drivingSub;
-  static const double _drivingFollowZoom = 16.0;
+  /// Configuração da câmera em modo direção — espelha Waze/Google Maps
+  /// Navigation: zoom de quarteirão, tilt 3D, bearing sincronizado com
+  /// o heading do GPS.
+  static const double _drivingFollowZoom = 17.5;
+  static const double _drivingTilt = 50.0;
 
   bool _matchesFilters(Occurrence o) {
     if (!_window.includes(o.date)) return false;
@@ -152,17 +156,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       );
       if (!mounted) return;
       setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
-      final controller = _map;
-      if (controller != null) {
-        await controller.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(pos.latitude, pos.longitude),
-              zoom: _drivingFollowZoom,
-            ),
-          ),
-        );
-      }
+      await _animateDriving(pos.latitude, pos.longitude, bearing: 0);
     } catch (_) {
       // Ignora: o stream abaixo eventualmente cobre.
     }
@@ -174,32 +168,56 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
     ).listen((pos) async {
       if (!mounted) return;
+      double? newHeading;
+      if (pos.speed >= 3 && pos.heading >= 0) {
+        newHeading = pos.heading;
+      }
       setState(() {
         _userPos = LatLng(pos.latitude, pos.longitude);
         // Heading parado é ruidoso (gira aleatório). Só atualizamos se
         // a velocidade reportada indica deslocamento real (≥ 3 m/s ≈ 11 km/h).
-        if (pos.speed >= 3 && pos.heading >= 0) {
-          _drivingArrowRotation = pos.heading;
-        }
+        if (newHeading != null) _drivingArrowRotation = newHeading;
       });
-      final controller = _map;
-      if (controller != null) {
-        await controller.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(pos.latitude, pos.longitude),
-              zoom: _drivingFollowZoom,
-            ),
-          ),
-        );
-      }
+      await _animateDriving(
+        pos.latitude,
+        pos.longitude,
+        bearing: newHeading ?? _drivingArrowRotation,
+      );
     });
+  }
+
+  /// Anima a câmera em modo navegação: zoom de rua + tilt 3D + bearing
+  /// = heading (mapa gira pra deixar "pra frente sempre pra cima").
+  Future<void> _animateDriving(double lat, double lng,
+      {required double bearing}) async {
+    final controller = _map;
+    if (controller == null) return;
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(lat, lng),
+          zoom: _drivingFollowZoom,
+          tilt: _drivingTilt,
+          bearing: bearing,
+        ),
+      ),
+    );
   }
 
   void _stopDrivingFollow() {
     _drivingSub?.cancel();
     _drivingSub = null;
     if (mounted) setState(() => _drivingArrowRotation = 0);
+    // Volta a câmera pra a vista normal: sem tilt e norte pra cima.
+    final controller = _map;
+    final pos = _userPos;
+    if (controller != null && pos != null) {
+      unawaited(controller.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: pos, zoom: 15),
+        ),
+      ));
+    }
   }
 
   Future<void> _loadMarkers() async {

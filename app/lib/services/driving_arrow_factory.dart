@@ -7,59 +7,52 @@ import '../core/design/tokens.dart';
 
 /// Gera o BitmapDescriptor da "seta de carro" usada no modo direção.
 ///
-/// Inspiração visual no marker do Waze (círculo com seta), mas com a
-/// paleta Faro (não roxo). A seta sempre é desenhada apontando pra cima
-/// (norte do bitmap). O Google Maps rotaciona o marker pelo `heading`
-/// do GPS via `Marker.rotation`.
+/// Inspiração visual no marker do Waze/Google Maps Navigation: ícone
+/// compacto, sem halos externos exagerados, com a paleta Faro
+/// (não roxo). A seta sempre é desenhada apontando pra cima (norte do
+/// bitmap). O Google Maps rotaciona o marker pelo `heading` do GPS via
+/// `Marker.rotation`.
 class DrivingArrowFactory {
   BitmapDescriptor? _cache;
 
   Future<BitmapDescriptor> build({double devicePixelRatio = 2.5}) async {
     if (_cache != null) return _cache!;
-    // 64pt-base: fica proporcional aos pins de ocorrência sem dominar
-    // a tela em zoom de rua.
-    final size = 64.0 * devicePixelRatio;
+    // 36pt-base: chega a ~36dp na tela em DPR ~3, mesmo footprint do
+    // ícone do Waze e do Google Maps em modo navegação.
+    final size = 36.0 * devicePixelRatio;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final center = Offset(size / 2, size / 2);
     const primary = FaroColors.primary;
 
-    // Halo externo translúcido — comunica "minha posição" sem ficar
-    // pesado contra o satélite.
+    // Sombra suave atrás do disco (profundidade contra mapa)
     canvas.drawCircle(
-      center,
-      size / 2.3,
-      Paint()..color = primary.withValues(alpha: 0.18),
-    );
-
-    // Sombra do disco — profundidade contra tile de mapa.
-    canvas.drawCircle(
-      Offset(center.dx, center.dy + 2.5 * devicePixelRatio),
-      size / 3.2,
+      Offset(center.dx, center.dy + 1.5 * devicePixelRatio),
+      size / 2.6,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.32)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * devicePixelRatio),
+        ..color = Colors.black.withValues(alpha: 0.35)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3 * devicePixelRatio),
     );
 
-    // Anel branco externo
+    // Anel branco externo (contraste contra mapa em qualquer fundo)
     canvas.drawCircle(
       center,
-      size / 3.1,
+      size / 2.4,
       Paint()..color = Colors.white,
     );
 
-    // Disco azul/marrom Faro (cor primary)
+    // Disco azul Faro (cor primary)
     canvas.drawCircle(
       center,
-      size / 3.4,
+      size / 2.75,
       Paint()..color = primary,
     );
 
     // Seta branca apontando pra cima
     final arrowPath = Path();
-    final tipY = center.dy - size / 6.5;
-    final baseY = center.dy + size / 9;
-    final halfWidth = size / 9;
+    final tipY = center.dy - size / 5;
+    final baseY = center.dy + size / 8;
+    final halfWidth = size / 7;
     arrowPath
       ..moveTo(center.dx, tipY)
       ..lineTo(center.dx + halfWidth, baseY)
