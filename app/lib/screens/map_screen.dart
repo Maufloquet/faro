@@ -22,6 +22,7 @@ import '../services/marker_factory.dart';
 import '../services/messaging_service.dart';
 import '../services/occurrences_service.dart';
 import '../services/osm_service.dart';
+import '../widgets/driving_mode_button.dart';
 import '../widgets/faro_drawer.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/layers_sheet.dart';
@@ -459,6 +460,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             bottom: MediaQuery.of(context).size.height * 0.18 + 12,
             child: Column(
               children: [
+                DrivingModeButton(
+                  active: ref.watch(drivingModeProvider),
+                  onTap: () =>
+                      ref.read(drivingModeProvider.notifier).toggle(),
+                ),
+                const SizedBox(height: 12),
                 LayersButton(
                   hasActiveLayers: _mapType == MapType.hybrid || _showBusStops,
                   onTap: _openLayersSheet,
