@@ -26,6 +26,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const ngeohash = require("ngeohash");
 const { authedFetch } = require("./fogoCruzadoAuth");
+const { buildEventKey } = require("./eventKey");
 
 const STATE_IDS = {
   BA: "d3a9b545-7056-4dc6-9b68-ce320c9edffc",
@@ -119,6 +120,9 @@ async function backfillState(db, stateAbbr, stateId, initialDate, finalDate) {
       const date = new Date(o.date);
       const expiresAt = new Date(date.getTime() + ttlMs);
       const geohash = ngeohash.encode(Number(o.latitude), Number(o.longitude), 8);
+      const city = o.city?.name || null;
+      const neighborhood = o.neighborhood?.name || null;
+      const mainReason = o.contextInfo?.mainReason?.name || null;
 
       batch.set(
         ref,
@@ -129,9 +133,15 @@ async function backfillState(db, stateAbbr, stateId, initialDate, finalDate) {
           date: admin.firestore.Timestamp.fromDate(date),
           expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
           state: o.state?.name || stateAbbr,
-          city: o.city?.name || null,
-          neighborhood: o.neighborhood?.name || null,
-          mainReason: o.contextInfo?.mainReason?.name || null,
+          city,
+          neighborhood,
+          mainReason,
+          // eventKey grava pra que o dedupe do scheduler diário consiga
+          // achar matches contra dados históricos. Backfill em si é
+          // one-shot e usa id externo do FC como docId, então é
+          // idempotente por construção; mas docs futuros (matéria de
+          // jornal cobrindo evento dentro da janela) precisam achar isso.
+          eventKey: buildEventKey({ city, neighborhood, mainReason }),
           policeAction: !!o.policeAction,
           agentPresence: !!o.agentPresence,
           source: SOURCE,

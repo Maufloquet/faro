@@ -10,6 +10,8 @@ exports.cleanupOccurrences = require("./lib/cleanupOccurrences").cleanupOccurren
 
 // HTTP (manual one-shot)
 exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoCruzado;
+exports.backfillDedup = require("./lib/dedupBackfill").backfillDedup;
+exports.fetchOsmBusStops = require("./lib/osmFetch").fetchOsmBusStops;
 
 // Firestore triggers
 exports.onOccurrenceCreated = require("./lib/proximityAlert").onOccurrenceCreated;

@@ -33,6 +33,7 @@ const Parser = require("rss-parser");
 const { enabledSources } = require("./newsSources");
 const { classify } = require("./groqClient");
 const { resolveBairro } = require("./bairrosDict");
+const { buildEventKey } = require("./eventKey");
 
 const SOURCE = "media";
 const PARSE_TIMEOUT_MS = 15000;
@@ -40,6 +41,15 @@ const PARSE_TIMEOUT_MS = 15000;
 // confortável dentro do TPM do Groq 8B (30k/min) sem retry agressivo.
 const MAX_ITEMS_PER_SOURCE = 8;
 const TTL_HOURS = 24 * 30;
+
+/** Janela de ±N horas em que dois relatos do mesmo (cidade, bairro, tipo)
+ * são tratados como o MESMO evento e merged como corroboração. */
+const DEDUP_WINDOW_HOURS = 6;
+
+/** Boost de peso por corroboração — saiu em mais um veículo, sobe um pouco.
+ * Cap evita que evento megamidiático domine o score indefinidamente. */
+const CORROBORATION_WEIGHT_BOOST = 0.05;
+const MAX_CORROBORATED_WEIGHT = 0.95;
 
 // Parser instanciado lazy dentro da função pra não pesar o load global
 // — firebase tenta importar o módulo em 10s pra descobrir as functions.
@@ -152,10 +162,57 @@ async function ingestFromSource(db, source) {
       continue;
     }
 
-    // ID determinístico do doc: hash do URL — idempotente.
-    const docId = `media-${hash.slice(0, 16)}`;
     const pubDate = item.isoDate ? new Date(item.isoDate) : new Date();
     const expiresAt = new Date(pubDate.getTime() + TTL_HOURS * 60 * 60 * 1000);
+    const mainReason = mapType(classification.occurrence_type);
+    const neighborhood = geo.method === "city-centroid" ? null : geo.matched;
+    const busLines = sanitizeBusLines(classification.bus_lines);
+    const transportContext = sanitizeTransportContext(classification.transport_context);
+    const eventKey = buildEventKey({
+      city: classification.city,
+      neighborhood,
+      mainReason,
+      geocodeMethod: geo.method,
+    });
+
+    // Dedupe cross-source: se já existe doc com mesma eventKey em ±6h,
+    // adicionamos uma corroboração em vez de criar duplicata. Cobre
+    // "mesmo tiroteio sai em 3 portais" e "Fogo Cruzado + matéria sobre
+    // o mesmo evento".
+    const corroboration = {
+      source: SOURCE,
+      sourceProvider: source.id,
+      sourceName: source.name,
+      url,
+      title: item.title || null,
+      confidence: classification.confidence ?? null,
+      addedAt: new Date(),
+    };
+
+    const existing = eventKey ? await findCorroboratableDoc(db, eventKey, pubDate) : null;
+    if (existing) {
+      const data = existing.data();
+      const currentWeight = typeof data.weight === "number" ? data.weight : 0.5;
+      await existing.ref.update({
+        corroborations: admin.firestore.FieldValue.arrayUnion(corroboration),
+        corroborationCount: admin.firestore.FieldValue.increment(1),
+        weight: Math.min(MAX_CORROBORATED_WEIGHT, currentWeight + CORROBORATION_WEIGHT_BOOST),
+        // expira não antes da janela do relato mais recente.
+        expiresAt: admin.firestore.Timestamp.fromDate(
+          new Date(Math.max(
+            data.expiresAt?.toMillis?.() ?? 0,
+            expiresAt.getTime(),
+          )),
+        ),
+        lastCorroboratedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      logger.info(`Corroborado · ${existing.id} += ${source.id}`);
+      result.written++;
+      continue;
+    }
+
+    // ID determinístico do doc: hash do URL — idempotente.
+    const docId = `media-${hash.slice(0, 16)}`;
 
     await db.collection("occurrences").doc(docId).set(
       {
@@ -166,9 +223,12 @@ async function ingestFromSource(db, source) {
         expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
         state: "Bahia",
         city: classification.city,
-        neighborhood: geo.method === "city-centroid" ? null : geo.matched,
+        neighborhood,
         geocodeMethod: geo.method,
-        mainReason: mapType(classification.occurrence_type),
+        mainReason,
+        eventKey,
+        busLines,
+        transportContext,
         source: SOURCE,
         sourceProvider: source.id,
         sourceName: source.name,
@@ -176,6 +236,7 @@ async function ingestFromSource(db, source) {
         externalUrl: url,
         externalTitle: item.title,
         confidence: classification.confidence,
+        corroborationCount: 0,
         ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
@@ -189,6 +250,26 @@ async function ingestFromSource(db, source) {
 
 function sha1(s) {
   return crypto.createHash("sha1").update(s).digest("hex");
+}
+
+/**
+ * Procura por um doc em /occurrences com a mesma eventKey dentro de
+ * ±DEDUP_WINDOW_HOURS da data passada. Retorna o DocumentSnapshot ou null.
+ * A query precisa do índice composto (eventKey ASC, date ASC).
+ */
+async function findCorroboratableDoc(db, eventKey, pubDate) {
+  if (!eventKey) return null;
+  const windowMs = DEDUP_WINDOW_HOURS * 60 * 60 * 1000;
+  const since = new Date(pubDate.getTime() - windowMs);
+  const until = new Date(pubDate.getTime() + windowMs);
+  const snap = await db
+    .collection("occurrences")
+    .where("eventKey", "==", eventKey)
+    .where("date", ">=", admin.firestore.Timestamp.fromDate(since))
+    .where("date", "<=", admin.firestore.Timestamp.fromDate(until))
+    .limit(1)
+    .get();
+  return snap.empty ? null : snap.docs[0];
 }
 
 const TYPE_MAP = {
@@ -206,5 +287,46 @@ function mapType(t) {
   return TYPE_MAP[t.toLowerCase()] || "Outros";
 }
 
+/**
+ * Aceita só o que a IA REALMENTE consegue extrair com confiança: array de
+ * strings curtas com dígitos ou códigos curtos tipo "L-105" ou "1234-01".
+ * Descarta tudo o que parece nome de bairro ou descrição livre — a IA
+ * tende a inventar quando deixamos campo livre.
+ */
+function sanitizeBusLines(raw) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const v of raw) {
+    if (typeof v !== "string") continue;
+    const trimmed = v.trim();
+    if (trimmed.length === 0 || trimmed.length > 20) continue;
+    // Tem que conter ao menos UM dígito — bloqueia descrições tipo "ônibus pra Lauro"
+    if (!/\d/.test(trimmed)) continue;
+    // Lista de chars permitidos: dígitos, letras, hífen, ponto, barra
+    if (!/^[A-Za-z0-9.\-/]+$/.test(trimmed)) continue;
+    const norm = trimmed.toUpperCase();
+    if (seen.has(norm)) continue;
+    seen.add(norm);
+    out.push(norm);
+  }
+  return out;
+}
+
+function sanitizeTransportContext(raw) {
+  if (raw === "onibus" || raw === "metro") return raw;
+  return null;
+}
+
 // Exportado para testes unitários
-exports._internal = { sha1, mapType, TYPE_MAP };
+exports._internal = {
+  sha1,
+  mapType,
+  TYPE_MAP,
+  findCorroboratableDoc,
+  DEDUP_WINDOW_HOURS,
+  CORROBORATION_WEIGHT_BOOST,
+  MAX_CORROBORATED_WEIGHT,
+  sanitizeBusLines,
+  sanitizeTransportContext,
+};

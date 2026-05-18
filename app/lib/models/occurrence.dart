@@ -52,8 +52,13 @@ class Occurrence {
   final String? externalTitle;
   final double? confidence;
   final String? geocodeMethod;
+  // Transporte público (extração via LLM no newsIngest):
+  final List<String> busLines;
+  final String? transportContext; // 'onibus' | 'metro' | null
 
   bool get isCityCentroid => geocodeMethod == 'city-centroid';
+  bool get hasBusLines => busLines.isNotEmpty;
+  bool get isPublicTransport => transportContext != null;
 
   Occurrence({
     required this.id,
@@ -73,10 +78,16 @@ class Occurrence {
     this.externalTitle,
     this.confidence,
     this.geocodeMethod,
+    this.busLines = const [],
+    this.transportContext,
   });
 
   factory Occurrence.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
+    final rawBusLines = d['busLines'];
+    final busLines = rawBusLines is List
+        ? rawBusLines.whereType<String>().toList(growable: false)
+        : const <String>[];
     return Occurrence(
       id: doc.id,
       latitude: (d['latitude'] as num).toDouble(),
@@ -95,6 +106,8 @@ class Occurrence {
       externalTitle: d['externalTitle'] as String?,
       confidence: (d['confidence'] as num?)?.toDouble(),
       geocodeMethod: d['geocodeMethod'] as String?,
+      busLines: busLines,
+      transportContext: d['transportContext'] as String?,
     );
   }
 }

@@ -46,9 +46,14 @@ class _AboutScreenState extends State<AboutScreen> {
                 'Não somos um produto de garantia. Nunca dizemos "está seguro". A única mensagem possível em uma região sem relatos é "sem relatos recentes" — silêncio nos dados não é silêncio nas ruas. Mantenha atenção sempre.',
           ),
           _Section(
+            title: 'Sem cadastro',
+            body:
+                'Você não precisa criar conta. Não pedimos seu nome, email ou telefone. Seu uso é anônimo. Não rastreamos seu trajeto. Você abre o app e já está usando — é assim por princípio, não por descuido.',
+          ),
+          _Section(
             title: 'Fontes de dados',
             body:
-                'Hoje: Fogo Cruzado (banco público de violência armada — RJ, PE, BA, PA). Próximas: relatos de usuários com validação coletiva, scraping de portais locais de notícia, monitoramento de canais públicos do Telegram. Cada fonte com peso diferente no cálculo de risco.',
+                'Hoje: Fogo Cruzado (banco público de violência armada — RJ, PE, BA, PA) + matérias de jornais locais (G1, A Tarde, Correio 24h, iBahia, Bahia Notícias, Tribuna da Bahia, releases da SSP-BA) processadas por IA pra extrair bairro, tipo de relato e linha de ônibus. Próximas: relatos de usuários com validação coletiva e canais públicos do Telegram. Cada fonte com peso diferente.',
           ),
           _Section(
             title: 'Como classificamos o risco',
@@ -71,9 +76,19 @@ class _AboutScreenState extends State<AboutScreen> {
                 'Sua localização é usada apenas para mostrar relatos próximos. Não armazenamos seu histórico individual de trajetos. Dados agregados por região, nunca por pessoa. A política de privacidade completa está disponível em desenvolvimento.',
           ),
           _Section(
-            title: 'Para quem anda de ônibus',
+            title: 'Se você anda de ônibus',
             body:
-                'Você é passageiro frequente de ônibus? O Faro hoje ajuda você a avaliar a região onde vai descer antes de chegar. Use o filtro de 24h e a busca por bairro pra olhar antecipadamente. Funções específicas pra ponto de ônibus e trecho a pé estão na V2 do roadmap.',
+                'Antes de sair de casa, abra o mapa e use o filtro "24h" pra ver o que rolou hoje na região onde vai descer. Use a busca de bairro pra olhar o destino mesmo se ainda não estiver no caminho. Em Atividade por Área, dá pra ver quais linhas de ônibus foram citadas em relatos recentes — não é ranking de linha perigosa, é informação pra você se preparar (escolher horário, descer um ponto antes ou depois). O app NÃO recomenda evitar linha — quem depende do ônibus não tem essa escolha.',
+          ),
+          _Section(
+            title: 'Se você é motorista de aplicativo',
+            body:
+                'Antes de aceitar corrida pra destino desconhecido, abra o mapa e busque o bairro do destino — em 2 segundos você vê relatos das últimas 24h. Não vamos recomendar você recusar corrida (discriminação territorial é ilegal e viola termos da plataforma), mas dar contexto pra decidir com calma. Ative "Alertar com o app fechado" pra receber notificação quando entrar em região com relato recente. Veja a tela Atividade por Área pra entender padrões da semana.',
+          ),
+          _Section(
+            title: 'Se você é entregador',
+            body:
+                'Mesmo princípio do motorista: contexto antes da entrega, não veredito. Em entregas noturnas em áreas pouco familiares, use a busca por bairro pra olhar a região antes de aceitar. O painel Atividade por Área mostra onde concentraram relatos nas últimas semanas — útil pra escolher horários de menor exposição.',
           ),
           _Section(
             title: 'Contato',

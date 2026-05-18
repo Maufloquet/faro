@@ -71,6 +71,19 @@ jobs:
           channel: stable
           cache: true
 
+      # Cache de Gradle — primeiro build do dia ainda é frio, mas builds
+      # subsequentes com mesmo Gradle wrapper + dependências (Kotlin, AGP,
+      # androidx) pulam o download pesado.
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('app/android/**/*.gradle*', 'app/android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Stub Maps key
         run: |
           echo 'MAPS_API_KEY=PLACEHOLDER_CI' > android/key.properties

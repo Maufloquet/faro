@@ -30,6 +30,8 @@ Recebe título + descrição de uma notícia. Retorna APENAS JSON com:
   "occurrence_type": "tiroteio"|"homicidio"|"roubo"|"acao_policial"|"sequestro"|"agressao"|"outros"|null,
   "neighborhood": "nome do bairro mencionado",  // ou null
   "city": "Salvador"|"Camaçari"|"Lauro de Freitas"|"Simões Filho"|null,  // só essas 4 ou null se outra
+  "bus_lines": ["1234", "L-105"],   // array de strings com números/códigos de linha mencionados, ou []
+  "transport_context": "onibus"|"metro"|null,  // só preencha se a notícia for explicitamente sobre transporte público
   "confidence": 0.0-1.0  // sua confiança na extração
 }
 
@@ -37,6 +39,8 @@ Regras:
 - Bairros: use o nome exato como mencionado, sem cidade ("Pirajá" não "Pirajá, Salvador")
 - Se a notícia menciona só município sem bairro, neighborhood=null
 - Se cidade é outra (Feira de Santana, Ilhéus, etc), retorne city=null
+- bus_lines: APENAS quando o texto cita explicitamente número/código de linha (ex.: "linha 1234", "ônibus 0220-01", "L-105"). NÃO invente, NÃO interprete "ônibus rumo a Cajazeiras" como linha. Se não há código claro, retorne array vazio [].
+- transport_context: só preencha quando o crime aconteceu DENTRO ou no PONTO de transporte público. Crime na rua que por acaso menciona ônibus passando = null.
 - Notícias políticas, comentários, opiniões, esporte → security_related=false
 - Sem campo extra, sem markdown, sem explicação. Apenas o JSON.`;
 
@@ -136,3 +140,4 @@ function extractJsonBlock(s) {
 }
 
 module.exports = { classify };
+module.exports._internal = { extractJsonBlock, parseRetryAfter };

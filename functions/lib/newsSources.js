@@ -175,6 +175,49 @@ const SOURCES = [
     weight: 0.30,
     scope: "salvador",
   },
+  // HojeBahia — portal local relevante, RSS direto retorna 403 (anti-bot),
+  // então cobrimos via Google News.
+  {
+    id: "gnews-hoje-bahia",
+    name: "Google News · Hoje Bahia",
+    url: GOOGLE_NEWS_RSS("\"hoje bahia\" Salvador"),
+    enabled: true,
+    weight: 0.30,
+    scope: "salvador",
+  },
+  // Bahia.ba — portal mais novo, ainda sem RSS direto confirmado.
+  {
+    id: "gnews-bahia-ba",
+    name: "Google News · Bahia.ba",
+    url: GOOGLE_NEWS_RSS("\"bahia.ba\" Salvador segurança"),
+    enabled: true,
+    weight: 0.30,
+    scope: "salvador",
+  },
+  // Tribuna da Bahia — RSS direto não confirmado, cobrimos via Google News.
+  {
+    id: "gnews-tribuna-bahia",
+    name: "Google News · Tribuna da Bahia",
+    url: GOOGLE_NEWS_RSS("\"tribuna da bahia\" Salvador"),
+    enabled: true,
+    weight: 0.30,
+    scope: "salvador",
+  },
+
+  // ─── Releases oficiais (peso maior, sem sensacionalismo) ───
+  //
+  // Notícias oficiais da SSP-BA são releases institucionais sobre operações,
+  // apreensões e prisões. Tom factual (não-sensacionalista) — peso editorial
+  // levemente maior. Trade-off: ponto de vista da polícia, então combina
+  // com cobertura de jornais críticos pra evitar viés institucional.
+  {
+    id: "gnews-ssp-ba",
+    name: "Google News · SSP-BA (releases oficiais)",
+    url: GOOGLE_NEWS_RSS("site:ssp.ba.gov.br OR site:ba.gov.br/ssp Salvador"),
+    enabled: true,
+    weight: 0.35,
+    scope: "salvador",
+  },
 
   // ─── Programas populares (peso menor por viés sensacionalista) ───
   //

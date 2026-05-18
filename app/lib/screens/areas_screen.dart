@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/filters/time_window.dart';
 import '../core/stats/area_activity.dart';
+import '../core/stats/bus_line_activity.dart';
+import '../core/stats/temporal_activity.dart';
 import '../core/text/string_format.dart';
+import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
 import '../services/occurrences_service.dart';
+import '../widgets/temporal_chart.dart';
 
 /// Tela "Atividade recente por área".
 ///
@@ -41,6 +45,17 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
       data: (list) => rankAreas(list),
       orElse: () => <AreaActivity>[],
     );
+    final busLines = filtered.maybeWhen(
+      data: rankBusLines,
+      orElse: () => <BusLineActivity>[],
+    );
+    final filteredList = filtered.maybeWhen(
+      data: (v) => v,
+      orElse: () => const <Occurrence>[],
+    );
+    final hourBuckets = rankByHour(filteredList);
+    final weekdayBuckets = rankByWeekday(filteredList);
+    final peak = peakHour(hourBuckets);
 
     return Scaffold(
       appBar: AppBar(
@@ -67,6 +82,20 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
                     onFocus: widget.onFocus,
                   ),
                 ),
+          if (busLines.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            const _BusLinesHeader(),
+            const SizedBox(height: 12),
+            ...busLines.map((line) => _BusLineCard(activity: line)),
+          ],
+          if (filteredList.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _TemporalSection(
+              hourEntries: TemporalEntries.fromHours(hourBuckets),
+              weekdayEntries: TemporalEntries.fromWeekdays(weekdayBuckets),
+              peakHour: peak,
+            ),
+          ],
         ],
       ),
     );
@@ -282,6 +311,173 @@ class _AreaCard extends StatelessWidget {
     if (diff.inMinutes < 60) return 'há ${diff.inMinutes} min';
     if (diff.inHours < 24) return 'há ${diff.inHours}h';
     return 'há ${diff.inDays}d';
+  }
+}
+
+class _BusLinesHeader extends StatelessWidget {
+  const _BusLinesHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF3F8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD7E0EC)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.directions_bus_outlined, size: 18, color: Color(0xFF2A4A7A)),
+              SizedBox(width: 8),
+              Text(
+                'Linhas de ônibus citadas',
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2A4A7A),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Linhas mencionadas em matérias de jornal sobre relatos do período. NÃO é ranking de linha perigosa — pessoa que depende da linha não pode trocar. Use pra se preparar (escolher horário, descer um ponto antes ou depois).',
+            style: TextStyle(fontSize: 12.5, height: 1.5, color: Color(0xFF3A3A3A)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BusLineCard extends StatelessWidget {
+  final BusLineActivity activity;
+  const _BusLineCard({required this.activity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE6E6DC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A4A7A),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  activity.line,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'citada em ${activity.count} ${activity.count == 1 ? "relato" : "relatos"}',
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF3A3A3A)),
+                ),
+              ),
+            ],
+          ),
+          if (activity.neighborhoodBreakdown.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Bairros: ${activity.neighborhoodBreakdown.take(3).map((e) => titleCasePtBr(e.key)).join(" · ")}',
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF555555)),
+            ),
+          ],
+          if (activity.reasonBreakdown.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Tipos: ${activity.reasonBreakdown.take(3).map((e) => e.key).join(" · ")}',
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF555555)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TemporalSection extends StatelessWidget {
+  final List<({String tag, int count})> hourEntries;
+  final List<({String tag, int count})> weekdayEntries;
+  final int? peakHour;
+
+  const _TemporalSection({
+    required this.hourEntries,
+    required this.weekdayEntries,
+    required this.peakHour,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final peakLabel = peakHour == null
+        ? null
+        : '${peakHour!.toString().padLeft(2, '0')}h–${(peakHour! + 1).toString().padLeft(2, '0')}h';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE6E6DC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.schedule, size: 18, color: Color(0xFF7A5C2C)),
+              SizedBox(width: 8),
+              Text(
+                'Quando acontecem',
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (peakLabel != null)
+            Text(
+              'Horário com mais relatos: $peakLabel',
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF555555)),
+            ),
+          const SizedBox(height: 4),
+          const Text(
+            'Padrão temporal dos relatos do período. NÃO é "evite esse horário" — quem precisa sair à noite não tem essa escolha. Use pra escolher quando der flexibilidade.',
+            style: TextStyle(fontSize: 11.5, height: 1.5, color: Color(0xFF8A8A8A), fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 14),
+          TemporalChart(label: 'POR HORA DO DIA', entries: hourEntries),
+          const SizedBox(height: 14),
+          TemporalChart(label: 'POR DIA DA SEMANA', entries: weekdayEntries),
+        ],
+      ),
+    );
   }
 }
 

@@ -72,6 +72,22 @@ firebase emulators:start  # local
 firebase deploy --only functions  # produção
 ```
 
+### One-shots manuais (rodar uma vez no setup)
+
+Após o deploy inicial das Functions, rodar:
+
+```bash
+# Sincroniza pontos de ônibus (OSM Overpass → /osm/bus_stops)
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  "https://southamerica-east1-<PROJECT_ID>.cloudfunctions.net/fetchOsmBusStops"
+
+# (opcional) Mescla duplicatas históricas em /occurrences
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  "https://southamerica-east1-<PROJECT_ID>.cloudfunctions.net/backfillDedup?dryRun=true"
+```
+
+Pontos de ônibus mudam pouco — re-rodar `fetchOsmBusStops` a cada 3-6 meses é suficiente.
+
 ## Documento de referência
 
 `docs/relatorio_v3.pdf` — análise crítica de viabilidade e plano de execução. Toda decisão estratégica deve ser consistente com esse documento. Quando divergir, registrar em `docs/decisoes/`.

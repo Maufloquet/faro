@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,42 +6,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../core/filters/time_window.dart';
+import '../core/geo/haversine.dart';
 import '../core/theme/app_theme.dart';
+import '../models/bus_stop.dart';
 import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
+import '../services/cluster_engine.dart';
 import '../services/cluster_marker_factory.dart';
 import '../services/location_service.dart';
 import '../services/marker_factory.dart';
 import '../services/messaging_service.dart';
 import '../services/occurrences_service.dart';
+import '../services/osm_service.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
+import '../widgets/proximity_banner.dart';
 import 'areas_screen.dart';
 import 'help_screen.dart';
 import 'search_screen.dart';
-
-/// Nó do mapa pós-clustering. Pode ser um relato isolado ou um cluster
-/// agregando vários relatos próximos.
-class _MapNode {
-  final double lat;
-  final double lng;
-  final List<Occurrence> members; // length 1 = single, >1 = cluster
-  _MapNode(this.lat, this.lng, this.members);
-
-  bool get isCluster => members.length > 1;
-  int get count => members.length;
-
-  /// Cluster herda o risco do relato mais recente (maior RiskLevel).
-  RiskLevel get risk {
-    RiskLevel max = RiskLevel.noRecentReports;
-    for (final m in members) {
-      final r = classifyAge(m.date);
-      if (r.index > max.index) max = r;
-    }
-    return max;
-  }
-}
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -70,17 +52,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
   Map<String, BitmapDescriptor>? _clusterIcons;
 
-  /// Limite de zoom que separa heatmap (zoom-out) de marcadores individuais.
-  /// Salvador inteira cabe em ~12; bairro em ~14-15. Em 14.5 fica natural:
-  /// vista de cidade/zona mostra heatmap, zoom de rua mostra markers.
-  static const double _heatmapZoomThreshold = 14.5;
-  /// Zoom acima do qual NÃO agrupamos mais — usuário pediu street-level,
-  /// queremos ver cada relato individualmente.
-  static const double _clusterCeilingZoom = 17.0;
   double _zoom = 12;
 
-  bool get _showHeatmap => _zoom < _heatmapZoomThreshold;
-  bool get _shouldCluster => _zoom >= _heatmapZoomThreshold && _zoom < _clusterCeilingZoom;
+  bool get _showHeatmap => _zoom < kHeatmapZoomThreshold;
 
   // Posição atual do usuário pra cálculos de proximidade.
   LatLng? _userPos;
@@ -95,6 +69,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Raio (em km) pra considerar relato "próximo" do usuário.
   static const double _proximityRadiusKm = 1.0;
   static const Duration _proximityRecency = Duration(hours: 6);
+
+  /// Toggle de pontos de ônibus (Camada 6 — OSM). Só aparece em zoom alto
+  /// pra não poluir vista panorâmica.
+  bool _showBusStops = false;
+  static const double _busStopMinZoom = 15.0;
 
   bool _matchesFilters(Occurrence o) {
     if (!_window.includes(o.date)) return false;
@@ -123,40 +102,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  /// Agrupa ocorrências em nós (single ou cluster) pra um dado zoom.
-  /// Acima de [_clusterCeilingZoom], todos viram nós individuais.
-  /// Entre [_heatmapZoomThreshold] e [_clusterCeilingZoom], células
-  /// dimensionadas pra ~80px na tela agrupam relatos próximos.
-  List<_MapNode> _buildNodes(List<Occurrence> occurrences) {
-    if (!_shouldCluster || occurrences.isEmpty) {
-      return [for (final o in occurrences) _MapNode(o.latitude, o.longitude, [o])];
-    }
-    // 1° de latitude ≈ 111320m. 1 pixel em zoom Z ≈ 156543 * cos(lat) / 2^Z metros.
-    // Pra ~80px de raio de agregação:
-    final lat0 = _salvador.target.latitude;
-    final metersPerPixel = 156543.034 * math.cos(lat0 * math.pi / 180.0) / math.pow(2, _zoom);
-    final cellMeters = 80 * metersPerPixel;
-    final cellDeg = cellMeters / 111320.0;
-
-    final cells = <String, List<Occurrence>>{};
-    for (final o in occurrences) {
-      final key = '${(o.latitude / cellDeg).floor()},${(o.longitude / cellDeg).floor()}';
-      cells.putIfAbsent(key, () => []).add(o);
-    }
-    final nodes = <_MapNode>[];
-    for (final group in cells.values) {
-      if (group.length == 1) {
-        final o = group.first;
-        nodes.add(_MapNode(o.latitude, o.longitude, group));
-      } else {
-        // Centroide simples (média de lat/lng)
-        final lat = group.fold(0.0, (a, o) => a + o.latitude) / group.length;
-        final lng = group.fold(0.0, (a, o) => a + o.longitude) / group.length;
-        nodes.add(_MapNode(lat, lng, group));
-      }
-    }
-    return nodes;
-  }
+  /// Agrupa ocorrências em nós (single ou cluster) pra o zoom atual.
+  /// Função pura — testada em `services/cluster_engine.dart`.
+  List<MapNode> _buildNodes(List<Occurrence> occurrences) => clusterOccurrences(
+        occurrences: occurrences,
+        zoom: _zoom,
+        referenceLat: _salvador.target.latitude,
+      );
 
   Future<void> _silentCenter() async {
     final pos = await _location.currentIfAlreadyAuthorized();
@@ -236,27 +188,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final cutoff = DateTime.now().subtract(_proximityRecency);
     return all
         .where((o) => o.date.isAfter(cutoff))
-        .where((o) => _haversineKm(pos, LatLng(o.latitude, o.longitude)) <= _proximityRadiusKm)
+        .where((o) =>
+            haversineKm(pos.latitude, pos.longitude, o.latitude, o.longitude) <=
+            _proximityRadiusKm)
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
-
-  /// Distância aproximada em km entre dois pontos (Haversine).
-  double _haversineKm(LatLng a, LatLng b) {
-    const r = 6371.0;
-    final dLat = _toRad(b.latitude - a.latitude);
-    final dLng = _toRad(b.longitude - a.longitude);
-    final lat1 = _toRad(a.latitude);
-    final lat2 = _toRad(b.latitude);
-    final h = (1 - _cos(dLat)) / 2 +
-        _cos(lat1) * _cos(lat2) * (1 - _cos(dLng)) / 2;
-    return 2 * r * _asin(_sqrt(h));
-  }
-
-  double _toRad(double d) => d * 3.141592653589793 / 180.0;
-  double _cos(double v) => math.cos(v);
-  double _asin(double v) => math.asin(v);
-  double _sqrt(double v) => math.sqrt(v);
 
   /// Zoom efetivamente refletido no último rebuild — usado pra decidir se o
   /// onCameraIdle precisa disparar setState (clusters dependem do zoom).
@@ -287,10 +224,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Tap em cluster: aproxima a câmera no centroide. Se já está perto do
   /// teto de cluster, foca rasante pra individualizar.
-  Future<void> _onTapCluster(_MapNode node) async {
+  Future<void> _onTapCluster(MapNode node) async {
     final controller = _map;
     if (controller == null) return;
-    final targetZoom = (_zoom + 2).clamp(_heatmapZoomThreshold + 0.5, 18.0);
+    final targetZoom = (_zoom + 2).clamp(kHeatmapZoomThreshold + 0.5, 18.0);
     await controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(target: LatLng(node.lat, node.lng), zoom: targetZoom),
@@ -341,6 +278,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final allList = raw.maybeWhen(data: (v) => v, orElse: () => const <Occurrence>[]);
     final alerts = _alertDismissed ? const <Occurrence>[] : _proximityAlerts(allList);
 
+    // Pontos de ônibus: só carrega o provider quando o toggle está ativo
+    // (lazy). Markers só são renderizados acima do zoom mínimo pra não
+    // poluir vista panorâmica.
+    final showStopsNow = _showBusStops && _zoom >= _busStopMinZoom;
+    final busStops = showStopsNow
+        ? ref.watch(busStopsProvider).maybeWhen(
+              data: (v) => v,
+              orElse: () => const <BusStop>[],
+            )
+        : const <BusStop>[];
+
     // Loga o banner apenas na transição 0→N (mesma sessão, mesmo conjunto
     // não loga de novo). Evita poluir Analytics com cada rebuild.
     if (alerts.length != _lastAlertCountLogged) {
@@ -367,6 +315,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             markerIcons: _markerIcons,
             clusterIcons: _clusterIcons,
             asHeatmap: _showHeatmap,
+            busStops: busStops,
             onCreated: (c) => _map = c,
             onTap: (o) => _openDetail(o, OccurrenceOpenEntry.marker),
             onTapCluster: _onTapCluster,
@@ -375,7 +324,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ),
           _Header(onFocusArea: _focusOnArea, onSearch: _openSearch),
           if (alerts.isNotEmpty)
-            _ProximityBanner(
+            ProximityBanner(
               alerts: alerts,
               onTap: () {
                 AnalyticsService.instance.proximityAlertTapped();
@@ -435,6 +384,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 _MapTypeToggle(
                   isHybrid: _mapType == MapType.hybrid,
                   onTap: _toggleMapType,
+                ),
+                const SizedBox(height: 10),
+                _BusStopsToggle(
+                  active: _showBusStops,
+                  onTap: () {
+                    setState(() => _showBusStops = !_showBusStops);
+                    AnalyticsService.instance.filterApplied(
+                      kind: 'bus_stops',
+                      value: _showBusStops ? 'on' : 'off',
+                    );
+                  },
                 ),
                 const SizedBox(height: 10),
                 _LocateButton(loading: _locating, onTap: _centerOnMe),
@@ -632,6 +592,33 @@ class _MapTypeToggle extends StatelessWidget {
   }
 }
 
+class _BusStopsToggle extends StatelessWidget {
+  final bool active;
+  final VoidCallback onTap;
+  const _BusStopsToggle({required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: active ? const Color(0xFF2A4A7A) : Colors.white,
+      elevation: 4,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(11),
+          child: Icon(
+            Icons.directions_bus_outlined,
+            size: 22,
+            color: active ? Colors.white : const Color(0xFF2A4A7A),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LocateButton extends StatelessWidget {
   final bool loading;
   final VoidCallback onTap;
@@ -676,13 +663,14 @@ class _Map extends StatelessWidget {
   final CameraPosition initialCamera;
   final MapType mapType;
   final List<Occurrence> occurrences;
-  final List<_MapNode> nodes;
+  final List<MapNode> nodes;
   final Map<RiskLevel, BitmapDescriptor>? markerIcons;
   final Map<String, BitmapDescriptor>? clusterIcons;
   final bool asHeatmap;
+  final List<BusStop> busStops;
   final ValueChanged<GoogleMapController> onCreated;
   final ValueChanged<Occurrence> onTap;
-  final ValueChanged<_MapNode> onTapCluster;
+  final ValueChanged<MapNode> onTapCluster;
   final ValueChanged<CameraPosition> onCameraMove;
   final VoidCallback onCameraIdle;
 
@@ -694,6 +682,7 @@ class _Map extends StatelessWidget {
     required this.markerIcons,
     required this.clusterIcons,
     required this.asHeatmap,
+    required this.busStops,
     required this.onCreated,
     required this.onTap,
     required this.onTapCluster,
@@ -711,7 +700,7 @@ class _Map extends StatelessWidget {
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
       compassEnabled: false,
-      markers: asHeatmap ? const {} : _markers(),
+      markers: asHeatmap ? const {} : {..._markers(), ..._busStopMarkers()},
       // Heatmap nativo funciona bem no iOS. No Android o suporte é
       // inconsistente — usamos cluster circles como fallback. Em zoom-in
       // (asHeatmap=false), só os círculos de incerteza dos centroides.
@@ -825,6 +814,35 @@ class _Map extends StatelessWidget {
     return result;
   }
 
+  Set<Marker> _busStopMarkers() {
+    if (busStops.isEmpty) return const {};
+    // Marker pequeno e neutro — ônibus é contexto, não evento.
+    final icon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    return {
+      for (final s in busStops)
+        Marker(
+          markerId: MarkerId('bus-${s.id}'),
+          position: LatLng(s.lat, s.lng),
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          alpha: 0.7,
+          flat: true,
+          infoWindow: InfoWindow(
+            title: s.name ?? 'Ponto de ônibus',
+            snippet: _busStopTags(s),
+          ),
+        ),
+    };
+  }
+
+  String _busStopTags(BusStop s) {
+    final tags = <String>[];
+    if (s.shelter) tags.add('cobertura');
+    if (s.bench) tags.add('banco');
+    if (s.lit) tags.add('iluminação');
+    return tags.isEmpty ? 'sem dados de infraestrutura' : tags.join(' · ');
+  }
+
   Set<Heatmap> _heatmaps() {
     if (occurrences.isEmpty) return const {};
     final points = occurrences
@@ -869,98 +887,6 @@ class _Map extends StatelessWidget {
 // ============================================================================
 // Header
 // ============================================================================
-
-// ============================================================================
-// Proximity banner — alerta editorial quando há relato recente próximo
-// ============================================================================
-
-class _ProximityBanner extends StatelessWidget {
-  final List<Occurrence> alerts;
-  final VoidCallback onTap;
-  final VoidCallback onDismiss;
-  const _ProximityBanner({
-    required this.alerts,
-    required this.onTap,
-    required this.onDismiss,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final n = alerts.length;
-    final freshest = alerts.first;
-    final diff = DateTime.now().difference(freshest.date);
-    String when;
-    if (diff.inMinutes < 60) {
-      when = 'há ${diff.inMinutes} min';
-    } else {
-      when = 'há ${diff.inHours}h';
-    }
-    final headline = n == 1
-        ? 'Novo relato perto de você'
-        : '$n relatos próximos nas últimas 6h';
-    final subtext = n == 1
-        ? '${freshest.mainReason ?? "Relato"} · $when'
-        : 'Mais recente: ${freshest.mainReason ?? "relato"} · $when';
-
-    return Positioned(
-      top: MediaQuery.of(context).padding.top + 60,
-      left: 12,
-      right: 12,
-      child: Material(
-        color: const Color(0xFFC46A2C),
-        borderRadius: BorderRadius.circular(14),
-        elevation: 6,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-            child: Row(
-              children: [
-                const Icon(Icons.notifications_active_outlined,
-                    size: 22, color: Colors.white),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        headline,
-                        style: const TextStyle(
-                          fontFamily: 'Georgia',
-                          fontSize: 14.5,
-                          height: 1.2,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtext,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          height: 1.2,
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 18, color: Colors.white),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Dispensar',
-                  onPressed: onDismiss,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _Header extends StatelessWidget {
   final void Function(double lat, double lng)? onFocusArea;

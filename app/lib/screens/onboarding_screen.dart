@@ -79,6 +79,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       body:
                           'Usamos GPS só pra mostrar o que está perto. Não armazenamos seu histórico individual de trajetos.',
                     ),
+                    _Principle(
+                      icon: Icons.person_off_outlined,
+                      title: 'Sem cadastro, sem perfil',
+                      body:
+                          'Você não precisa criar conta. Não pedimos email, nome ou telefone. Seu uso é anônimo desde o primeiro toque.',
+                    ),
                   ],
                 ),
               ),
@@ -137,7 +143,7 @@ class _Header extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         const Text(
-          'Antes de começar, três coisas que você precisa saber:',
+          'Antes de começar, quatro coisas que você precisa saber:',
           style: TextStyle(
             fontFamily: 'Georgia',
             fontStyle: FontStyle.italic,

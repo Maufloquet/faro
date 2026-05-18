@@ -118,6 +118,14 @@ class OccurrenceDetailSheet extends StatelessWidget {
             ),
             const Divider(height: 1),
             _SourceRow(occurrence: occurrence),
+            if (occurrence.hasBusLines) ...[
+              const Divider(height: 1),
+              _LabeledRow(
+                label: 'Linha de ônibus',
+                value: occurrence.busLines.join(', '),
+                hint: 'Linha mencionada na matéria. Pode ser apenas uma referência geográfica — não significa que toda corrida desta linha tem o mesmo risco.',
+              ),
+            ],
             if (occurrence.isCityCentroid) ...[
               const Divider(height: 1),
               const _LabeledRow(

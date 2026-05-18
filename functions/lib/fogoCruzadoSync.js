@@ -18,6 +18,12 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const ngeohash = require("ngeohash");
 const { authedFetch } = require("./fogoCruzadoAuth");
+const { buildEventKey } = require("./eventKey");
+
+/** Mesma janela do newsIngest — coerência cross-source. */
+const DEDUP_WINDOW_HOURS = 6;
+const CORROBORATION_WEIGHT_BOOST = 0.05;
+const MAX_CORROBORATED_WEIGHT = 0.95;
 
 const STATE_IDS = {
   BA: "d3a9b545-7056-4dc6-9b68-ce320c9edffc",
@@ -65,6 +71,64 @@ exports.syncFogoCruzado = onSchedule(
   }
 );
 
+/**
+ * Mapeia um item bruto da API do Fogo Cruzado pro shape de Firestore.
+ * Função pura — retorna `null` quando o item não tem lat/lng utilizável.
+ *
+ * `date` e `expiresAt` saem como `Date`; o caller converte pra Timestamp.
+ */
+function prepareOccurrenceDoc(item, stateAbbr, ttlMs) {
+  if (!item || !item.latitude || !item.longitude) return null;
+
+  const date = new Date(item.date);
+  const expiresAt = new Date(date.getTime() + ttlMs);
+  const geohash = ngeohash.encode(item.latitude, item.longitude, 8);
+  const city = item.city?.name || null;
+  const neighborhood = item.neighborhood?.name || null;
+  const mainReason = item.contextInfo?.mainReason?.name || null;
+
+  return {
+    docId: item.id,
+    fields: {
+      latitude: Number(item.latitude),
+      longitude: Number(item.longitude),
+      geohash,
+      date,
+      expiresAt,
+      state: item.state?.name || stateAbbr,
+      city,
+      neighborhood,
+      mainReason,
+      eventKey: buildEventKey({ city, neighborhood, mainReason }),
+      policeAction: !!item.policeAction,
+      agentPresence: !!item.agentPresence,
+      source: SOURCE,
+      weight: SOURCE_WEIGHT,
+      externalId: item.id,
+      documentNumber: item.documentNumber || null,
+    },
+  };
+}
+
+/**
+ * Procura doc existente em /occurrences com mesma eventKey em ±DEDUP_WINDOW_HOURS.
+ * Critério é source-agnostic: pode ser doc de media ou de outra ingestão do FC.
+ */
+async function findCorroboratableDoc(db, eventKey, pubDate) {
+  if (!eventKey) return null;
+  const windowMs = DEDUP_WINDOW_HOURS * 60 * 60 * 1000;
+  const since = new Date(pubDate.getTime() - windowMs);
+  const until = new Date(pubDate.getTime() + windowMs);
+  const snap = await db
+    .collection("occurrences")
+    .where("eventKey", "==", eventKey)
+    .where("date", ">=", admin.firestore.Timestamp.fromDate(since))
+    .where("date", "<=", admin.firestore.Timestamp.fromDate(until))
+    .limit(1)
+    .get();
+  return snap.empty ? null : snap.docs[0];
+}
+
 async function syncState(db, stateAbbr, stateId) {
   const data = await authedFetch("/occurrences", {
     idState: stateId,
@@ -75,37 +139,57 @@ async function syncState(db, stateAbbr, stateId) {
   const items = data.data || [];
 
   const ttlMs = TTL_HOURS * 60 * 60 * 1000;
-
-  const batch = db.batch();
   let upserted = 0;
+  let corroborated = 0;
 
   for (const o of items) {
-    if (!o.latitude || !o.longitude) continue;
+    const prepared = prepareOccurrenceDoc(o, stateAbbr, ttlMs);
+    if (!prepared) continue;
 
-    const ref = db.collection("occurrences").doc(o.id);
-    const date = new Date(o.date);
-    const expiresAt = new Date(date.getTime() + ttlMs);
+    // Skip dedupe se o doc canônico do FC já existe — idempotência por id externo.
+    const ownRef = db.collection("occurrences").doc(prepared.docId);
+    const ownSnap = await ownRef.get();
 
-    const geohash = ngeohash.encode(o.latitude, o.longitude, 8);
+    if (!ownSnap.exists) {
+      // Procura por evento equivalente em outra fonte (ex.: matéria de
+      // jornal que já cobriu esse tiroteio). Se achou, anexa corroboração
+      // ao doc existente em vez de criar uma duplicata aqui.
+      const existing = await findCorroboratableDoc(
+        db,
+        prepared.fields.eventKey,
+        prepared.fields.date,
+      );
+      if (existing && existing.id !== prepared.docId) {
+        const data = existing.data();
+        const currentWeight = typeof data.weight === "number" ? data.weight : 0.5;
+        await existing.ref.update({
+          corroborations: admin.firestore.FieldValue.arrayUnion({
+            source: SOURCE,
+            externalId: prepared.docId,
+            mainReason: prepared.fields.mainReason,
+            addedAt: new Date(),
+          }),
+          corroborationCount: admin.firestore.FieldValue.increment(1),
+          weight: Math.min(MAX_CORROBORATED_WEIGHT, currentWeight + CORROBORATION_WEIGHT_BOOST),
+          expiresAt: admin.firestore.Timestamp.fromDate(
+            new Date(Math.max(
+              data.expiresAt?.toMillis?.() ?? 0,
+              prepared.fields.expiresAt.getTime(),
+            )),
+          ),
+          lastCorroboratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        corroborated++;
+        continue;
+      }
+    }
 
-    batch.set(
-      ref,
+    await ownRef.set(
       {
-        latitude: Number(o.latitude),
-        longitude: Number(o.longitude),
-        geohash,
-        date: admin.firestore.Timestamp.fromDate(date),
-        expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
-        state: o.state?.name || stateAbbr,
-        city: o.city?.name || null,
-        neighborhood: o.neighborhood?.name || null,
-        mainReason: o.contextInfo?.mainReason?.name || null,
-        policeAction: !!o.policeAction,
-        agentPresence: !!o.agentPresence,
-        source: SOURCE,
-        weight: SOURCE_WEIGHT,
-        externalId: o.id,
-        documentNumber: o.documentNumber || null,
+        ...prepared.fields,
+        date: admin.firestore.Timestamp.fromDate(prepared.fields.date),
+        expiresAt: admin.firestore.Timestamp.fromDate(prepared.fields.expiresAt),
+        corroborationCount: ownSnap.exists ? (ownSnap.data().corroborationCount ?? 0) : 0,
         ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
@@ -113,7 +197,11 @@ async function syncState(db, stateAbbr, stateId) {
     upserted++;
   }
 
-  if (upserted > 0) await batch.commit();
-
-  return { fetched: items.length, upserted };
+  return { fetched: items.length, upserted, corroborated };
 }
+
+exports._internal = {
+  prepareOccurrenceDoc,
+  findCorroboratableDoc,
+  DEDUP_WINDOW_HOURS,
+};
