@@ -1,9 +1,9 @@
 import 'dart:io' show Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/log/faro_logger.dart';
 import 'local_notification_service.dart';
 
 /// Gerencia FCM: permissão, token e subscription por região (geohash5).
@@ -19,6 +19,7 @@ import 'local_notification_service.dart';
 /// - Persistência da subscription depende do FCM service do device
 class MessagingService {
   static const _lastTopicKey = 'fcm_last_topic_v1';
+  static const _log = FaroLogger('fcm');
 
   /// Pede permissão pra notificações.
   /// Retorna true se autorizado (full ou provisional).
@@ -28,9 +29,7 @@ class MessagingService {
     );
     final ok = settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional;
-    if (kDebugMode) {
-      debugPrint('[Faro] FCM permission: ${settings.authorizationStatus}');
-    }
+    _log.info('permission: ${settings.authorizationStatus}');
     return ok;
   }
 
@@ -56,17 +55,17 @@ class MessagingService {
     if (last != null && last.isNotEmpty) {
       try {
         await fcm.unsubscribeFromTopic(last);
-      } catch (e) {
-        if (kDebugMode) debugPrint('[Faro] unsubscribe falhou: $e');
+      } catch (e, s) {
+        _log.error('unsubscribe falhou', e, s);
       }
     }
 
     try {
       await fcm.subscribeToTopic(topic);
       await prefs.setString(_lastTopicKey, topic);
-      if (kDebugMode) debugPrint('[Faro] subscribed to $topic');
-    } catch (e) {
-      if (kDebugMode) debugPrint('[Faro] subscribe falhou: $e');
+      _log.info('subscribed to $topic');
+    } catch (e, s) {
+      _log.error('subscribe falhou', e, s);
     }
   }
 
@@ -123,7 +122,7 @@ class MessagingService {
           dataPayload: data,
         );
       } catch (e) {
-        if (kDebugMode) debugPrint('[Faro] foreground notif falhou: $e');
+        _log.error('foreground notif falhou', e);
       }
     });
   }

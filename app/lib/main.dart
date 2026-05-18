@@ -9,6 +9,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/i18n/faro_strings.dart';
+import 'core/log/faro_logger.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
@@ -26,11 +28,19 @@ import 'services/reference_location_service.dart';
 ///   flutter run --dart-define=USE_DEV_DATA=true
 const bool kUseDevAssetData = bool.fromEnvironment('USE_DEV_DATA');
 
+const _log = FaroLogger('main');
+
 Future<void> main() async {
   // runZonedGuarded captura erros async fora do framework. Crashlytics
   // só ativa em release — debug usa o console normal.
   await runZonedGuarded<Future<void>>(() async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Inicializa tradução logo cedo — qualquer string que dependa do
+    // locale do device precisa disso resolvido antes do primeiro frame.
+    FaroStrings.init(
+      WidgetsBinding.instance.platformDispatcher.locale,
+    );
 
     if (!kUseDevAssetData) {
       await Firebase.initializeApp(
@@ -69,8 +79,8 @@ Future<void> main() async {
       if (FirebaseAuth.instance.currentUser == null) {
         try {
           await FirebaseAuth.instance.signInAnonymously();
-        } catch (e) {
-          if (kDebugMode) debugPrint('[Faro] anonymous sign-in falhou: $e');
+        } catch (e, s) {
+          _log.error('anonymous sign-in falhou', e, s);
         }
       }
 
@@ -82,7 +92,7 @@ Future<void> main() async {
       // pra normalizar "relatos por 10k habitantes". Falha silenciosa: se
       // o asset não carregar, populationFor retorna null e a UI esconde.
       unawaited(DensityService.instance.initialize().catchError((Object e) {
-        if (kDebugMode) debugPrint('[Faro] density init falhou: $e');
+        _log.error('density init falhou', e);
       }));
 
       // Background location tracking: só inicia se o usuário já fez opt-in
@@ -94,8 +104,8 @@ Future<void> main() async {
       // ponto salvo. FCM pode perder a subscription se o device ficou
       // muito tempo offline, então re-afirmamos no boot.
       unawaited(ReferenceLocationService.instance.resumeOnBoot());
-    } else if (kDebugMode) {
-      debugPrint('[Faro] modo dev: lendo ocorrências de assets/, sem Firebase.');
+    } else {
+      _log.debug('modo dev: lendo ocorrências de assets/, sem Firebase.');
     }
 
     runApp(ProviderScope(
@@ -109,7 +119,7 @@ Future<void> main() async {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     } else {
       // Em debug, deixa o erro escalar pro console.
-      debugPrint('[Faro] unhandled zone error: $error\n$stack');
+      _log.error('unhandled zone error', error, stack);
     }
   });
 }
@@ -119,8 +129,8 @@ Future<void> _resumeBackgroundTracking() async {
     if (await BackgroundLocationService.isOptedIn()) {
       await BackgroundLocationService.instance.start();
     }
-  } catch (e) {
-    if (kDebugMode) debugPrint('[Faro] resume bg tracking falhou: $e');
+  } catch (e, s) {
+    _log.error('resume bg tracking falhou', e, s);
   }
 }
 

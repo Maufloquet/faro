@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import '../services/analytics_service.dart';
 import 'map_screen.dart';
-
-import '../core/design/tokens.dart';
 
 /// Onboarding de UMA tela, bloqueante na primeira abertura.
 ///
@@ -62,30 +62,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Expanded(
                 child: ListView(
                   padding: EdgeInsets.zero,
-                  children: const [
+                  children: [
                     _Principle(
                       icon: Icons.warning_amber_rounded,
-                      title: 'O Faro não diz que está seguro',
-                      body:
-                          'Mostramos relatos recentes na sua região. Silêncio nos dados não é silêncio nas ruas — mantenha sua atenção sempre.',
+                      title: FaroStrings.principleNeverSafeTitle,
+                      body: FaroStrings.principleNeverSafeBody,
                     ),
                     _Principle(
                       icon: Icons.travel_explore,
-                      title: 'É contexto, não veredito',
-                      body:
-                          'Combinamos dados públicos (Fogo Cruzado), notícias e (em breve) relatos de outros usuários. Cada fonte tem peso editorial diferente.',
+                      title: FaroStrings.principleContextTitle,
+                      body: FaroStrings.principleContextBody,
                     ),
                     _Principle(
                       icon: Icons.lock_outline,
-                      title: 'Sua localização fica com você',
-                      body:
-                          'Usamos GPS só pra mostrar o que está perto. Não armazenamos seu histórico individual de trajetos.',
+                      title: FaroStrings.principleLocationTitle,
+                      body: FaroStrings.principleLocationBody,
                     ),
                     _Principle(
                       icon: Icons.person_off_outlined,
-                      title: 'Sem cadastro, sem perfil',
-                      body:
-                          'Você não precisa criar conta. Não pedimos email, nome ou telefone. Seu uso é anônimo desde o primeiro toque.',
+                      title: FaroStrings.principleNoSignupTitle,
+                      body: FaroStrings.principleNoSignupBody,
                     ),
                   ],
                 ),
@@ -107,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
-                  child: const Text('Entendi, abrir o mapa'),
+                  child: Text(FaroStrings.acceptanceCta),
                 ),
               ),
             ],
@@ -134,9 +130,9 @@ class _Header extends StatelessWidget {
           child: const Icon(Icons.travel_explore, size: 30, color: Colors.white),
         ),
         const SizedBox(height: 18),
-        const Text(
-          'Bem-vindo ao Faro',
-          style: TextStyle(
+        Text(
+          FaroStrings.onboardingHeadline,
+          style: const TextStyle(
             fontFamily: 'Georgia',
             fontSize: 26,
             height: 1.15,
@@ -144,9 +140,9 @@ class _Header extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Antes de começar, quatro coisas que você precisa saber:',
-          style: TextStyle(
+        Text(
+          FaroStrings.onboardingSubhead,
+          style: const TextStyle(
             fontFamily: 'Georgia',
             fontStyle: FontStyle.italic,
             fontSize: 14,
@@ -230,10 +226,10 @@ class _AcceptanceRow extends StatelessWidget {
               activeColor: FaroColors.primary,
             ),
             const SizedBox(width: 6),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Entendo que o Faro é uma ferramenta de informação, não de garantia. Continuo responsável pelas minhas decisões.',
-                style: TextStyle(
+                FaroStrings.acceptanceText,
+                style: const TextStyle(
                   fontSize: 12.5,
                   height: 1.4,
                   color: FaroColors.textSecondary,

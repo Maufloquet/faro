@@ -1,7 +1,8 @@
 import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import '../core/log/faro_logger.dart';
 
 /// Notificações locais (não-FCM). Disparadas pelo BackgroundLocationService
 /// quando o usuário entra em região com relatos ativos recentes.
@@ -11,6 +12,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 class LocalNotificationService {
   LocalNotificationService._();
   static final LocalNotificationService instance = LocalNotificationService._();
+  static const _log = FaroLogger('local_notif');
 
   static const String _channelId = 'faro_proximity';
   static const String _channelName = 'Alertas de proximidade';
@@ -110,7 +112,7 @@ class LocalNotificationService {
         payload: dataPayload?['occurrenceId'] ?? 'fcm_foreground',
       );
     } catch (e) {
-      if (kDebugMode) debugPrint('[Faro] notif foreground falhou: $e');
+      _log.error('notif foreground falhou', e);
     }
   }
 
@@ -163,7 +165,7 @@ class LocalNotificationService {
         payload: 'proximity_catchup',
       );
     } catch (e) {
-      if (kDebugMode) debugPrint('[Faro] local notif falhou: $e');
+      _log.error('local notif falhou', e);
     }
   }
 }
