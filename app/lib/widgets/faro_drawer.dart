@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/design/tokens.dart';
+import '../core/driving/driving_mode.dart';
 import '../core/i18n/faro_strings.dart';
 import '../core/i18n/locale_notifier.dart';
 import '../screens/about_screen.dart';
@@ -25,6 +26,7 @@ class FaroDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(localeNotifierProvider);
     final currentLangCode = state.override ?? FaroStrings.currentCode;
+    final drivingMode = ref.watch(drivingModeProvider);
 
     return Drawer(
       backgroundColor: Colors.white,
@@ -81,6 +83,11 @@ class FaroDrawer extends ConsumerWidget {
                         ),
                       );
                     },
+                  ),
+                  _DrivingModeToggle(
+                    value: drivingMode,
+                    onChanged: (v) =>
+                        ref.read(drivingModeProvider.notifier).set(v),
                   ),
                   const SizedBox(height: 8),
                   _SectionLabel(FaroStrings.drawerSectionInfo),
@@ -233,6 +240,42 @@ class _Item extends StatelessWidget {
                     size: 18, color: FaroColors.textHint),
               ],
             ),
+    );
+  }
+}
+
+class _DrivingModeToggle extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _DrivingModeToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile.adaptive(
+      value: value,
+      onChanged: onChanged,
+      activeThumbColor: FaroColors.primary,
+      secondary: const Icon(Icons.directions_car_outlined,
+          size: 22, color: FaroColors.editorialBrown),
+      title: Text(
+        FaroStrings.menuDrivingMode,
+        style: const TextStyle(
+          fontFamily: 'Georgia',
+          fontSize: 15,
+          color: FaroColors.textPrimary,
+        ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Text(
+          FaroStrings.menuDrivingModeHint,
+          style: const TextStyle(
+            fontSize: 11.5,
+            color: FaroColors.textSoft,
+            height: 1.35,
+          ),
+        ),
+      ),
     );
   }
 }

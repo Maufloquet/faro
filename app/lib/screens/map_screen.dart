@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../core/driving/driving_mode.dart';
 import '../core/filters/time_window.dart';
 import '../core/geo/haversine.dart';
 import '../core/i18n/faro_strings.dart';
@@ -79,6 +81,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _showBusStops = false;
   static const double _busStopMinZoom = 15.0;
 
+  /// Modo direção: stream contínuo de posição que move a câmera. Inicia
+  /// quando o usuário ativa o toggle no drawer; cancela ao desativar.
+  StreamSubscription<Position>? _drivingSub;
+  static const double _drivingFollowZoom = 16.0;
+
   bool _matchesFilters(Occurrence o) {
     if (!_window.includes(o.date)) return false;
     if (_activeReasons.isEmpty) return true;
@@ -91,7 +98,62 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _loadMarkers();
     AnalyticsService.instance.logScreen('map');
     // Auto-centro silencioso: só se permissão já foi concedida em sessão anterior
-    WidgetsBinding.instance.addPostFrameCallback((_) => _silentCenter());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _silentCenter();
+      // Se o usuário voltou ao app com modo direção já ativo, retoma o follow.
+      if (ref.read(drivingModeProvider)) _startDrivingFollow();
+    });
+  }
+
+  @override
+  void dispose() {
+    _drivingSub?.cancel();
+    super.dispose();
+  }
+
+  /// Inicia o stream de GPS que move a câmera. Só roda em modo direção.
+  /// Distância mínima de 10m evita queimar bateria com micro-movimentos.
+  Future<void> _startDrivingFollow() async {
+    if (_drivingSub != null) return; // já está rodando
+    // Garante permissão antes de abrir o stream; se negar, modo direção
+    // não tem efeito visível (mas ainda fica ligado pra o usuário ver).
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return;
+      }
+    } catch (_) {
+      return;
+    }
+    _drivingSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen((pos) async {
+      if (!mounted) return;
+      setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
+      final controller = _map;
+      if (controller != null) {
+        await controller.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(pos.latitude, pos.longitude),
+              zoom: _drivingFollowZoom,
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  void _stopDrivingFollow() {
+    _drivingSub?.cancel();
+    _drivingSub = null;
   }
 
   Future<void> _loadMarkers() async {
@@ -303,6 +365,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Reage ao toggle de modo direção: liga/desliga o stream de GPS.
+    ref.listen<bool>(drivingModeProvider, (prev, next) {
+      if (next) {
+        _startDrivingFollow();
+      } else {
+        _stopDrivingFollow();
+      }
+    });
+
     final raw = ref.watch(recentOccurrencesProvider);
     final windowed = raw.whenData((list) => list.where((o) => _window.includes(o.date)).toList());
     final filtered = raw.whenData((list) => list.where(_matchesFilters).toList());

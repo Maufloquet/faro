@@ -409,6 +409,8 @@ class FaroStrings {
   static String get menuAreas => _t('menu.areas');
   static String get menuTrajectory => _t('menu.trajectory');
   static String get menuLanguage => _t('menu.language');
+  static String get menuDrivingMode => _t('menu.driving_mode');
+  static String get menuDrivingModeHint => _t('menu.driving_mode.hint');
   static String get menuHelp => _t('menu.help');
   static String get menuAbout => _t('menu.about');
 
@@ -737,6 +739,8 @@ const Map<String, Map<String, String>> _table = {
     'menu.areas': 'Atividade por área',
     'menu.trajectory': 'Seu trajeto',
     'menu.language': 'Idioma',
+    'menu.driving_mode': 'Modo direção',
+    'menu.driving_mode.hint': 'Mapa segue o GPS · zoom de rua · sem voz',
     'menu.help': 'Como o Faro funciona',
     'menu.about': 'Sobre o Faro',
     'language.title': 'Idioma',
@@ -1036,6 +1040,8 @@ const Map<String, Map<String, String>> _table = {
     'menu.areas': 'Activity by area',
     'menu.trajectory': 'Your trajectory',
     'menu.language': 'Language',
+    'menu.driving_mode': 'Driving mode',
+    'menu.driving_mode.hint': 'Map follows GPS · street zoom · no voice',
     'menu.help': 'How Faro works',
     'menu.about': 'About Faro',
     'language.title': 'Language',
@@ -1337,6 +1343,8 @@ const Map<String, Map<String, String>> _table = {
     'menu.areas': 'Actividad por zona',
     'menu.trajectory': 'Tu recorrido',
     'menu.language': 'Idioma',
+    'menu.driving_mode': 'Modo conducción',
+    'menu.driving_mode.hint': 'El mapa sigue el GPS · zoom de calle · sin voz',
     'menu.help': 'Cómo funciona Faro',
     'menu.about': 'Sobre Faro',
     'language.title': 'Idioma',

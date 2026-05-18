@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/driving/driving_mode.dart';
 import 'core/i18n/faro_strings.dart';
 import 'core/i18n/locale_notifier.dart';
 import 'core/log/faro_logger.dart';
@@ -155,6 +156,7 @@ class _FaroAppState extends ConsumerState<FaroApp> {
       ref
           .read(localeNotifierProvider.notifier)
           .bootstrap(WidgetsBinding.instance.platformDispatcher.locale);
+      ref.read(drivingModeProvider.notifier).bootstrap();
     });
   }
 
