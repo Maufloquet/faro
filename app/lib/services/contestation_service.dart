@@ -2,15 +2,29 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum ContestationReason {
-  imprecise('Localização imprecisa'),
-  notHappened('Evento não aconteceu'),
-  alreadyResolved('Situação já resolvida'),
-  exaggerated('Cobertura exagerada da fonte'),
-  other('Outro motivo');
+import '../core/i18n/faro_strings.dart';
 
-  final String label;
-  const ContestationReason(this.label);
+enum ContestationReason {
+  imprecise,
+  notHappened,
+  alreadyResolved,
+  exaggerated,
+  other;
+
+  String get label {
+    switch (this) {
+      case ContestationReason.imprecise:
+        return FaroStrings.contestReasonImprecise;
+      case ContestationReason.notHappened:
+        return FaroStrings.contestReasonNotHappened;
+      case ContestationReason.alreadyResolved:
+        return FaroStrings.contestReasonAlreadyResolved;
+      case ContestationReason.exaggerated:
+        return FaroStrings.contestReasonExaggerated;
+      case ContestationReason.other:
+        return FaroStrings.contestReasonOther;
+    }
+  }
 }
 
 class ContestationService {

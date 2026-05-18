@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/copy/editorial.dart';
 import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import '../core/text/string_format.dart';
 import '../models/crossing_event.dart';
 import '../services/analytics_service.dart';
@@ -33,9 +33,9 @@ class _TrajectoryScreenState extends ConsumerState<TrajectoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Seu trajeto',
-          style: TextStyle(fontFamily: FaroFonts.serifEditorial),
+        title: Text(
+          FaroStrings.trajTitle,
+          style: const TextStyle(fontFamily: FaroFonts.serifEditorial),
         ),
         elevation: 0,
       ),
@@ -100,9 +100,9 @@ class _TrajectoryScreenState extends ConsumerState<TrajectoryScreen> {
     final delta = DateTime(nl.year, nl.month, nl.day)
         .difference(DateTime(dl.year, dl.month, dl.day))
         .inDays;
-    if (delta == 0) return 'Hoje';
-    if (delta == 1) return 'Ontem';
-    if (delta < 7) return 'Há $delta dias';
+    if (delta == 0) return FaroStrings.trajToday;
+    if (delta == 1) return FaroStrings.trajYesterday;
+    if (delta < 7) return FaroStrings.trajDaysAgo(delta);
     return '${dl.day.toString().padLeft(2, '0')}/${dl.month.toString().padLeft(2, '0')}';
   }
 }
@@ -141,8 +141,7 @@ class _EventCard extends StatelessWidget {
     final hourLabel =
         '${local.hour.toString().padLeft(2, '0')}h${local.minute.toString().padLeft(2, '0')}';
     final bairro = titleCasePtBr(event.neighborhood);
-    final whatWord =
-        event.reportCount == 1 ? '1 relato' : '${event.reportCount} relatos';
+    final whatWord = FaroStrings.trajReportCount(event.reportCount);
 
     return Container(
       margin: const EdgeInsets.only(top: FaroSpacing.sm),
@@ -176,7 +175,7 @@ class _EventCard extends StatelessWidget {
               const SizedBox(width: FaroSpacing.md),
               Expanded(
                 child: Text(
-                  bairro.isNotEmpty ? bairro : 'Localização aproximada',
+                  bairro.isNotEmpty ? bairro : FaroStrings.trajApproxLocation,
                   style: const TextStyle(
                     fontFamily: FaroFonts.serifEditorial,
                     fontSize: 16,
@@ -204,9 +203,9 @@ class _EventCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: FaroSpacing.xs),
-          const Text(
-            'você passou e tudo bem',
-            style: TextStyle(
+          Text(
+            FaroStrings.trajPassedSafe,
+            style: const TextStyle(
               fontSize: 11.5,
               fontStyle: FontStyle.italic,
               color: FaroColors.textHint,
@@ -230,16 +229,16 @@ class _PrivacyNote extends StatelessWidget {
         borderRadius: BorderRadius.circular(FaroRadii.card),
         border: Border.all(color: FaroColors.sandBorder),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.lock_outline, size: 16, color: FaroColors.editorialBrown),
-              SizedBox(width: FaroSpacing.sm),
+              const Icon(Icons.lock_outline, size: 16, color: FaroColors.editorialBrown),
+              const SizedBox(width: FaroSpacing.sm),
               Text(
-                'Fica só no seu celular',
-                style: TextStyle(
+                FaroStrings.trajPrivacyTitle,
+                style: const TextStyle(
                   fontFamily: FaroFonts.serifEditorial,
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
@@ -248,12 +247,10 @@ class _PrivacyNote extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: FaroSpacing.sm),
+          const SizedBox(height: FaroSpacing.sm),
           Text(
-            'Esta lista é gerada no seu aparelho a partir do GPS que você '
-            'autorizou. Nada disso vai pros nossos servidores. Apagamos '
-            'automaticamente registros com mais de 7 dias.',
-            style: TextStyle(
+            FaroStrings.trajPrivacyBody,
+            style: const TextStyle(
               fontSize: 12,
               height: 1.5,
               color: FaroColors.textMuted,
@@ -270,36 +267,35 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
           FaroSpacing.xl, FaroSpacing.xl3, FaroSpacing.xl, FaroSpacing.xl3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PrivacyNote(),
-          SizedBox(height: FaroSpacing.xl),
+          const _PrivacyNote(),
+          const SizedBox(height: FaroSpacing.xl),
           Text(
-            'Sem cruzamentos por aqui',
-            style: TextStyle(
+            FaroStrings.trajEmptyTitle,
+            style: const TextStyle(
               fontFamily: FaroFonts.serifEditorial,
               fontSize: 18,
               color: FaroColors.textPrimary,
             ),
           ),
-          SizedBox(height: FaroSpacing.sm),
+          const SizedBox(height: FaroSpacing.sm),
           Text(
-            'Você não passou por áreas com relatos recentes nos últimos 7 dias.\n\n'
-            'Pode ser ausência de evento, ausência de relato, ou os dois.',
-            style: TextStyle(
+            FaroStrings.trajEmptyBody,
+            style: const TextStyle(
               fontSize: 13.5,
               height: 1.5,
               color: FaroColors.textMuted,
             ),
           ),
-          SizedBox(height: FaroSpacing.sm),
+          const SizedBox(height: FaroSpacing.sm),
           Text(
-            '${FaroEditorial.silentDataIsNotSilentStreet}.',
-            style: TextStyle(
+            '${FaroStrings.silenceDisclaimer}.',
+            style: const TextStyle(
               fontSize: 13.5,
               height: 1.5,
               color: FaroColors.textMuted,
@@ -327,7 +323,7 @@ class _ErrorState extends StatelessWidget {
             const Icon(Icons.error_outline, size: 36, color: FaroColors.textSoft),
             const SizedBox(height: FaroSpacing.sm),
             Text(
-              'Não foi possível ler seu trajeto. $message',
+              FaroStrings.trajErrorBody(message),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,

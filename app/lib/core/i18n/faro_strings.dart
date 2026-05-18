@@ -350,6 +350,41 @@ class FaroStrings {
   static String get areasEmptyTitle => _t('areas.empty.title');
   static String get areasEmptyBody => _t('areas.empty.body');
 
+  // ─── Trajectory screen ────────────────────────────────────────────────
+  static String get trajTitle => _t('traj.title');
+  static String get trajToday => _t('traj.today');
+  static String get trajYesterday => _t('traj.yesterday');
+  static String trajDaysAgo(int n) =>
+      _t('traj.days_ago').replaceAll('{n}', n.toString());
+  static String get trajApproxLocation => _t('traj.approx_location');
+  static String trajReportCount(int count) {
+    final key = count == 1 ? 'traj.report_count_one' : 'traj.report_count_many';
+    return _t(key).replaceAll('{count}', count.toString());
+  }
+  static String get trajPassedSafe => _t('traj.passed_safe');
+  static String get trajPrivacyTitle => _t('traj.privacy.title');
+  static String get trajPrivacyBody => _t('traj.privacy.body');
+  static String get trajEmptyTitle => _t('traj.empty.title');
+  static String get trajEmptyBody => _t('traj.empty.body');
+  static String trajErrorBody(String detail) =>
+      _t('traj.error.body').replaceAll('{detail}', detail);
+
+  // ─── Contestation screen ──────────────────────────────────────────────
+  static String get contestTitle => _t('contest.title');
+  static String get contestReport => _t('contest.report');
+  static String get contestReasonHeader => _t('contest.reason_header');
+  static String get contestReasonImprecise => _t('contest.reason.imprecise');
+  static String get contestReasonNotHappened => _t('contest.reason.not_happened');
+  static String get contestReasonAlreadyResolved =>
+      _t('contest.reason.already_resolved');
+  static String get contestReasonExaggerated => _t('contest.reason.exaggerated');
+  static String get contestReasonOther => _t('contest.reason.other');
+  static String get contestDetailsLabel => _t('contest.details.label');
+  static String get contestDetailsHint => _t('contest.details.hint');
+  static String get contestSend => _t('contest.send');
+  static String get contestSendFailed => _t('contest.send_failed');
+  static String get contestDisclaimer => _t('contest.disclaimer');
+
   // ─── Dias da semana (1=seg ... 7=dom) ─────────────────────────────────
   static String weekdayShort(int weekday) {
     const keys = {
@@ -618,6 +653,35 @@ const Map<String, Map<String, String>> _table = {
     'weekday.fri': 'Sex',
     'weekday.sat': 'Sáb',
     'weekday.sun': 'Dom',
+    'traj.title': 'Seu trajeto',
+    'traj.today': 'Hoje',
+    'traj.yesterday': 'Ontem',
+    'traj.days_ago': 'Há {n} dias',
+    'traj.approx_location': 'Localização aproximada',
+    'traj.report_count_one': '{count} relato',
+    'traj.report_count_many': '{count} relatos',
+    'traj.passed_safe': 'você passou e tudo bem',
+    'traj.privacy.title': 'Fica só no seu celular',
+    'traj.privacy.body':
+        'Esta lista é gerada no seu aparelho a partir do GPS que você autorizou. Nada disso vai pros nossos servidores. Apagamos automaticamente registros com mais de 7 dias.',
+    'traj.empty.title': 'Sem cruzamentos por aqui',
+    'traj.empty.body':
+        'Você não passou por áreas com relatos recentes nos últimos 7 dias.\n\nPode ser ausência de evento, ausência de relato, ou os dois.',
+    'traj.error.body': 'Não foi possível ler seu trajeto. {detail}',
+    'contest.title': 'Contestar relato',
+    'contest.report': 'Relato',
+    'contest.reason_header': 'Motivo da contestação',
+    'contest.reason.imprecise': 'Localização imprecisa',
+    'contest.reason.not_happened': 'Evento não aconteceu',
+    'contest.reason.already_resolved': 'Situação já resolvida',
+    'contest.reason.exaggerated': 'Cobertura exagerada da fonte',
+    'contest.reason.other': 'Outro motivo',
+    'contest.details.label': 'Detalhes (opcional)',
+    'contest.details.hint': 'Ex: o evento foi noutra rua, já foi resolvido há dias…',
+    'contest.send': 'Enviar contestação',
+    'contest.send_failed': 'Não foi possível enviar. Tente novamente.',
+    'contest.disclaimer':
+        'Contestações são revisadas em até 2h. Se a contestação for procedente, o relato é removido da visão pública. Múltiplas contestações de fontes independentes aceleram a revisão.',
   },
   'en': {
     'onboarding.headline': 'Welcome to Faro',
@@ -867,6 +931,35 @@ const Map<String, Map<String, String>> _table = {
     'weekday.fri': 'Fri',
     'weekday.sat': 'Sat',
     'weekday.sun': 'Sun',
+    'traj.title': 'Your trajectory',
+    'traj.today': 'Today',
+    'traj.yesterday': 'Yesterday',
+    'traj.days_ago': '{n} days ago',
+    'traj.approx_location': 'Approximate location',
+    'traj.report_count_one': '{count} report',
+    'traj.report_count_many': '{count} reports',
+    'traj.passed_safe': 'you passed by and all was well',
+    'traj.privacy.title': 'It stays on your phone',
+    'traj.privacy.body':
+        'This list is generated on your device from the GPS you authorized. None of it goes to our servers. We automatically delete records older than 7 days.',
+    'traj.empty.title': 'No crossings around here',
+    'traj.empty.body':
+        'You have not passed through areas with recent reports in the last 7 days.\n\nIt could be absence of events, absence of reports, or both.',
+    'traj.error.body': 'Could not read your trajectory. {detail}',
+    'contest.title': 'Challenge report',
+    'contest.report': 'Report',
+    'contest.reason_header': 'Reason for the challenge',
+    'contest.reason.imprecise': 'Imprecise location',
+    'contest.reason.not_happened': 'The event did not happen',
+    'contest.reason.already_resolved': 'Already resolved',
+    'contest.reason.exaggerated': 'Source exaggerated the coverage',
+    'contest.reason.other': 'Other reason',
+    'contest.details.label': 'Details (optional)',
+    'contest.details.hint': 'E.g.: the event was on another street, was resolved days ago…',
+    'contest.send': 'Send dispute',
+    'contest.send_failed': 'Could not send. Please try again.',
+    'contest.disclaimer':
+        'Disputes are reviewed within 2h. If the dispute is upheld, the report is removed from public view. Multiple disputes from independent sources speed up the review.',
   },
   'es': {
     'onboarding.headline': 'Bienvenido a Faro',
@@ -1118,5 +1211,34 @@ const Map<String, Map<String, String>> _table = {
     'weekday.fri': 'Vie',
     'weekday.sat': 'Sáb',
     'weekday.sun': 'Dom',
+    'traj.title': 'Tu recorrido',
+    'traj.today': 'Hoy',
+    'traj.yesterday': 'Ayer',
+    'traj.days_ago': 'Hace {n} días',
+    'traj.approx_location': 'Ubicación aproximada',
+    'traj.report_count_one': '{count} reporte',
+    'traj.report_count_many': '{count} reportes',
+    'traj.passed_safe': 'pasaste y todo bien',
+    'traj.privacy.title': 'Se queda solo en tu celular',
+    'traj.privacy.body':
+        'Esta lista se genera en tu dispositivo a partir del GPS que autorizaste. Nada de esto va a nuestros servidores. Eliminamos automáticamente registros con más de 7 días.',
+    'traj.empty.title': 'Sin cruces por aquí',
+    'traj.empty.body':
+        'No pasaste por zonas con reportes recientes en los últimos 7 días.\n\nPuede ser ausencia de evento, ausencia de reporte, o ambos.',
+    'traj.error.body': 'No fue posible leer tu recorrido. {detail}',
+    'contest.title': 'Impugnar reporte',
+    'contest.report': 'Reporte',
+    'contest.reason_header': 'Motivo de la impugnación',
+    'contest.reason.imprecise': 'Ubicación imprecisa',
+    'contest.reason.not_happened': 'El evento no ocurrió',
+    'contest.reason.already_resolved': 'Situación ya resuelta',
+    'contest.reason.exaggerated': 'Cobertura exagerada de la fuente',
+    'contest.reason.other': 'Otro motivo',
+    'contest.details.label': 'Detalles (opcional)',
+    'contest.details.hint': 'Ej: el evento fue en otra calle, ya fue resuelto hace días…',
+    'contest.send': 'Enviar impugnación',
+    'contest.send_failed': 'No fue posible enviar. Intenta de nuevo.',
+    'contest.disclaimer':
+        'Las impugnaciones se revisan en hasta 2h. Si la impugnación procede, el reporte se elimina de la vista pública. Múltiples impugnaciones de fuentes independientes aceleran la revisión.',
   },
 };
