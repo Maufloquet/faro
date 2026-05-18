@@ -135,6 +135,14 @@ class BackgroundLocationService {
     await _catchUp(gh5);
   }
 
+  /// Sentinel do Firestore pra range query "começa com prefixo".
+  ///  é o último ponto Unicode da Private Use Area — qualquer
+  /// geohash8 cujo prefixo bate vai estar na faixa [gh5, gh5+sentinel).
+  /// NÃO trocar por '~' ou 'z' (ambos colidem com chars válidos do
+  /// alfabeto base32 do geohash). Ver:
+  /// https://firebase.google.com/docs/firestore/query-data/queries#range_and_inequality_filters
+  static const String _firestorePrefixSentinel = '';
+
   Future<void> _catchUp(String geohash5) async {
     final cutoff = DateTime.now().subtract(_catchUpWindow);
     try {
@@ -143,7 +151,7 @@ class BackgroundLocationService {
       final snap = await _firestore
           .collection('occurrences')
           .where('geohash', isGreaterThanOrEqualTo: geohash5)
-          .where('geohash', isLessThan: '$geohash5')
+          .where('geohash', isLessThan: '$geohash5$_firestorePrefixSentinel')
           .limit(50)
           .get();
 

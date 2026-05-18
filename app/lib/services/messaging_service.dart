@@ -4,6 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'local_notification_service.dart';
+
 /// Gerencia FCM: permissão, token e subscription por região (geohash5).
 ///
 /// Estratégia topic-based: o app calcula geohash5 baseado na localização
@@ -75,7 +77,10 @@ class MessagingService {
     return token != null;
   }
 
-  /// Inicialização: pede permissão se ainda não tem, espera APNS no iOS.
+  /// Inicialização: pede permissão se ainda não tem, espera APNS no iOS,
+  /// e registra handler de mensagem em foreground (FCM, por padrão, não
+  /// exibe notificação quando o app está aberto — é responsabilidade do
+  /// app interceptar e mostrar via notificação local).
   Future<bool> initialize() async {
     final ok = await requestPermission();
     if (!ok) return false;
@@ -84,7 +89,33 @@ class MessagingService {
       await Future.delayed(const Duration(seconds: 1));
       if (!await _hasApnsToken()) return false;
     }
+    _registerForegroundHandler();
     return true;
+  }
+
+  bool _foregroundHandlerRegistered = false;
+
+  void _registerForegroundHandler() {
+    if (_foregroundHandlerRegistered) return;
+    _foregroundHandlerRegistered = true;
+    FirebaseMessaging.onMessage.listen((message) async {
+      // App em foreground: sistema não exibe notif automaticamente. Em
+      // vez disso, mostramos uma notif local com o mesmo conteúdo.
+      final notif = message.notification;
+      if (notif == null) return;
+      try {
+        final data = message.data.map(
+          (k, v) => MapEntry(k, v?.toString() ?? ''),
+        );
+        await LocalNotificationService.instance.showFromPush(
+          title: notif.title ?? 'Faro · novo relato',
+          body: notif.body ?? '',
+          dataPayload: data,
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[Faro] foreground notif falhou: $e');
+      }
+    });
   }
 }
 

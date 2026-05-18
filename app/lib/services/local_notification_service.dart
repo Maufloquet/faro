@@ -72,6 +72,48 @@ class LocalNotificationService {
     return true;
   }
 
+  /// Exibe notificação derivada de um push FCM recebido em foreground.
+  /// O sistema operacional não exibe notif do FCM quando o app está
+  /// aberto, então recriamos via canal local com o mesmo conteúdo.
+  Future<void> showFromPush({
+    required String title,
+    required String body,
+    Map<String, String>? dataPayload,
+  }) async {
+    await initialize();
+
+    const androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      ticker: 'Faro',
+      category: AndroidNotificationCategory.status,
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    // ID estável por payload pra evitar duplicar quando o mesmo push
+    // chega mais de uma vez (raro, mas FCM pode retry).
+    final id = (dataPayload?['occurrenceId'] ?? body).hashCode & 0x7fffffff;
+
+    try {
+      await _plugin.show(
+        id,
+        title,
+        body,
+        const NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: dataPayload?['occurrenceId'] ?? 'fcm_foreground',
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Faro] notif foreground falhou: $e');
+    }
+  }
+
   /// Dispara notif de proximidade. [count] é número de relatos próximos
   /// nas últimas 6h. Copy é deliberadamente factual.
   Future<void> showProximityCatchUp({

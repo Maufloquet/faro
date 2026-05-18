@@ -66,10 +66,22 @@ exports.onOccurrenceCreated = onDocumentCreated(
         },
       },
       apns: {
+        // headers garantem entrega imediata + categoria de alerta
+        headers: {
+          "apns-priority": "10",
+          "apns-push-type": "alert",
+        },
         payload: {
           aps: {
             sound: "default",
             badge: 1,
+            // mutable-content permite que extension service modifique
+            // o payload antes de mostrar (útil pra ricos/imagens futuras)
+            "mutable-content": 1,
+            // content-available acorda o app brevemente pra processar
+            // a entrega — útil pra atualização de badge/lista mesmo
+            // antes do usuário tocar
+            "content-available": 1,
           },
         },
       },
