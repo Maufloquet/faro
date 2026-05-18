@@ -17,9 +17,9 @@ class DrivingArrowFactory {
 
   Future<BitmapDescriptor> build({double devicePixelRatio = 2.5}) async {
     if (_cache != null) return _cache!;
-    // 36pt-base: chega a ~36dp na tela em DPR ~3, mesmo footprint do
-    // ícone do Waze e do Google Maps em modo navegação.
-    final size = 36.0 * devicePixelRatio;
+    // 28pt-base: chega a ~28dp na tela em DPR ~3 — footprint do ícone
+    // de carro do Waze e do Google Maps em modo navegação.
+    final size = 28.0 * devicePixelRatio;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final center = Offset(size / 2, size / 2);
