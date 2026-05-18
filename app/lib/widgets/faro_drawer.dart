@@ -1,0 +1,257 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
+import '../core/i18n/locale_notifier.dart';
+import '../screens/about_screen.dart';
+import '../screens/areas_screen.dart';
+import '../screens/help_screen.dart';
+import '../screens/language_screen.dart';
+import '../screens/trajectory_screen.dart';
+
+/// Drawer lateral do mapa — paradigma Waze/Uber. Mapa-first: nunca cede
+/// altura permanente pra navigation bar. Organizado em 3 seções editoriais
+/// (Navegar / Configurações / Informações) pra ficar fácil escanear.
+///
+/// O drawer é fechado antes de cada `push` pra que o usuário volte ao
+/// mapa após sair da sub-tela (em vez de cair de novo no menu aberto).
+class FaroDrawer extends ConsumerWidget {
+  final void Function(double lat, double lng)? onFocusArea;
+
+  const FaroDrawer({super.key, this.onFocusArea});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(localeNotifierProvider);
+    final currentLangCode = state.override ?? FaroStrings.currentCode;
+
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _Header(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _SectionLabel(FaroStrings.drawerSectionNavigate),
+                  _Item(
+                    icon: Icons.map_outlined,
+                    label: FaroStrings.menuMap,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                  _Item(
+                    icon: Icons.insights_outlined,
+                    label: FaroStrings.menuAreas,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => AreasScreen(onFocus: onFocusArea),
+                        ),
+                      );
+                    },
+                  ),
+                  _Item(
+                    icon: Icons.history,
+                    label: FaroStrings.menuTrajectory,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TrajectoryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _SectionLabel(FaroStrings.drawerSectionConfig),
+                  _Item(
+                    icon: Icons.translate,
+                    label: FaroStrings.menuLanguage,
+                    trailing: FaroStrings.languageNativeName(currentLangCode),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LanguageScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _SectionLabel(FaroStrings.drawerSectionInfo),
+                  _Item(
+                    icon: Icons.help_outline,
+                    label: FaroStrings.menuHelp,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const HelpScreen()),
+                      );
+                    },
+                  ),
+                  _Item(
+                    icon: Icons.info_outline,
+                    label: FaroStrings.menuAbout,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const AboutScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const _Footer(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+      decoration: const BoxDecoration(
+        color: FaroColors.sandSoft,
+        border: Border(bottom: BorderSide(color: FaroColors.sandBorder)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: FaroColors.primary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.travel_explore,
+                    size: 20, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Faro',
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontSize: 22,
+                  color: FaroColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            FaroStrings.drawerTagline,
+            style: const TextStyle(
+              fontFamily: 'Georgia',
+              fontStyle: FontStyle.italic,
+              fontSize: 12.5,
+              height: 1.35,
+              color: FaroColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: FaroColors.textSoft,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+}
+
+class _Item extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? trailing;
+  final VoidCallback onTap;
+  const _Item({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      dense: false,
+      leading: Icon(icon, size: 22, color: FaroColors.editorialBrown),
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: 'Georgia',
+          fontSize: 15,
+          color: FaroColors.textPrimary,
+        ),
+      ),
+      trailing: trailing == null
+          ? const Icon(Icons.chevron_right, size: 18, color: FaroColors.textHint)
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  trailing!,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: FaroColors.textSoft,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right,
+                    size: 18, color: FaroColors.textHint),
+              ],
+            ),
+    );
+  }
+}
+
+class _Footer extends StatelessWidget {
+  const _Footer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: Text(
+        FaroStrings.aboutVersion,
+        style: const TextStyle(
+          fontSize: 11,
+          color: FaroColors.textHint,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    );
+  }
+}

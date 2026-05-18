@@ -25,11 +25,24 @@ class FaroStrings {
 
   static String _locale = 'pt';
 
+  /// Idioma atualmente em uso ('pt' | 'en' | 'es').
+  static String get currentCode => _locale;
+
   /// Inicializa baseado no locale do device. Chamar no boot do app
-  /// **antes** de qualquer leitura de string.
-  static void init(Locale locale) {
-    final code = locale.languageCode.toLowerCase();
+  /// **antes** de qualquer leitura de string. [override] (se não nulo)
+  /// força um idioma específico independente do device — usado pelo
+  /// seletor manual.
+  static void init(Locale deviceLocale, {String? override}) {
+    final code = (override ?? deviceLocale.languageCode).toLowerCase();
     _locale = const ['en', 'es', 'pt'].contains(code) ? code : 'pt';
+  }
+
+  /// Resolve qual locale seria usado em modo automático, sem aplicar
+  /// override — útil pro item "Automático" do seletor mostrar o nome
+  /// nativo do idioma que seria escolhido.
+  static String resolveAutoCode(Locale deviceLocale) {
+    final code = deviceLocale.languageCode.toLowerCase();
+    return const ['en', 'es', 'pt'].contains(code) ? code : 'pt';
   }
 
   /// Resgata uma string pela chave. Fallback automático: locale → 'pt' → chave.
@@ -386,6 +399,37 @@ class FaroStrings {
   static String get contestSendFailed => _t('contest.send_failed');
   static String get contestDisclaimer => _t('contest.disclaimer');
 
+  // ─── Drawer + Idioma ──────────────────────────────────────────────────
+  static String get drawerTagline => _t('drawer.tagline');
+  static String get drawerSectionNavigate => _t('drawer.section.navigate');
+  static String get drawerSectionConfig => _t('drawer.section.config');
+  static String get drawerSectionInfo => _t('drawer.section.info');
+  static String get drawerOpenMenu => _t('drawer.open_menu');
+  static String get menuMap => _t('menu.map');
+  static String get menuAreas => _t('menu.areas');
+  static String get menuTrajectory => _t('menu.trajectory');
+  static String get menuLanguage => _t('menu.language');
+  static String get menuHelp => _t('menu.help');
+  static String get menuAbout => _t('menu.about');
+
+  static String get languageTitle => _t('language.title');
+  static String get languageAuto => _t('language.auto');
+  static String languageAutoCurrent(String name) =>
+      _t('language.auto.current').replaceAll('{name}', name);
+  static String get languagePortuguese => _t('language.portuguese');
+  static String get languageEnglish => _t('language.english');
+  static String get languageSpanish => _t('language.spanish');
+  static String languageNativeName(String code) {
+    switch (code) {
+      case 'en':
+        return _t('language.native.en');
+      case 'es':
+        return _t('language.native.es');
+      default:
+        return _t('language.native.pt');
+    }
+  }
+
   // ─── Dias da semana (1=seg ... 7=dom) ─────────────────────────────────
   static String weekdayShort(int weekday) {
     const keys = {
@@ -684,6 +728,26 @@ const Map<String, Map<String, String>> _table = {
     'contest.send_failed': 'Não foi possível enviar. Tente novamente.',
     'contest.disclaimer':
         'Contestações são revisadas em até 2h. Se a contestação for procedente, o relato é removido da visão pública. Múltiplas contestações de fontes independentes aceleram a revisão.',
+    'drawer.tagline': 'O que está acontecendo perto de você agora',
+    'drawer.section.navigate': 'NAVEGAR',
+    'drawer.section.config': 'CONFIGURAÇÕES',
+    'drawer.section.info': 'INFORMAÇÕES',
+    'drawer.open_menu': 'Abrir menu',
+    'menu.map': 'Mapa',
+    'menu.areas': 'Atividade por área',
+    'menu.trajectory': 'Seu trajeto',
+    'menu.language': 'Idioma',
+    'menu.help': 'Como o Faro funciona',
+    'menu.about': 'Sobre o Faro',
+    'language.title': 'Idioma',
+    'language.auto': 'Automático (do celular)',
+    'language.auto.current': 'Atualmente: {name}',
+    'language.portuguese': 'Português',
+    'language.english': 'English',
+    'language.spanish': 'Español',
+    'language.native.pt': 'Português',
+    'language.native.en': 'English',
+    'language.native.es': 'Español',
   },
   'en': {
     'onboarding.headline': 'Welcome to Faro',
@@ -963,6 +1027,26 @@ const Map<String, Map<String, String>> _table = {
     'contest.send_failed': 'Could not send. Please try again.',
     'contest.disclaimer':
         'Disputes are reviewed within 2h. If the dispute is upheld, the report is removed from public view. Multiple disputes from independent sources speed up the review.',
+    'drawer.tagline': 'What is happening near you right now',
+    'drawer.section.navigate': 'NAVIGATE',
+    'drawer.section.config': 'SETTINGS',
+    'drawer.section.info': 'INFORMATION',
+    'drawer.open_menu': 'Open menu',
+    'menu.map': 'Map',
+    'menu.areas': 'Activity by area',
+    'menu.trajectory': 'Your trajectory',
+    'menu.language': 'Language',
+    'menu.help': 'How Faro works',
+    'menu.about': 'About Faro',
+    'language.title': 'Language',
+    'language.auto': 'Automatic (device default)',
+    'language.auto.current': 'Currently: {name}',
+    'language.portuguese': 'Portuguese',
+    'language.english': 'English',
+    'language.spanish': 'Spanish',
+    'language.native.pt': 'Português',
+    'language.native.en': 'English',
+    'language.native.es': 'Español',
   },
   'es': {
     'onboarding.headline': 'Bienvenido a Faro',
@@ -1244,5 +1328,25 @@ const Map<String, Map<String, String>> _table = {
     'contest.send_failed': 'No fue posible enviar. Intenta de nuevo.',
     'contest.disclaimer':
         'Las impugnaciones se revisan en hasta 2h. Si la impugnación procede, el reporte se elimina de la vista pública. Múltiples impugnaciones de fuentes independientes aceleran la revisión.',
+    'drawer.tagline': 'Lo que está pasando cerca de ti ahora',
+    'drawer.section.navigate': 'NAVEGAR',
+    'drawer.section.config': 'AJUSTES',
+    'drawer.section.info': 'INFORMACIÓN',
+    'drawer.open_menu': 'Abrir menú',
+    'menu.map': 'Mapa',
+    'menu.areas': 'Actividad por zona',
+    'menu.trajectory': 'Tu recorrido',
+    'menu.language': 'Idioma',
+    'menu.help': 'Cómo funciona Faro',
+    'menu.about': 'Sobre Faro',
+    'language.title': 'Idioma',
+    'language.auto': 'Automático (del celular)',
+    'language.auto.current': 'Actualmente: {name}',
+    'language.portuguese': 'Portugués',
+    'language.english': 'Inglés',
+    'language.spanish': 'Español',
+    'language.native.pt': 'Português',
+    'language.native.en': 'English',
+    'language.native.es': 'Español',
   },
 };

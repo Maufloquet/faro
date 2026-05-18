@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/i18n/faro_strings.dart';
+import 'core/i18n/locale_notifier.dart';
 import 'core/log/faro_logger.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
@@ -36,8 +37,9 @@ Future<void> main() async {
   await runZonedGuarded<Future<void>>(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Inicializa tradução logo cedo — qualquer string que dependa do
-    // locale do device precisa disso resolvido antes do primeiro frame.
+    // Tradução: inicializa com o locale do device antes do primeiro frame
+    // pra evitar flicker. A escolha persistida (se houver) é aplicada logo
+    // depois via LocaleNotifier.bootstrap (já dentro do ProviderScope).
     FaroStrings.init(
       WidgetsBinding.instance.platformDispatcher.locale,
     );
@@ -134,11 +136,33 @@ Future<void> _resumeBackgroundTracking() async {
   }
 }
 
-class FaroApp extends StatelessWidget {
+class FaroApp extends ConsumerStatefulWidget {
   const FaroApp({super.key});
 
   @override
+  ConsumerState<FaroApp> createState() => _FaroAppState();
+}
+
+class _FaroAppState extends ConsumerState<FaroApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Bootstrap do override persistido. Fire-and-forget: o FaroStrings já
+    // foi inicializado sincronamente com o locale do device em main(),
+    // então a UI sobe traduzida; quando o prefs resolver, o notifier dispara
+    // rebuild se o override divergir do device.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(localeNotifierProvider.notifier)
+          .bootstrap(WidgetsBinding.instance.platformDispatcher.locale);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // O watch garante rebuild quando o usuário troca de idioma — toda a
+    // árvore (incluindo as telas via Navigator) recria com strings novas.
+    ref.watch(localeNotifierProvider);
     return MaterialApp(
       title: 'Faro',
       debugShowCheckedModeBanner: false,

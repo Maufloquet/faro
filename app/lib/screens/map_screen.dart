@@ -20,13 +20,12 @@ import '../services/marker_factory.dart';
 import '../services/messaging_service.dart';
 import '../services/occurrences_service.dart';
 import '../services/osm_service.dart';
+import '../widgets/faro_drawer.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/layers_sheet.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
 import '../widgets/proximity_banner.dart';
-import 'areas_screen.dart';
-import 'help_screen.dart';
 import 'search_screen.dart';
 
 import '../core/design/tokens.dart';
@@ -339,6 +338,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         statusBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
+      drawer: FaroDrawer(onFocusArea: _focusOnArea),
       body: Stack(
         children: [
           _Map(
@@ -356,7 +356,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onCameraMove: _onCameraMove,
             onCameraIdle: _onCameraIdle,
           ),
-          _Header(onFocusArea: _focusOnArea, onSearch: _openSearch),
+          Builder(
+            builder: (ctx) => _Header(
+              onFocusArea: _focusOnArea,
+              onSearch: _openSearch,
+              onMenu: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
           if (alerts.isNotEmpty)
             ProximityBanner(
               alerts: alerts,
@@ -678,7 +684,8 @@ class _Map extends StatelessWidget {
 class _Header extends StatelessWidget {
   final void Function(double lat, double lng)? onFocusArea;
   final VoidCallback? onSearch;
-  const _Header({this.onFocusArea, this.onSearch});
+  final VoidCallback? onMenu;
+  const _Header({this.onFocusArea, this.onSearch, this.onMenu});
 
   @override
   Widget build(BuildContext context) {
@@ -687,7 +694,7 @@ class _Header extends StatelessWidget {
       left: 12,
       right: 12,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.94),
           borderRadius: BorderRadius.circular(14),
@@ -697,12 +704,19 @@ class _Header extends StatelessWidget {
         ),
         child: Row(
           children: [
+            IconButton(
+              icon: const Icon(Icons.menu, size: 22, color: FaroColors.textPrimary),
+              tooltip: FaroStrings.drawerOpenMenu,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              onPressed: onMenu,
+            ),
             Expanded(
               child: InkWell(
                 onTap: onSearch,
                 borderRadius: BorderRadius.circular(10),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   child: Row(
                     children: [
                       const Icon(Icons.search, size: 18, color: FaroColors.primary),
@@ -717,24 +731,6 @@ class _Header extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.insights_outlined, size: 22, color: FaroColors.textMuted),
-              tooltip: FaroStrings.mapAreasTooltip,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => AreasScreen(onFocus: onFocusArea)),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.help_outline, size: 22, color: FaroColors.textMuted),
-              tooltip: FaroStrings.helpTitle,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const HelpScreen()),
               ),
             ),
           ],
