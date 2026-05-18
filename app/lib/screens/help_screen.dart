@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/design/tokens.dart';
 import '../services/analytics_service.dart';
 import 'about_screen.dart';
 
@@ -66,6 +67,33 @@ class _HelpScreenState extends State<HelpScreen> {
             body:
                 'Sua localização é usada para mostrar relatos próximos. Não armazenamos histórico individual de trajetos. Dados agregados por região, nunca por pessoa.',
           ),
+          SizedBox(height: 24),
+          _AudienceHeader(),
+          SizedBox(height: 12),
+          _AudienceCard(
+            icon: Icons.directions_bus_outlined,
+            title: 'Se você anda de ônibus',
+            body:
+                'Antes de sair, abra o mapa e use o filtro 24h pra ver o que rolou hoje na região onde vai descer. Em Atividade por Área você vê quais linhas foram citadas em relatos recentes — não pra evitar, pra se preparar (escolher horário, descer um ponto antes ou depois).',
+          ),
+          _AudienceCard(
+            icon: Icons.local_taxi_outlined,
+            title: 'Se você é motorista de aplicativo',
+            body:
+                'Antes de aceitar corrida pra destino desconhecido, busque o bairro no mapa. Em 2 segundos você vê os relatos das últimas 24h. O Faro NÃO recomenda recusar corridas — discriminação territorial é ilegal e viola termos das plataformas. Damos contexto pra decisão, não veredito.',
+          ),
+          _AudienceCard(
+            icon: Icons.delivery_dining_outlined,
+            title: 'Se você é entregador',
+            body:
+                'Mesmo princípio do motorista: contexto antes da entrega. Em rotas noturnas em áreas pouco familiares, olhe o bairro antes de aceitar. A tela "Atividade por área" mostra onde concentraram relatos nas últimas semanas — útil pra escolher horários de menor exposição.',
+          ),
+          _AudienceCard(
+            icon: Icons.place_outlined,
+            title: 'Se você está visitando Salvador',
+            body:
+                'Vá na tela Sobre e salve seu hotel como "Local de referência". O Faro vai te avisar se houver relatos no entorno dele mesmo quando você estiver longe — útil pra decidir horário de volta ou se vai de Uber ou andando.',
+          ),
           SizedBox(height: 16),
           _Privacy(),
         ],
@@ -96,7 +124,7 @@ class _Hero extends StatelessWidget {
           const SizedBox(height: 12),
           const Text(
             'O Faro lê fontes públicas em tempo real e mostra a movimentação do entorno. Ajuda a decidir uma rota, não a confirmar uma certeza.',
-            style: TextStyle(fontSize: 14.5, height: 1.45, color: Color(0xFF555555)),
+            style: TextStyle(fontSize: 14.5, height: 1.45, color: FaroColors.textMuted),
           ),
         ],
       ),
@@ -116,16 +144,16 @@ class _FeatureCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F4ED),
+        color: FaroColors.sand,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE3DFD3)),
+        border: Border.all(color: FaroColors.sandBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 1),
-            child: Icon(icon, size: 22, color: const Color(0xFF7A5C2C)),
+            child: Icon(icon, size: 22, color: FaroColors.editorialBrown),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -138,15 +166,100 @@ class _FeatureCard extends StatelessWidget {
                     fontFamily: 'Georgia',
                     fontSize: 16,
                     height: 1.25,
-                    color: Color(0xFF1A1A1A),
+                    color: FaroColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   body,
-                  style: const TextStyle(fontSize: 13.5, height: 1.5, color: Color(0xFF3A3A3A)),
+                  style: const TextStyle(fontSize: 13.5, height: 1.5, color: FaroColors.textSecondary),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AudienceHeader extends StatelessWidget {
+  const _AudienceHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Como usar pra cada perfil',
+          style: TextStyle(
+            fontFamily: FaroFonts.serifEditorial,
+            fontSize: 20,
+            color: FaroColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Caminhos práticos pensados pra quem usa o app por uma razão específica.',
+          style: TextStyle(
+            fontSize: 13,
+            color: FaroColors.textMuted,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AudienceCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  const _AudienceCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(FaroRadii.card),
+        border: Border.all(color: FaroColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: FaroColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: FaroFonts.serifEditorial,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: FaroColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: FaroColors.textSecondary,
             ),
           ),
         ],
@@ -163,12 +276,12 @@ class _Privacy extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDCDCD2)),
+        border: Border.all(color: FaroColors.cardBorder),
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Text(
         'Erros acontecem. Quando um relato se mostrar impreciso, ele pode ser contestado e expira automaticamente. O app não substitui sua atenção — só a complementa.',
-        style: TextStyle(fontSize: 12.5, height: 1.55, color: Color(0xFF555555)),
+        style: TextStyle(fontSize: 12.5, height: 1.55, color: FaroColors.textMuted),
       ),
     );
   }

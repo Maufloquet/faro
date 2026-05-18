@@ -28,6 +28,8 @@ import 'areas_screen.dart';
 import 'help_screen.dart';
 import 'search_screen.dart';
 
+import '../core/design/tokens.dart';
+
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
@@ -425,13 +427,13 @@ class _LocateButton extends StatelessWidget {
                   height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.4,
-                    color: Color(0xFF2A4A7A),
+                    color: FaroColors.primary,
                   ),
                 )
               : const Icon(
                   Icons.my_location,
                   size: 22,
-                  color: Color(0xFF2A4A7A),
+                  color: FaroColors.primary,
                 ),
         ),
       ),
@@ -702,13 +704,13 @@ class _Header extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, size: 18, color: Color(0xFF2A4A7A)),
+                      const Icon(Icons.search, size: 18, color: FaroColors.primary),
                       const SizedBox(width: 8),
                       Text(
                         'Buscar bairro em Salvador',
                         style: TextStyle(
                           fontSize: 14,
-                          color: const Color(0xFF1A1A1A).withValues(alpha: 0.6),
+                          color: FaroColors.textPrimary.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -717,7 +719,7 @@ class _Header extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.insights_outlined, size: 22, color: Color(0xFF555555)),
+              icon: const Icon(Icons.insights_outlined, size: 22, color: FaroColors.textMuted),
               tooltip: 'Atividade por área',
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36),
@@ -726,7 +728,7 @@ class _Header extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.help_outline, size: 22, color: Color(0xFF555555)),
+              icon: const Icon(Icons.help_outline, size: 22, color: FaroColors.textMuted),
               tooltip: 'Como o Faro funciona',
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36),
@@ -852,13 +854,13 @@ class _EmptyState extends StatelessWidget {
               fontFamily: 'Georgia',
               fontSize: 15.5,
               height: 1.3,
-              color: Color(0xFF1A1A1A),
+              color: FaroColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
             'Isso não significa que está seguro — significa que ninguém reportou nada nessa janela. Mantenha atenção.',
-            style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF555555)),
+            style: TextStyle(fontSize: 13, height: 1.5, color: FaroColors.textMuted),
           ),
           if (onExpandWindow != null) ...[
             const SizedBox(height: 14),
@@ -899,13 +901,13 @@ class _SummaryHeader extends StatelessWidget {
               fontFamily: 'Georgia',
               fontSize: 17,
               height: 1.2,
-              color: Color(0xFF1A1A1A),
+              color: FaroColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           const Text(
             'Sem garantia de segurança. Apenas o que foi reportado.',
-            style: TextStyle(fontSize: 12, height: 1.3, color: Color(0xFF7A7A7A)),
+            style: TextStyle(fontSize: 12, height: 1.3, color: FaroColors.textSoft),
           ),
         ],
       ),
@@ -948,7 +950,7 @@ class _Footer extends StatelessWidget {
             'Fonte: Fogo Cruzado',
             style: TextStyle(
               fontSize: 11.5,
-              color: Color(0xFF8A8A8A),
+              color: FaroColors.textHint,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -958,7 +960,7 @@ class _Footer extends StatelessWidget {
               freshness,
               style: const TextStyle(
                 fontSize: 11.5,
-                color: Color(0xFF8A8A8A),
+                color: FaroColors.textHint,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -987,7 +989,7 @@ class _SheetSimple extends StatelessWidget {
       children: [
         const _Handle(),
         const SizedBox(height: 18),
-        Text(message, style: const TextStyle(color: Color(0xFF555555))),
+        Text(message, style: const TextStyle(color: FaroColors.textMuted)),
       ],
     );
   }

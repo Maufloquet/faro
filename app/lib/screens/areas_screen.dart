@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/design/tokens.dart';
 import '../core/filters/time_window.dart';
 import '../core/stats/area_activity.dart';
 import '../core/stats/bus_line_activity.dart';
@@ -57,47 +58,151 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
     final weekdayBuckets = rankByWeekday(filteredList);
     final peak = peakHour(hourBuckets);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atividade por área', style: TextStyle(fontFamily: 'Georgia')),
-        elevation: 0,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          const _Disclaimer(),
-          const SizedBox(height: 16),
-          _WindowSelector(
-            selected: _window,
-            onSelect: (w) => setState(() => _window = w),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Atividade por área',
+            style: TextStyle(fontFamily: FaroFonts.serifEditorial),
           ),
-          const SizedBox(height: 20),
-          if (areas.isEmpty)
-            const _EmptyState()
-          else
-            ...areas.asMap().entries.map(
-                  (e) => _AreaCard(
-                    rank: e.key + 1,
-                    area: e.value,
-                    onFocus: widget.onFocus,
+          elevation: 0,
+          bottom: const TabBar(
+            indicatorColor: FaroColors.primary,
+            labelColor: FaroColors.primary,
+            unselectedLabelColor: FaroColors.textSoft,
+            labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            tabs: [
+              Tab(text: 'Bairros'),
+              Tab(text: 'Linhas'),
+              Tab(text: 'Padrões'),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Column(
+                children: [
+                  const _Disclaimer(),
+                  const SizedBox(height: 12),
+                  _WindowSelector(
+                    selected: _window,
+                    onSelect: (w) => setState(() => _window = w),
                   ),
-                ),
-          if (busLines.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            const _BusLinesHeader(),
-            const SizedBox(height: 12),
-            ...busLines.map((line) => _BusLineCard(activity: line)),
-          ],
-          if (filteredList.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            _TemporalSection(
-              hourEntries: TemporalEntries.fromHours(hourBuckets),
-              weekdayEntries: TemporalEntries.fromWeekdays(weekdayBuckets),
-              peakHour: peak,
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _AreasTab(areas: areas, onFocus: widget.onFocus),
+                  _BusLinesTab(lines: busLines),
+                  _PatternsTab(
+                    hasData: filteredList.isNotEmpty,
+                    hourEntries: TemporalEntries.fromHours(hourBuckets),
+                    weekdayEntries: TemporalEntries.fromWeekdays(weekdayBuckets),
+                    peakHour: peak,
+                  ),
+                ],
+              ),
             ),
           ],
-        ],
+        ),
       ),
+    );
+  }
+}
+
+// ─── Abas ───────────────────────────────────────────────────────────────
+
+class _AreasTab extends StatelessWidget {
+  final List<AreaActivity> areas;
+  final void Function(double, double)? onFocus;
+  const _AreasTab({required this.areas, required this.onFocus});
+
+  @override
+  Widget build(BuildContext context) {
+    if (areas.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: _EmptyState(),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+      itemCount: areas.length,
+      itemBuilder: (_, i) => _AreaCard(
+        rank: i + 1,
+        area: areas[i],
+        onFocus: onFocus,
+      ),
+    );
+  }
+}
+
+class _BusLinesTab extends StatelessWidget {
+  final List<BusLineActivity> lines;
+  const _BusLinesTab({required this.lines});
+
+  @override
+  Widget build(BuildContext context) {
+    if (lines.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
+        child: Text(
+          'Sem linhas de ônibus citadas nesta janela. Linhas só aparecem '
+          'quando uma matéria cita explicitamente o número/código da '
+          'linha (ex.: "linha 1234"). Janelas curtas costumam ter poucos.',
+          style: TextStyle(fontSize: 13, height: 1.5, color: FaroColors.textMuted),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+      children: [
+        const _BusLinesHeader(),
+        const SizedBox(height: 12),
+        ...lines.map((line) => _BusLineCard(activity: line)),
+      ],
+    );
+  }
+}
+
+class _PatternsTab extends StatelessWidget {
+  final bool hasData;
+  final List<({String tag, int count})> hourEntries;
+  final List<({String tag, int count})> weekdayEntries;
+  final int? peakHour;
+  const _PatternsTab({
+    required this.hasData,
+    required this.hourEntries,
+    required this.weekdayEntries,
+    required this.peakHour,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!hasData) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
+        child: Text(
+          'Sem dados no período. Aumente a janela acima pra ver o padrão.',
+          style: TextStyle(fontSize: 13, height: 1.5, color: FaroColors.textMuted),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+      children: [
+        _TemporalSection(
+          hourEntries: hourEntries,
+          weekdayEntries: weekdayEntries,
+          peakHour: peakHour,
+        ),
+      ],
     );
   }
 }
@@ -110,16 +215,16 @@ class _Disclaimer extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBF6EC),
+        color: FaroColors.sandSoft,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE3DFD3)),
+        border: Border.all(color: FaroColors.sandBorder),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline, size: 18, color: Color(0xFF7A5C2C)),
+              Icon(Icons.info_outline, size: 18, color: FaroColors.editorialBrown),
               SizedBox(width: 8),
               Text(
                 'Isto NÃO é um ranking de risco',
@@ -127,7 +232,7 @@ class _Disclaimer extends StatelessWidget {
                   fontFamily: 'Georgia',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF7A5C2C),
+                  color: FaroColors.editorialBrown,
                 ),
               ),
             ],
@@ -135,7 +240,7 @@ class _Disclaimer extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             'Mais relatos numa área podem indicar mais policiamento ativo, mais cobertura de mídia ou mais pessoas reportando — não necessariamente mais crime real. Use como contexto, não como julgamento.',
-            style: TextStyle(fontSize: 12.5, height: 1.5, color: Color(0xFF3A3A3A)),
+            style: TextStyle(fontSize: 12.5, height: 1.5, color: FaroColors.textSecondary),
           ),
         ],
       ),
@@ -157,7 +262,7 @@ class _WindowSelector extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Material(
-              color: isSelected ? const Color(0xFF2A4A7A) : Colors.white,
+              color: isSelected ? FaroColors.primary : Colors.white,
               elevation: 1.5,
               borderRadius: BorderRadius.circular(10),
               child: InkWell(
@@ -200,7 +305,7 @@ class _AreaCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE6E6DC)),
+        border: Border.all(color: FaroColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +326,7 @@ class _AreaCard extends StatelessWidget {
                     fontFamily: 'Georgia',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF7A5C2C),
+                    color: FaroColors.editorialBrown,
                   ),
                 ),
               ),
@@ -232,7 +337,7 @@ class _AreaCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Georgia',
                     fontSize: 17,
-                    color: Color(0xFF1A1A1A),
+                    color: FaroColors.textPrimary,
                   ),
                 ),
               ),
@@ -240,7 +345,7 @@ class _AreaCard extends StatelessWidget {
                 '${area.count} relatos',
                 style: const TextStyle(
                   fontSize: 12.5,
-                  color: Color(0xFF7A7A7A),
+                  color: FaroColors.textSoft,
                 ),
               ),
             ],
@@ -255,7 +360,7 @@ class _AreaCard extends StatelessWidget {
                     width: 6,
                     height: 6,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF8A6A3A),
+                      color: FaroColors.editorialOcher,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -263,12 +368,12 @@ class _AreaCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       entry.key,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF3A3A3A)),
+                      style: const TextStyle(fontSize: 13, color: FaroColors.textSecondary),
                     ),
                   ),
                   Text(
                     '${entry.value}',
-                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF7A7A7A)),
+                    style: const TextStyle(fontSize: 12.5, color: FaroColors.textSoft),
                   ),
                 ],
               ),
@@ -282,7 +387,7 @@ class _AreaCard extends StatelessWidget {
                 'Último relato: ${_relative(area.mostRecent)}',
                 style: const TextStyle(
                   fontSize: 11.5,
-                  color: Color(0xFF8A8A8A),
+                  color: FaroColors.textHint,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -331,7 +436,7 @@ class _BusLinesHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.directions_bus_outlined, size: 18, color: Color(0xFF2A4A7A)),
+              Icon(Icons.directions_bus_outlined, size: 18, color: FaroColors.primary),
               SizedBox(width: 8),
               Text(
                 'Linhas de ônibus citadas',
@@ -339,7 +444,7 @@ class _BusLinesHeader extends StatelessWidget {
                   fontFamily: 'Georgia',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2A4A7A),
+                  color: FaroColors.primary,
                 ),
               ),
             ],
@@ -347,7 +452,7 @@ class _BusLinesHeader extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             'Linhas mencionadas em matérias de jornal sobre relatos do período. NÃO é ranking de linha perigosa — pessoa que depende da linha não pode trocar. Use pra se preparar (escolher horário, descer um ponto antes ou depois).',
-            style: TextStyle(fontSize: 12.5, height: 1.5, color: Color(0xFF3A3A3A)),
+            style: TextStyle(fontSize: 12.5, height: 1.5, color: FaroColors.textSecondary),
           ),
         ],
       ),
@@ -367,7 +472,7 @@ class _BusLineCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE6E6DC)),
+        border: Border.all(color: FaroColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +482,7 @@ class _BusLineCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A4A7A),
+                  color: FaroColors.primary,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -393,7 +498,7 @@ class _BusLineCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'citada em ${activity.count} ${activity.count == 1 ? "relato" : "relatos"}',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF3A3A3A)),
+                  style: const TextStyle(fontSize: 13, color: FaroColors.textSecondary),
                 ),
               ),
             ],
@@ -402,14 +507,14 @@ class _BusLineCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Bairros: ${activity.neighborhoodBreakdown.take(3).map((e) => titleCasePtBr(e.key)).join(" · ")}',
-              style: const TextStyle(fontSize: 12.5, color: Color(0xFF555555)),
+              style: const TextStyle(fontSize: 12.5, color: FaroColors.textMuted),
             ),
           ],
           if (activity.reasonBreakdown.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               'Tipos: ${activity.reasonBreakdown.take(3).map((e) => e.key).join(" · ")}',
-              style: const TextStyle(fontSize: 12.5, color: Color(0xFF555555)),
+              style: const TextStyle(fontSize: 12.5, color: FaroColors.textMuted),
             ),
           ],
         ],
@@ -440,14 +545,14 @@ class _TemporalSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE6E6DC)),
+        border: Border.all(color: FaroColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.schedule, size: 18, color: Color(0xFF7A5C2C)),
+              Icon(Icons.schedule, size: 18, color: FaroColors.editorialBrown),
               SizedBox(width: 8),
               Text(
                 'Quando acontecem',
@@ -455,7 +560,7 @@ class _TemporalSection extends StatelessWidget {
                   fontFamily: 'Georgia',
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
+                  color: FaroColors.textPrimary,
                 ),
               ),
             ],
@@ -464,12 +569,12 @@ class _TemporalSection extends StatelessWidget {
           if (peakLabel != null)
             Text(
               'Horário com mais relatos: $peakLabel',
-              style: const TextStyle(fontSize: 12.5, color: Color(0xFF555555)),
+              style: const TextStyle(fontSize: 12.5, color: FaroColors.textMuted),
             ),
           const SizedBox(height: 4),
           const Text(
             'Padrão temporal dos relatos do período. NÃO é "evite esse horário" — quem precisa sair à noite não tem essa escolha. Use pra escolher quando der flexibilidade.',
-            style: TextStyle(fontSize: 11.5, height: 1.5, color: Color(0xFF8A8A8A), fontStyle: FontStyle.italic),
+            style: TextStyle(fontSize: 11.5, height: 1.5, color: FaroColors.textHint, fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 14),
           TemporalChart(label: 'POR HORA DO DIA', entries: hourEntries),
@@ -497,13 +602,13 @@ class _EmptyState extends StatelessWidget {
               fontFamily: 'Georgia',
               fontSize: 15.5,
               height: 1.3,
-              color: Color(0xFF1A1A1A),
+              color: FaroColors.textPrimary,
             ),
           ),
           SizedBox(height: 8),
           Text(
             'Para entrar nesta lista, uma área precisa ter pelo menos 5 relatos no período. Isso evita listar bairros com 1 ou 2 ocorrências isoladas.',
-            style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF555555)),
+            style: TextStyle(fontSize: 13, height: 1.5, color: FaroColors.textMuted),
           ),
         ],
       ),

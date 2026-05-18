@@ -6,6 +6,8 @@ import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
 import '../services/contestation_service.dart';
 
+import '../core/design/tokens.dart';
+
 /// Tela de contestação de relato.
 ///
 /// Princípio §10 do relatório: contestação é direito, com fricção
@@ -83,7 +85,7 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
             'Relato',
             style: TextStyle(
               fontSize: 12.5,
-              color: Color(0xFF7A7A7A),
+              color: FaroColors.textSoft,
               letterSpacing: 0.2,
             ),
           ),
@@ -94,14 +96,14 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
               fontFamily: 'Georgia',
               fontSize: 16,
               height: 1.3,
-              color: Color(0xFF1A1A1A),
+              color: FaroColors.textPrimary,
             ),
           ),
           if (widget.occurrence.mainReason != null) ...[
             const SizedBox(height: 2),
             Text(
               widget.occurrence.mainReason!,
-              style: const TextStyle(fontSize: 13.5, color: Color(0xFF555555)),
+              style: const TextStyle(fontSize: 13.5, color: FaroColors.textMuted),
             ),
           ],
           const SizedBox(height: 24),
@@ -109,7 +111,7 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
             'Motivo da contestação',
             style: TextStyle(
               fontSize: 12.5,
-              color: Color(0xFF7A7A7A),
+              color: FaroColors.textSoft,
               letterSpacing: 0.2,
             ),
           ),
@@ -126,7 +128,7 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
                     Icon(
                       selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                       size: 20,
-                      color: selected ? const Color(0xFF2A4A7A) : const Color(0xFF8A8A8A),
+                      color: selected ? FaroColors.primary : FaroColors.textHint,
                     ),
                     const SizedBox(width: 12),
                     Text(r.label, style: const TextStyle(fontSize: 14)),
@@ -156,7 +158,7 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
             child: FilledButton(
               onPressed: _reason != null && !_submitting ? _submit : null,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2A4A7A),
+                backgroundColor: FaroColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -184,13 +186,13 @@ class _Disclaimer extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBF6EC),
+        color: FaroColors.sandSoft,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE3DFD3)),
+        border: Border.all(color: FaroColors.sandBorder),
       ),
       child: const Text(
         'Contestações são revisadas em até 2h. Se a contestação for procedente, o relato é removido da visão pública. Múltiplas contestações de fontes independentes aceleram a revisão.',
-        style: TextStyle(fontSize: 12.5, height: 1.55, color: Color(0xFF3A3A3A)),
+        style: TextStyle(fontSize: 12.5, height: 1.55, color: FaroColors.textSecondary),
       ),
     );
   }

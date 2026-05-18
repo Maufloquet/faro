@@ -3,6 +3,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../screens/trajectory_screen.dart';
 
+import '../core/design/tokens.dart';
+
 /// Botão circular que abre o sheet de camadas. Substitui os botões
 /// individuais de "mapa/satélite" e "pontos de ônibus" — fica mais
 /// limpo e prepara espaço pra camadas futuras (iluminação, hospitais 24h).
@@ -18,7 +20,7 @@ class LayersButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: hasActiveLayers ? const Color(0xFF2A4A7A) : Colors.white,
+      color: hasActiveLayers ? FaroColors.primary : Colors.white,
       elevation: 4,
       shape: const CircleBorder(),
       child: InkWell(
@@ -29,7 +31,7 @@ class LayersButton extends StatelessWidget {
           child: Icon(
             Icons.layers_outlined,
             size: 22,
-            color: hasActiveLayers ? Colors.white : const Color(0xFF2A4A7A),
+            color: hasActiveLayers ? Colors.white : FaroColors.primary,
           ),
         ),
       ),
@@ -113,7 +115,7 @@ class _LayersSheetState extends State<LayersSheet> {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF7A7A7A),
+                color: FaroColors.textSoft,
                 letterSpacing: 0.3,
               ),
             ),
@@ -143,7 +145,7 @@ class _LayersSheetState extends State<LayersSheet> {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF7A7A7A),
+                color: FaroColors.textSoft,
                 letterSpacing: 0.3,
               ),
             ),
@@ -151,15 +153,15 @@ class _LayersSheetState extends State<LayersSheet> {
             SwitchListTile.adaptive(
               value: _showBusStops,
               onChanged: (v) => setState(() => _showBusStops = v),
-              activeThumbColor: const Color(0xFF2A4A7A),
+              activeThumbColor: FaroColors.primary,
               contentPadding: EdgeInsets.zero,
               title: const Text(
                 'Pontos de ônibus',
-                style: TextStyle(fontSize: 14.5, color: Color(0xFF1A1A1A)),
+                style: TextStyle(fontSize: 14.5, color: FaroColors.textPrimary),
               ),
               subtitle: const Text(
                 'Visíveis ao aproximar o mapa (zoom de rua)',
-                style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
+                style: TextStyle(fontSize: 12, color: FaroColors.textSoft),
               ),
             ),
             const SizedBox(height: 16),
@@ -168,7 +170,7 @@ class _LayersSheetState extends State<LayersSheet> {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF7A7A7A),
+                color: FaroColors.textSoft,
                 letterSpacing: 0.3,
               ),
             ),
@@ -186,7 +188,7 @@ class _LayersSheetState extends State<LayersSheet> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.history, size: 20, color: Color(0xFF2A4A7A)),
+                    Icon(Icons.history, size: 20, color: FaroColors.primary),
                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -194,17 +196,17 @@ class _LayersSheetState extends State<LayersSheet> {
                         children: [
                           Text(
                             'Seu trajeto',
-                            style: TextStyle(fontSize: 14.5, color: Color(0xFF1A1A1A)),
+                            style: TextStyle(fontSize: 14.5, color: FaroColors.textPrimary),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'Áreas com relatos por onde você passou nos últimos 7 dias',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
+                            style: TextStyle(fontSize: 12, color: FaroColors.textSoft),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, size: 20, color: Color(0xFF7A7A7A)),
+                    Icon(Icons.chevron_right, size: 20, color: FaroColors.textSoft),
                   ],
                 ),
               ),
@@ -217,7 +219,7 @@ class _LayersSheetState extends State<LayersSheet> {
                   LayersSelection(mapType: _mapType, showBusStops: _showBusStops),
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF2A4A7A),
+                  backgroundColor: FaroColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -247,7 +249,7 @@ class _SegmentChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFF2A4A7A) : const Color(0xFFF4F1E8),
+      color: selected ? FaroColors.primary : FaroColors.sandChip,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -260,7 +262,7 @@ class _SegmentChoice extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w500,
-                color: selected ? Colors.white : const Color(0xFF1A1A1A),
+                color: selected ? Colors.white : FaroColors.textPrimary,
               ),
             ),
           ),

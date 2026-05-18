@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../core/filters/time_window.dart';
 import '../models/occurrence.dart';
 
+import '../core/design/tokens.dart';
+
 /// Pílula compacta que substitui as 2 fileiras de chips no topo do mapa.
 /// Mostra estado atual ("7 dias · todos os tipos") e abre o sheet ao tocar.
 ///
@@ -28,7 +30,7 @@ class FilterPill extends StatelessWidget {
             : '${activeReasons.first} +${activeReasons.length - 1}';
 
     return Material(
-      color: hasReasons ? const Color(0xFF2A4A7A) : Colors.white,
+      color: hasReasons ? FaroColors.primary : Colors.white,
       elevation: 3,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
@@ -42,7 +44,7 @@ class FilterPill extends StatelessWidget {
               Icon(
                 Icons.tune,
                 size: 16,
-                color: hasReasons ? Colors.white : const Color(0xFF2A4A7A),
+                color: hasReasons ? Colors.white : FaroColors.primary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -50,7 +52,7 @@ class FilterPill extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: hasReasons ? Colors.white : const Color(0xFF1A1A1A),
+                  color: hasReasons ? Colors.white : FaroColors.textPrimary,
                 ),
               ),
             ],
@@ -155,7 +157,7 @@ class _FilterSheetState extends State<FilterSheet> {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF7A7A7A),
+                color: FaroColors.textSoft,
                 letterSpacing: 0.3,
               ),
             ),
@@ -179,7 +181,7 @@ class _FilterSheetState extends State<FilterSheet> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF7A7A7A),
+                    color: FaroColors.textSoft,
                     letterSpacing: 0.3,
                   ),
                 ),
@@ -200,7 +202,7 @@ class _FilterSheetState extends State<FilterSheet> {
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   'Sem tipos com relatos neste período.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8A8A8A)),
+                  style: TextStyle(fontSize: 13, color: FaroColors.textHint),
                 ),
               )
             else
@@ -230,7 +232,7 @@ class _FilterSheetState extends State<FilterSheet> {
                   FilterSelection(_window, _reasons),
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF2A4A7A),
+                  backgroundColor: FaroColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -256,7 +258,7 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFF2A4A7A) : const Color(0xFFF4F1E8),
+      color: selected ? FaroColors.primary : FaroColors.sandChip,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -268,7 +270,7 @@ class _Chip extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: selected ? Colors.white : const Color(0xFF1A1A1A),
+              color: selected ? Colors.white : FaroColors.textPrimary,
             ),
           ),
         ),

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
 
+import '../core/design/tokens.dart';
+
 /// Tela de busca por bairro de Salvador.
 ///
 /// Catálogo vem de assets/bairros_salvador.json (152 bairros via OSM).
@@ -61,7 +63,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         },
                       ),
                 filled: true,
-                fillColor: const Color(0xFFF7F4ED),
+                fillColor: FaroColors.sand,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -85,7 +87,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       _query.isEmpty
                           ? 'Carregando lista de bairros…'
                           : 'Nenhum bairro encontrado com "$_query".',
-                      style: const TextStyle(color: Color(0xFF7A7A7A)),
+                      style: const TextStyle(color: FaroColors.textSoft),
                     ),
                   );
                 }
@@ -96,7 +98,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     final b = results[i];
                     return ListTile(
                       leading: const Icon(Icons.place_outlined,
-                          size: 20, color: Color(0xFF2A4A7A)),
+                          size: 20, color: FaroColors.primary),
                       title: Text(
                         b.displayName,
                         style: const TextStyle(

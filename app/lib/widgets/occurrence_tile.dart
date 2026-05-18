@@ -5,6 +5,8 @@ import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import 'risk_dot.dart';
 
+import '../core/design/tokens.dart';
+
 class OccurrenceTile extends StatelessWidget {
   final Occurrence occurrence;
   final VoidCallback? onTap;
@@ -43,7 +45,7 @@ class OccurrenceTile extends StatelessWidget {
                       fontFamily: 'Georgia',
                       fontSize: 15.5,
                       height: 1.2,
-                      color: Color(0xFF1A1A1A),
+                      color: FaroColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -89,13 +91,13 @@ class OccurrenceTile extends StatelessWidget {
       children.add(_pill(
         icon: Icons.newspaper_outlined,
         label: o.sourceName ?? 'Mídia',
-        color: const Color(0xFF7A5C2C),
+        color: FaroColors.editorialBrown,
       ));
     } else if (o.source == OccurrenceSource.fogoCruzado) {
       children.add(_pill(
         icon: Icons.gpp_maybe_outlined,
         label: 'Fogo Cruzado',
-        color: const Color(0xFF8A3F3F),
+        color: FaroColors.destructive,
       ));
     }
     if (o.isCityCentroid) {
@@ -103,7 +105,7 @@ class OccurrenceTile extends StatelessWidget {
       children.add(_pill(
         icon: Icons.adjust,
         label: 'localização aprox.',
-        color: const Color(0xFF8A6A3A),
+        color: FaroColors.editorialOcher,
       ));
     }
     if (children.isEmpty) return null;

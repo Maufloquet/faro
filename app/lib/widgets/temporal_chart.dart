@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/stats/temporal_activity.dart';
 
+import '../core/design/tokens.dart';
+
 /// Mini gráfico horizontal — barras proporcionais por hora/dia.
 /// Sem libs externas pra manter o bundle leve. Cor neutra (tom Faro)
 /// pra não disparar leitura emocional ("vermelho = perigo").
@@ -14,7 +16,7 @@ class TemporalChart extends StatelessWidget {
     super.key,
     required this.label,
     required this.entries,
-    this.barColor = const Color(0xFF8A6A3A),
+    this.barColor = FaroColors.editorialOcher,
   });
 
   @override
@@ -30,7 +32,7 @@ class TemporalChart extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF7A7A7A),
+            color: FaroColors.textSoft,
             letterSpacing: 0.2,
           ),
         ),
@@ -72,7 +74,7 @@ class _Row extends StatelessWidget {
               tag,
               style: const TextStyle(
                 fontSize: 11.5,
-                color: Color(0xFF555555),
+                color: FaroColors.textMuted,
                 fontFeatures: [FontFeature.tabularFigures()],
               ),
             ),
@@ -104,7 +106,7 @@ class _Row extends StatelessWidget {
               textAlign: TextAlign.right,
               style: const TextStyle(
                 fontSize: 11,
-                color: Color(0xFF7A7A7A),
+                color: FaroColors.textSoft,
                 fontFeatures: [FontFeature.tabularFigures()],
               ),
             ),

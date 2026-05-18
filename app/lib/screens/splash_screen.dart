@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'map_screen.dart';
 import 'onboarding_screen.dart';
 
+import '../core/design/tokens.dart';
+
 /// Splash de marca antes do mapa carregar.
 ///
 /// Não substitui o splash nativo (LaunchScreen.storyboard no iOS,
@@ -57,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F3EC),
+      backgroundColor: FaroColors.sand,
       body: Center(
         child: FadeTransition(
           opacity: _fade,
@@ -68,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A4A7A),
+                  color: FaroColors.primary,
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: const [
                     BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 4)),
@@ -87,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   fontFamily: 'Georgia',
                   fontSize: 38,
                   height: 1.1,
-                  color: Color(0xFF1A1A1A),
+                  color: FaroColors.textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),

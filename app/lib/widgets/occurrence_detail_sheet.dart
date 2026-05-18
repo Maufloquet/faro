@@ -7,6 +7,8 @@ import '../models/occurrence.dart';
 import '../screens/contestation_screen.dart';
 import 'risk_dot.dart';
 
+import '../core/design/tokens.dart';
+
 /// Sheet modal mostrado quando o usuário toca em um marker ou item da lista.
 ///
 /// Apresenta o relato de forma editorial: sem dramatizar, sem afirmar
@@ -72,7 +74,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                           fontFamily: 'Georgia',
                           fontSize: 22,
                           height: 1.2,
-                          color: Color(0xFF1A1A1A),
+                          color: FaroColors.textPrimary,
                         ),
                       ),
                       if (city.isNotEmpty)
@@ -82,7 +84,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                             city,
                             style: const TextStyle(
                               fontSize: 13.5,
-                              color: Color(0xFF7A7A7A),
+                              color: FaroColors.textSoft,
                             ),
                           ),
                         ),
@@ -102,7 +104,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                     fontStyle: FontStyle.italic,
                     fontSize: 14,
                     height: 1.4,
-                    color: Color(0xFF3A3A3A),
+                    color: FaroColors.textSecondary,
                   ),
                 ),
               ),
@@ -132,7 +134,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                 label: 'Localização',
                 value: 'Aproximada (centro da cidade)',
                 hint: 'Notícia não menciona bairro específico. Pin posicionado no centro da cidade.',
-                valueColor: Color(0xFF8A6A3A),
+                valueColor: FaroColors.editorialOcher,
               ),
             ],
             const SizedBox(height: 24),
@@ -148,7 +150,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                     icon: const Icon(Icons.open_in_new, size: 18),
                     label: const Text('Ler matéria completa'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2A4A7A),
+                      backgroundColor: FaroColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -286,7 +288,7 @@ class _LabeledRow extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 12.5,
-                color: Color(0xFF7A7A7A),
+                color: FaroColors.textSoft,
                 letterSpacing: 0.2,
               ),
             ),
@@ -300,7 +302,7 @@ class _LabeledRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.5,
                     height: 1.3,
-                    color: valueColor ?? const Color(0xFF1A1A1A),
+                    color: valueColor ?? FaroColors.textPrimary,
                   ),
                 ),
                 if (hint != null)
@@ -310,7 +312,7 @@ class _LabeledRow extends StatelessWidget {
                       hint!,
                       style: const TextStyle(
                         fontSize: 11.5,
-                        color: Color(0xFF8A8A8A),
+                        color: FaroColors.textHint,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -332,13 +334,13 @@ class _DisclaimerBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F3EC),
+        color: FaroColors.sand,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE3DFD3)),
+        border: Border.all(color: FaroColors.sandBorder),
       ),
       child: const Text(
         'Relato baseado em fonte pública. O Faro não garante segurança em nenhuma região — só comunica o que foi reportado. Erros acontecem.',
-        style: TextStyle(fontSize: 12.5, height: 1.5, color: Color(0xFF555555)),
+        style: TextStyle(fontSize: 12.5, height: 1.5, color: FaroColors.textMuted),
       ),
     );
   }
