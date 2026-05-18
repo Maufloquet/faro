@@ -329,6 +329,7 @@ class FaroStrings {
   static String areasLastReport(String when) =>
       _t('areas.last_report').replaceAll('{when}', when);
   static String get areasViewOnMap => _t('areas.view_on_map');
+  static String get areasNoLinesTitle => _t('areas.no_lines_title');
   static String get areasNoLinesBody => _t('areas.no_lines_body');
   static String get areasNoPatternsBody => _t('areas.no_patterns_body');
   static String get areasBusLinesHeaderTitle => _t('areas.bus_lines.header.title');
@@ -626,8 +627,9 @@ const Map<String, Map<String, String>> _table = {
     'areas.report_count_many': '{count} relatos',
     'areas.last_report': 'Último relato: {when}',
     'areas.view_on_map': 'Ver no mapa',
+    'areas.no_lines_title': 'Sem linhas citadas neste período',
     'areas.no_lines_body':
-        'Sem linhas de ônibus citadas nesta janela. Linhas só aparecem quando uma matéria cita explicitamente o número/código da linha (ex.: "linha 1234"). Janelas curtas costumam ter poucos.',
+        'Quase nenhuma matéria publica o número da linha — em geral citam só "ônibus" ou "coletivo". Quando aparece um código específico (ex.: "linha 1234"), ele entra aqui. Períodos maiores costumam ter mais — tente "30 dias" se ainda estiver vazio.',
     'areas.no_patterns_body':
         'Sem dados no período. Aumente a janela acima pra ver o padrão.',
     'areas.bus_lines.header.title': 'Linhas de ônibus citadas',
@@ -904,8 +906,9 @@ const Map<String, Map<String, String>> _table = {
     'areas.report_count_many': '{count} reports',
     'areas.last_report': 'Latest report: {when}',
     'areas.view_on_map': 'View on map',
+    'areas.no_lines_title': 'No lines cited in this period',
     'areas.no_lines_body':
-        'No bus lines cited in this window. Lines only appear when a news article explicitly mentions the number/code (e.g. "line 1234"). Short windows often have few.',
+        'Almost no news article publishes the bus line number — they usually just say "bus" or "transit". When a specific code (e.g. "line 1234") shows up, it appears here. Longer periods tend to have more — try "30 days" if it is still empty.',
     'areas.no_patterns_body':
         'No data in this period. Expand the window above to see the pattern.',
     'areas.bus_lines.header.title': 'Cited bus lines',
@@ -1184,8 +1187,9 @@ const Map<String, Map<String, String>> _table = {
     'areas.report_count_many': '{count} reportes',
     'areas.last_report': 'Último reporte: {when}',
     'areas.view_on_map': 'Ver en el mapa',
+    'areas.no_lines_title': 'Sin líneas citadas en este período',
     'areas.no_lines_body':
-        'Sin líneas de autobús citadas en esta ventana. Las líneas solo aparecen cuando una noticia menciona explícitamente el número/código (ej.: "línea 1234"). Las ventanas cortas suelen tener pocas.',
+        'Casi ninguna noticia publica el número de la línea — en general solo dicen "autobús" o "colectivo". Cuando aparece un código específico (ej.: "línea 1234"), entra aquí. Períodos más largos suelen tener más — prueba "30 días" si sigue vacío.',
     'areas.no_patterns_body':
         'Sin datos en el período. Amplía la ventana arriba para ver el patrón.',
     'areas.bus_lines.header.title': 'Líneas de autobús citadas',

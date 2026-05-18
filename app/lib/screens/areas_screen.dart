@@ -151,12 +151,9 @@ class _BusLinesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (lines.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-        child: Text(
-          FaroStrings.areasNoLinesBody,
-          style: const TextStyle(fontSize: 13, height: 1.5, color: FaroColors.textMuted),
-        ),
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
+        child: _BusLinesEmptyState(),
       );
     }
     return ListView(
@@ -415,6 +412,54 @@ class _AreaCard extends StatelessWidget {
     if (diff.inMinutes < 60) return FaroStrings.occRelMinutes(diff.inMinutes);
     if (diff.inHours < 24) return FaroStrings.occRelHours(diff.inHours);
     return FaroStrings.occRelDays(diff.inDays);
+  }
+}
+
+class _BusLinesEmptyState extends StatelessWidget {
+  const _BusLinesEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: FaroColors.sandSoft,
+        borderRadius: BorderRadius.circular(FaroRadii.card),
+        border: Border.all(color: FaroColors.sandBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.directions_bus_outlined,
+                  size: 18, color: FaroColors.editorialBrown),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  FaroStrings.areasNoLinesTitle,
+                  style: const TextStyle(
+                    fontFamily: FaroFonts.serifEditorial,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: FaroColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            FaroStrings.areasNoLinesBody,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: FaroColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
