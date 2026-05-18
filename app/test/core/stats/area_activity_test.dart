@@ -28,7 +28,7 @@ void main() {
 
     test('ignora ocorrências sem bairro', () {
       final result = rankAreas([
-        _o(id: '1', neighborhood: null),
+        _o(id: '1'),
         _o(id: '2', neighborhood: ''),
       ], minCount: 1);
       expect(result, isEmpty);
@@ -82,7 +82,7 @@ void main() {
         _o(id: '1', neighborhood: 'X', reason: 'assalto'),
         _o(id: '2', neighborhood: 'X', reason: 'assalto'),
         _o(id: '3', neighborhood: 'X', reason: 'tiroteio'),
-        _o(id: '4', neighborhood: 'X', reason: null),
+        _o(id: '4', neighborhood: 'X'),
       ], minCount: 1);
       final breakdown = result.first.reasonBreakdown;
       expect(breakdown.first.key, 'assalto');
@@ -92,7 +92,7 @@ void main() {
     });
 
     test('mostRecent é a data máxima do grupo', () {
-      final base = DateTime(2026, 1, 1);
+      final base = DateTime(2026);
       final result = rankAreas([
         _o(id: '1', neighborhood: 'X', date: base),
         _o(id: '2', neighborhood: 'X', date: base.add(const Duration(days: 5))),

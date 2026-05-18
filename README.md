@@ -1,5 +1,8 @@
 # Faro (provisório)
 
+[![Flutter CI](https://github.com/Maufloquet/faro/actions/workflows/flutter.yml/badge.svg)](https://github.com/Maufloquet/faro/actions/workflows/flutter.yml)
+[![Functions CI](https://github.com/Maufloquet/faro/actions/workflows/functions-test.yml/badge.svg)](https://github.com/Maufloquet/faro/actions/workflows/functions-test.yml)
+
 App de alerta de segurança urbana — assistente de decisão em tempo real.
 
 > **"O que está acontecendo perto de mim agora, e devo evitar passar por ali?"**
@@ -33,7 +36,8 @@ Detalhamento completo no relatório de referência (§11).
 
 ## Estrutura
 
-- `docs/` — visão, princípios editoriais, plano de crise, ADRs
+- `docs/` — visão, princípios editoriais, plano de crise
+- `docs/decisoes/` — Architecture Decision Records (ADRs)
 - `research/` — Validações da Fase 0 (concluídas, com findings)
 - `legal/` — termos, política, RIPD, contratos B2B (placeholders)
 - `design/` — linguagem visual de incerteza e wireframes

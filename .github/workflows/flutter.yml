@@ -31,8 +31,26 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-pub
 
-      - name: Tests
-        run: flutter test --no-pub
+      - name: Tests (with coverage)
+        run: flutter test --no-pub --coverage
+
+      # Codecov é opcional — sem o secret CODECOV_TOKEN configurado, o
+      # upload falha silenciosamente. Não bloqueia o CI.
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: app/coverage/lcov.info
+          flags: flutter
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-coverage
+          path: app/coverage/lcov.info
+          if-no-files-found: ignore
 
   build-android:
     name: Build APK (debug)
@@ -79,6 +97,18 @@ jobs:
 
       - name: Pub get
         run: flutter pub get
+
+      # Cache de CocoaPods — primeiro build do dia ainda é lento, mas
+      # builds subsequentes com mesmo Podfile.lock pulam o pod install pesado.
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: ${{ runner.os }}-pods-${{ hashFiles('app/ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
 
       # Build iOS sem assinatura — valida que o projeto compila, pods
       # resolvem e nada quebrou na camada Swift/Obj-C. Não roda em device,

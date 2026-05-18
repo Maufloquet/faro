@@ -53,7 +53,7 @@ class AppTheme {
     const seed = Color(0xFF2A4A7A);
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
+      colorScheme: ColorScheme.fromSeed(seedColor: seed),
       fontFamily: 'Helvetica',
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontFamily: 'Georgia', fontSize: 32, height: 1.2),

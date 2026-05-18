@@ -9,6 +9,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show FlutterError;
 import 'package:flutter/services.dart';
 
 import '../models/occurrence.dart';

@@ -23,7 +23,7 @@ void main() {
     });
 
     test('tudo aceita qualquer data, inclusive antiga', () {
-      expect(TimeWindow.tudo.includes(DateTime(2020, 1, 1)), isTrue);
+      expect(TimeWindow.tudo.includes(DateTime(2020)), isTrue);
       expect(TimeWindow.tudo.includes(DateTime.now()), isTrue);
     });
 

@@ -38,14 +38,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (!mounted) return;
     final needsOnboarding = await OnboardingScreen.shouldShow();
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
+    unawaited(Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 450),
         pageBuilder: (_, _, _) => needsOnboarding ? const OnboardingScreen() : const MapScreen(),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
-    );
+    ));
   }
 
   @override

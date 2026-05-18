@@ -23,7 +23,7 @@ import 'services/occurrences_service.dart';
 /// Default agora é FALSE — o app usa Firestore real. Pra rodar offline com
 /// snapshot histórico (assets/dev_occurrences.json), use:
 ///   flutter run --dart-define=USE_DEV_DATA=true
-const bool kUseDevAssetData = bool.fromEnvironment('USE_DEV_DATA', defaultValue: false);
+const bool kUseDevAssetData = bool.fromEnvironment('USE_DEV_DATA');
 
 Future<void> main() async {
   // runZonedGuarded captura erros async fora do framework. Crashlytics

@@ -79,11 +79,11 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
         children: [
           _Disclaimer(),
           const SizedBox(height: 18),
-          Text(
+          const Text(
             'Relato',
             style: TextStyle(
               fontSize: 12.5,
-              color: const Color(0xFF7A7A7A),
+              color: Color(0xFF7A7A7A),
               letterSpacing: 0.2,
             ),
           ),
@@ -105,11 +105,11 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
             ),
           ],
           const SizedBox(height: 24),
-          Text(
+          const Text(
             'Motivo da contestação',
             style: TextStyle(
               fontSize: 12.5,
-              color: const Color(0xFF7A7A7A),
+              color: Color(0xFF7A7A7A),
               letterSpacing: 0.2,
             ),
           ),

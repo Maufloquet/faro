@@ -1,0 +1,43 @@
+# Atualizações automáticas de dependências.
+# Dependabot abre PRs semanais; CI valida cada um antes do merge.
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  - package-ecosystem: "npm"
+    directory: "/functions"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(functions)"
+      include: "scope"
+    groups:
+      firebase:
+        patterns:
+          - "firebase-*"
+
+  - package-ecosystem: "pub"
+    directory: "/app"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(app)"
+      include: "scope"
+    groups:
+      firebase:
+        patterns:
+          - "firebase_*"
+          - "cloud_firestore"

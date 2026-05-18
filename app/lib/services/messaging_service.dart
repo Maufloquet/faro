@@ -22,10 +22,7 @@ class MessagingService {
   /// Retorna true se autorizado (full ou provisional).
   Future<bool> requestPermission() async {
     final settings = await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
+      
     );
     final ok = settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional;
@@ -94,7 +91,7 @@ class MessagingService {
 /// Calcula geohash precisão 5 de uma coordenada. Implementação simples
 /// (não depende de pacote externo).
 String geohash5Of(double lat, double lng) {
-  const base32 = "0123456789bcdefghjkmnpqrstuvwxyz";
+  const base32 = '0123456789bcdefghjkmnpqrstuvwxyz';
   double minLat = -90, maxLat = 90;
   double minLng = -180, maxLng = 180;
   bool even = true;

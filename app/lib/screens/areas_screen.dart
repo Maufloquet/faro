@@ -38,7 +38,7 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
       (list) => list.where((o) => _window.includes(o.date)).toList(),
     );
     final areas = filtered.maybeWhen(
-      data: (list) => rankAreas(list, topN: 5, minCount: 5),
+      data: (list) => rankAreas(list),
       orElse: () => <AreaActivity>[],
     );
 
@@ -85,26 +85,26 @@ class _Disclaimer extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE3DFD3)),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline, size: 18, color: Color(0xFF7A5C2C)),
-              const SizedBox(width: 8),
+              Icon(Icons.info_outline, size: 18, color: Color(0xFF7A5C2C)),
+              SizedBox(width: 8),
               Text(
                 'Isto NÃO é um ranking de risco',
                 style: TextStyle(
                   fontFamily: 'Georgia',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF7A5C2C),
+                  color: Color(0xFF7A5C2C),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Mais relatos numa área podem indicar mais policiamento ativo, mais cobertura de mídia ou mais pessoas reportando — não necessariamente mais crime real. Use como contexto, não como julgamento.',
             style: TextStyle(fontSize: 12.5, height: 1.5, color: Color(0xFF3A3A3A)),
           ),
@@ -290,11 +290,11 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text(
             'Sem áreas com volume suficiente nesta janela.',
             style: TextStyle(

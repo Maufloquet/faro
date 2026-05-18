@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -169,7 +170,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       );
     }
-    _ensureMessaging(pos.latitude, pos.longitude);
+    unawaited(_ensureMessaging(pos.latitude, pos.longitude));
   }
 
   /// Setup do FCM: pede permissão (1x), assina tópico da região atual.
@@ -195,11 +196,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<void> _openDetail(Occurrence o, OccurrenceOpenEntry entry) async {
-    AnalyticsService.instance.occurrenceOpen(
+    unawaited(AnalyticsService.instance.occurrenceOpen(
       entry: entry,
       source: o.source,
       age: DateTime.now().difference(o.date),
-    );
+    ));
     await _focusOn(o);
     if (!mounted) return;
     await OccurrenceDetailSheet.show(context, o);
@@ -311,7 +312,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ),
         );
       }
-      _ensureMessaging(pos.latitude, pos.longitude);
+      unawaited(_ensureMessaging(pos.latitude, pos.longitude));
     } on LocationException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -833,13 +834,13 @@ class _Map extends StatelessWidget {
       Heatmap(
         heatmapId: const HeatmapId('faro_occurrences'),
         data: points,
-        radius: HeatmapRadius.fromPixels(80),
+        radius: const HeatmapRadius.fromPixels(80),
         opacity: 0.85,
         // Paleta estilo \"surge\" do Uber: transparente nas bordas, amarelo
         // suave em densidade baixa, laranja em densidade média, vermelho
         // intenso onde concentra. Sem verde nem azul-base — evita tingir
         // o mapa inteiro.
-        gradient: HeatmapGradient([
+        gradient: const HeatmapGradient([
           HeatmapGradientColor(Color(0x00FFE082), 0.0),
           HeatmapGradientColor(Color(0xFFFFD56A), 0.15),
           HeatmapGradientColor(Color(0xFFFFA646), 0.35),

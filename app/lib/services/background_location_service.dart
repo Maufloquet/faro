@@ -184,7 +184,6 @@ class BackgroundLocationService {
       return AndroidSettings(
         accuracy: LocationAccuracy.medium,
         distanceFilter: _distanceFilterMeters.toInt(),
-        forceLocationManager: false,
         intervalDuration: const Duration(minutes: 2),
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationTitle: 'Faro está atento à sua região',
@@ -201,9 +200,6 @@ class BackgroundLocationService {
         accuracy: LocationAccuracy.medium,
         distanceFilter: _distanceFilterMeters.toInt(),
         pauseLocationUpdatesAutomatically: true,
-        showBackgroundLocationIndicator: false,
-        allowBackgroundLocationUpdates: true,
-        activityType: ActivityType.other,
       );
     }
     return LocationSettings(

@@ -32,56 +32,56 @@ class _AboutScreenState extends State<AboutScreen> {
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          const _BackgroundAlertsToggle(),
-          const SizedBox(height: 18),
-          const _Section(
+        children: const [
+          _BackgroundAlertsToggle(),
+          SizedBox(height: 18),
+          _Section(
             title: 'O que somos',
             body:
                 'Um assistente de decisão urbana em tempo real. Mostramos o que está acontecendo perto de você combinando fontes públicas e (futuramente) relatos de usuários. Não somos um mapa de crimes. Não substituímos sua atenção.',
           ),
-          const _Section(
+          _Section(
             title: 'O que não somos',
             body:
                 'Não somos um produto de garantia. Nunca dizemos "está seguro". A única mensagem possível em uma região sem relatos é "sem relatos recentes" — silêncio nos dados não é silêncio nas ruas. Mantenha atenção sempre.',
           ),
-          const _Section(
+          _Section(
             title: 'Fontes de dados',
             body:
                 'Hoje: Fogo Cruzado (banco público de violência armada — RJ, PE, BA, PA). Próximas: relatos de usuários com validação coletiva, scraping de portais locais de notícia, monitoramento de canais públicos do Telegram. Cada fonte com peso diferente no cálculo de risco.',
           ),
-          const _Section(
+          _Section(
             title: 'Como classificamos o risco',
             body:
                 'Combinamos peso da fonte, idade do relato e densidade de confirmações. Reportes antigos perdem peso automaticamente. Múltiplas fontes independentes corroborando elevam o nível. Uma única fonte isolada nunca sustenta classificação alta.',
           ),
-          const _Section(
+          _Section(
             title: 'Sobre viés algorítmico',
             body:
                 'Periferias têm mais policiamento e mais cobertura de mídia — não necessariamente mais crime real. Mais boletins em uma região indicam mais visibilidade, não mais risco. Quando não temos dados suficientes em uma área, dizemos isso explicitamente, em vez de assumir que é seguro.',
           ),
-          const _Section(
+          _Section(
             title: 'Densidade populacional (em construção)',
             body:
                 'Quando exibimos "relatos por 10 mil habitantes" em um bairro, usamos população do Censo IBGE 2010 (via PMS/SEMOP), porque o Censo 2022 ainda não publicou agregação por bairro para Salvador. Bairros sem dado de população não mostram normalização — preferimos silêncio honesto a número inventado.',
           ),
-          const _Section(
+          _Section(
             title: 'Privacidade',
             body:
                 'Sua localização é usada apenas para mostrar relatos próximos. Não armazenamos seu histórico individual de trajetos. Dados agregados por região, nunca por pessoa. A política de privacidade completa está disponível em desenvolvimento.',
           ),
-          const _Section(
+          _Section(
             title: 'Para quem anda de ônibus',
             body:
                 'Você é passageiro frequente de ônibus? O Faro hoje ajuda você a avaliar a região onde vai descer antes de chegar. Use o filtro de 24h e a busca por bairro pra olhar antecipadamente. Funções específicas pra ponto de ônibus e trecho a pé estão na V2 do roadmap.',
           ),
-          const _Section(
+          _Section(
             title: 'Contato',
             body:
                 'Email: faro@example.com (placeholder — em produção será real). Toda contestação de relato é respondida em até 2h durante o beta.',
           ),
-          const SizedBox(height: 24),
-          const _Version(),
+          SizedBox(height: 24),
+          _Version(),
         ],
       ),
     );

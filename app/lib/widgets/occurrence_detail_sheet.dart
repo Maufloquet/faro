@@ -120,11 +120,11 @@ class OccurrenceDetailSheet extends StatelessWidget {
             _SourceRow(occurrence: occurrence),
             if (occurrence.isCityCentroid) ...[
               const Divider(height: 1),
-              _LabeledRow(
+              const _LabeledRow(
                 label: 'Localização',
                 value: 'Aproximada (centro da cidade)',
                 hint: 'Notícia não menciona bairro específico. Pin posicionado no centro da cidade.',
-                valueColor: const Color(0xFF8A6A3A),
+                valueColor: Color(0xFF8A6A3A),
               ),
             ],
             const SizedBox(height: 24),
