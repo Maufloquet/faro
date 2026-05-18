@@ -115,7 +115,8 @@ class LocalNotificationService {
   }
 
   /// Dispara notif de proximidade. [count] é número de relatos próximos
-  /// nas últimas 6h. Copy é deliberadamente factual.
+  /// nas últimas 24h. Copy é deliberadamente factual e geográfico —
+  /// usuário tem que entender onde está sem abrir o app.
   Future<void> showProximityCatchUp({
     required int count,
     String? bairro,
@@ -123,12 +124,18 @@ class LocalNotificationService {
     if (count <= 0) return;
     await initialize();
 
-    final title = count == 1
-        ? '1 relato próximo a você'
-        : '$count relatos próximos a você';
+    final hasBairro = bairro != null && bairro.isNotEmpty;
+    final title = hasBairro
+        ? 'Você está em $bairro'
+        : (count == 1
+            ? '1 relato próximo a você'
+            : '$count relatos próximos a você');
 
-    final scope = bairro != null && bairro.isNotEmpty ? ' em $bairro' : '';
-    final body = 'Nas últimas 6h$scope. Toque para ver no mapa.';
+    final body = hasBairro
+        ? (count == 1
+            ? '1 relato aqui nas últimas 24h. Toque pra ver.'
+            : '$count relatos aqui nas últimas 24h. Toque pra ver.')
+        : 'Nas últimas 24h. Toque pra ver no mapa.';
 
     const androidDetails = AndroidNotificationDetails(
       _channelId,

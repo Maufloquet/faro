@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/log/faro_logger.dart';
+import '../models/crossing_event.dart';
 import '../models/occurrence.dart';
+import 'crossing_history_service.dart';
 import 'local_notification_service.dart';
 import 'messaging_service.dart';
 
@@ -27,23 +29,30 @@ class BackgroundLocationService {
   BackgroundLocationService._({
     MessagingService? messaging,
     LocalNotificationService? notifier,
+    CrossingHistoryService? history,
     FirebaseFirestore? firestore,
   })  : _messaging = messaging ?? MessagingService(),
         _notifier = notifier ?? LocalNotificationService.instance,
+        _history = history ?? CrossingHistoryService.instance,
         _firestoreOverride = firestore;
 
   static final BackgroundLocationService instance = BackgroundLocationService._();
+  static const _log = FaroLogger('bg_location');
 
   /// SharedPreferences key — usuário escolheu opt-in no fluxo de permissão.
   static const String kBackgroundEnabledKey = 'bg_location_enabled_v1';
   static const String _lastGeohashKey = 'bg_last_geohash5_v1';
 
   static const double _distanceFilterMeters = 500;
-  static const Duration _catchUpWindow = Duration(hours: 6);
+  /// Janela ampliada pra 24h porque o catch-up agora popula o histórico
+  /// pós-fato — usuário vê o que **aconteceu** durante o dia mesmo se a
+  /// matéria saiu de manhã sobre um evento de madrugada.
+  static const Duration _catchUpWindow = Duration(hours: 24);
   static const int _catchUpMinCount = 1;
 
   final MessagingService _messaging;
   final LocalNotificationService _notifier;
+  final CrossingHistoryService _history;
   final FirebaseFirestore? _firestoreOverride;
   FirebaseFirestore get _firestore =>
       _firestoreOverride ?? FirebaseFirestore.instance;
@@ -75,9 +84,7 @@ class BackgroundLocationService {
     final perm = await Geolocator.checkPermission();
     final hasBackground = perm == LocationPermission.always;
     if (!hasBackground) {
-      if (kDebugMode) {
-        debugPrint('[Faro] bg tracking: sem permissão Always, abortando');
-      }
+      _log.warn('sem permissão Always, abortando');
       return false;
     }
 
@@ -90,13 +97,13 @@ class BackgroundLocationService {
     _positionSub = Geolocator.getPositionStream(locationSettings: settings).listen(
       _onPosition,
       onError: (Object e, StackTrace s) {
-        if (kDebugMode) debugPrint('[Faro] bg stream erro: $e');
+        _log.error('stream erro', e, s);
       },
       cancelOnError: false,
     );
 
     _running = true;
-    if (kDebugMode) debugPrint('[Faro] bg tracking iniciado');
+    _log.info('iniciado');
     return true;
   }
 
@@ -105,16 +112,14 @@ class BackgroundLocationService {
     await _positionSub?.cancel();
     _positionSub = null;
     _running = false;
-    if (kDebugMode) debugPrint('[Faro] bg tracking parado');
+    _log.info('parado');
   }
 
   Future<void> _onPosition(Position pos) async {
     final gh5 = geohash5Of(pos.latitude, pos.longitude);
     if (gh5 == _lastGeohash5) return; // mesma célula, nada a fazer
 
-    if (kDebugMode) {
-      debugPrint('[Faro] bg geohash mudou: $_lastGeohash5 → $gh5');
-    }
+    _log.debug('geohash mudou: $_lastGeohash5 → $gh5');
 
     final previousGh = _lastGeohash5;
     _lastGeohash5 = gh5;
@@ -124,8 +129,8 @@ class BackgroundLocationService {
     // Reassina tópico FCM da nova célula.
     try {
       await _messaging.subscribeToRegion(gh5);
-    } catch (e) {
-      if (kDebugMode) debugPrint('[Faro] resubscribe falhou: $e');
+    } catch (e, s) {
+      _log.error('resubscribe falhou', e, s);
     }
 
     // Catch-up: consulta Firestore por relatos recentes na nova célula.
@@ -164,14 +169,57 @@ class BackgroundLocationService {
 
       // Bairro mais frequente nos relatos (pra contextualizar a notif).
       final bairro = _mostCommonBairro(recent);
+      final cidade = _mostCommonCity(recent);
+      final topReasons = _topReasons(recent);
+
+      final event = CrossingEvent(
+        id: DateTime.now().millisecondsSinceEpoch,
+        at: DateTime.now(),
+        neighborhood: bairro,
+        city: cidade,
+        reportCount: recent.length,
+        topReasons: topReasons,
+        occurrenceIds: recent.map((o) => o.id).take(20).toList(),
+      );
+
+      // tryRecord aplica dedupe (mesmo bairro/dia) e limite diário (5).
+      // Se retornar false, NÃO disparamos notif — usuário já viu/teve
+      // ruído suficiente desse bairro hoje.
+      final recorded = await _history.tryRecord(event);
+      if (!recorded) return;
 
       await _notifier.showProximityCatchUp(
         count: recent.length,
         bairro: bairro,
       );
-    } catch (e) {
-      if (kDebugMode) debugPrint('[Faro] catch-up falhou: $e');
+    } catch (e, s) {
+      _log.error('catch-up falhou', e, s);
     }
+  }
+
+  String? _mostCommonCity(List<Occurrence> list) {
+    final counts = <String, int>{};
+    for (final o in list) {
+      final c = o.city;
+      if (c == null || c.isEmpty) continue;
+      counts[c] = (counts[c] ?? 0) + 1;
+    }
+    if (counts.isEmpty) return null;
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.first.key;
+  }
+
+  List<String> _topReasons(List<Occurrence> list) {
+    final counts = <String, int>{};
+    for (final o in list) {
+      final r = o.mainReason;
+      if (r == null || r.isEmpty) continue;
+      counts[r] = (counts[r] ?? 0) + 1;
+    }
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.take(3).map((e) => e.key).toList();
   }
 
   String? _mostCommonBairro(List<Occurrence> list) {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../screens/trajectory_screen.dart';
+
 /// Botão circular que abre o sheet de camadas. Substitui os botões
 /// individuais de "mapa/satélite" e "pontos de ônibus" — fica mais
 /// limpo e prepara espaço pra camadas futuras (iluminação, hospitais 24h).
@@ -158,6 +160,53 @@ class _LayersSheetState extends State<LayersSheet> {
               subtitle: const Text(
                 'Visíveis ao aproximar o mapa (zoom de rua)',
                 style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Ver',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF7A7A7A),
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(height: 4),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pop(
+                  LayersSelection(mapType: _mapType, showBusStops: _showBusStops),
+                );
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TrajectoryScreen()),
+                );
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.history, size: 20, color: Color(0xFF2A4A7A)),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Seu trajeto',
+                            style: TextStyle(fontSize: 14.5, color: Color(0xFF1A1A1A)),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Áreas com relatos por onde você passou nos últimos 7 dias',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, size: 20, color: Color(0xFF7A7A7A)),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 14),
