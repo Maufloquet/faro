@@ -16,7 +16,9 @@ class DrivingArrowFactory {
 
   Future<BitmapDescriptor> build({double devicePixelRatio = 2.5}) async {
     if (_cache != null) return _cache!;
-    final size = 96.0 * devicePixelRatio;
+    // 64pt-base: fica proporcional aos pins de ocorrência sem dominar
+    // a tela em zoom de rua.
+    final size = 64.0 * devicePixelRatio;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final center = Offset(size / 2, size / 2);
