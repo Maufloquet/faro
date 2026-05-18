@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import '../services/analytics_service.dart';
 import 'about_screen.dart';
 
@@ -26,12 +27,12 @@ class _HelpScreenState extends State<HelpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Como o Faro funciona', style: TextStyle(fontFamily: 'Georgia')),
+        title: Text(FaroStrings.helpTitle, style: const TextStyle(fontFamily: 'Georgia')),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: 'Sobre o Faro',
+            tooltip: FaroStrings.helpAboutTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AboutScreen()),
             ),
@@ -40,62 +41,54 @@ class _HelpScreenState extends State<HelpScreen> {
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: const [
-          _Hero(),
-          SizedBox(height: 28),
+        children: [
+          const _Hero(),
+          const SizedBox(height: 28),
           _FeatureCard(
             icon: Icons.map_outlined,
-            title: 'Não somos um mapa de crimes',
-            body:
-                'Mostramos o que está acontecendo perto de você agora — não estatística histórica. A intenção é ajudar uma decisão pontual: passar por aqui, ou desviar?',
+            title: FaroStrings.helpNotCrimeMapTitle,
+            body: FaroStrings.helpNotCrimeMapBody,
           ),
           _FeatureCard(
             icon: Icons.warning_amber_rounded,
-            title: 'Nunca afirmamos segurança',
-            body:
-                'A única mensagem possível é "sem relatos recentes nesta área". O app não diz que algum lugar é seguro — só comunica probabilidade e ausência de relatos.',
+            title: FaroStrings.helpNeverSafeTitle,
+            body: FaroStrings.helpNeverSafeBody,
           ),
           _FeatureCard(
             icon: Icons.layers_outlined,
-            title: 'Várias fontes, pesos diferentes',
-            body:
-                'Hoje usamos dados em tempo real do Fogo Cruzado (RJ, PE, BA, PA). Ao longo da V2 entram relatos de usuários, scraping de portais locais e canais públicos do Telegram — cada fonte com peso próprio.',
+            title: FaroStrings.helpSourcesTitle,
+            body: FaroStrings.helpSourcesBody,
           ),
           _FeatureCard(
             icon: Icons.lock_outline,
-            title: 'Privacidade desde o dia 1',
-            body:
-                'Sua localização é usada para mostrar relatos próximos. Não armazenamos histórico individual de trajetos. Dados agregados por região, nunca por pessoa.',
+            title: FaroStrings.helpPrivacyTitle,
+            body: FaroStrings.helpPrivacyBody,
           ),
-          SizedBox(height: 24),
-          _AudienceHeader(),
-          SizedBox(height: 12),
+          const SizedBox(height: 24),
+          const _AudienceHeader(),
+          const SizedBox(height: 12),
           _AudienceCard(
             icon: Icons.directions_bus_outlined,
-            title: 'Se você anda de ônibus',
-            body:
-                'Antes de sair, abra o mapa e use o filtro 24h pra ver o que rolou hoje na região onde vai descer. Em Atividade por Área você vê quais linhas foram citadas em relatos recentes — não pra evitar, pra se preparar (escolher horário, descer um ponto antes ou depois).',
+            title: FaroStrings.helpBusTitle,
+            body: FaroStrings.helpBusBody,
           ),
           _AudienceCard(
             icon: Icons.local_taxi_outlined,
-            title: 'Se você é motorista de aplicativo',
-            body:
-                'Antes de aceitar corrida pra destino desconhecido, busque o bairro no mapa. Em 2 segundos você vê os relatos das últimas 24h. O Faro NÃO recomenda recusar corridas — discriminação territorial é ilegal e viola termos das plataformas. Damos contexto pra decisão, não veredito.',
+            title: FaroStrings.helpDriverTitle,
+            body: FaroStrings.helpDriverBody,
           ),
           _AudienceCard(
             icon: Icons.delivery_dining_outlined,
-            title: 'Se você é entregador',
-            body:
-                'Mesmo princípio do motorista: contexto antes da entrega. Em rotas noturnas em áreas pouco familiares, olhe o bairro antes de aceitar. A tela "Atividade por área" mostra onde concentraram relatos nas últimas semanas — útil pra escolher horários de menor exposição.',
+            title: FaroStrings.helpDeliveryTitle,
+            body: FaroStrings.helpDeliveryBody,
           ),
           _AudienceCard(
             icon: Icons.place_outlined,
-            title: 'Se você está visitando Salvador',
-            body:
-                'Vá na tela Sobre e salve seu hotel como "Local de referência". O Faro vai te avisar se houver relatos no entorno dele mesmo quando você estiver longe — útil pra decidir horário de volta ou se vai de Uber ou andando.',
+            title: FaroStrings.helpTouristTitle,
+            body: FaroStrings.helpTouristBody,
           ),
-          SizedBox(height: 16),
-          _Privacy(),
+          const SizedBox(height: 16),
+          const _Privacy(),
         ],
       ),
     );
@@ -113,7 +106,7 @@ class _Hero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'O que está\nacontecendo perto\nde você agora?',
+            FaroStrings.helpHeroTitle,
             style: TextStyle(
               fontFamily: 'Georgia',
               fontSize: 28,
@@ -122,9 +115,9 @@ class _Hero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'O Faro lê fontes públicas em tempo real e mostra a movimentação do entorno. Ajuda a decidir uma rota, não a confirmar uma certeza.',
-            style: TextStyle(fontSize: 14.5, height: 1.45, color: FaroColors.textMuted),
+          Text(
+            FaroStrings.helpHeroBody,
+            style: const TextStyle(fontSize: 14.5, height: 1.45, color: FaroColors.textMuted),
           ),
         ],
       ),
@@ -188,21 +181,21 @@ class _AudienceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Como usar pra cada perfil',
-          style: TextStyle(
+          FaroStrings.helpAudienceHeader,
+          style: const TextStyle(
             fontFamily: FaroFonts.serifEditorial,
             fontSize: 20,
             color: FaroColors.textPrimary,
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
-          'Caminhos práticos pensados pra quem usa o app por uma razão específica.',
-          style: TextStyle(
+          FaroStrings.helpAudienceSubhead,
+          style: const TextStyle(
             fontSize: 13,
             color: FaroColors.textMuted,
             fontStyle: FontStyle.italic,
@@ -279,9 +272,9 @@ class _Privacy extends StatelessWidget {
         border: Border.all(color: FaroColors.cardBorder),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: const Text(
-        'Erros acontecem. Quando um relato se mostrar impreciso, ele pode ser contestado e expira automaticamente. O app não substitui sua atenção — só a complementa.',
-        style: TextStyle(fontSize: 12.5, height: 1.55, color: FaroColors.textMuted),
+      child: Text(
+        FaroStrings.helpPrivacyFooter,
+        style: const TextStyle(fontSize: 12.5, height: 1.55, color: FaroColors.textMuted),
       ),
     );
   }
