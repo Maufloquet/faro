@@ -58,6 +58,16 @@ class FaroStrings {
   // ─── Disclaimers genéricos ────────────────────────────────────────────
   static String get silenceDisclaimer => _t('disclaimer.silence');
   static String get notARiskRanking => _t('disclaimer.not_a_ranking');
+
+  // ─── Splash ───────────────────────────────────────────────────────────
+  static String get splashTagline => _t('splash.tagline');
+
+  // ─── Busca de bairro ──────────────────────────────────────────────────
+  static String get searchTitle => _t('search.title');
+  static String get searchHint => _t('search.hint');
+  static String get searchLoading => _t('search.loading');
+  static String searchEmpty(String query) =>
+      _t('search.empty').replaceAll('{q}', query);
 }
 
 const Map<String, Map<String, String>> _table = {
@@ -82,6 +92,11 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.cta': 'Entendi, abrir o mapa',
     'disclaimer.silence': 'Silêncio nos dados não é silêncio nas ruas',
     'disclaimer.not_a_ranking': 'Isto NÃO é um ranking de risco',
+    'splash.tagline': 'O que está acontecendo perto de você agora',
+    'search.title': 'Buscar bairro',
+    'search.hint': 'Ex: Pirajá, Itapuã, Barra…',
+    'search.loading': 'Carregando lista de bairros…',
+    'search.empty': 'Nenhum bairro encontrado com "{q}".',
   },
   'en': {
     'onboarding.headline': 'Welcome to Faro',
@@ -103,6 +118,11 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.cta': 'Got it, open the map',
     'disclaimer.silence': 'Silence in the data is not silence on the streets',
     'disclaimer.not_a_ranking': 'This is NOT a risk ranking',
+    'splash.tagline': 'What is happening near you right now',
+    'search.title': 'Search neighborhood',
+    'search.hint': 'e.g. Pirajá, Itapuã, Barra…',
+    'search.loading': 'Loading neighborhood list…',
+    'search.empty': 'No neighborhood found for "{q}".',
   },
   'es': {
     'onboarding.headline': 'Bienvenido a Faro',
@@ -124,5 +144,10 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.cta': 'Entendido, abrir el mapa',
     'disclaimer.silence': 'El silencio en los datos no es silencio en la calle',
     'disclaimer.not_a_ranking': 'Esto NO es un ranking de riesgo',
+    'splash.tagline': 'Lo que está pasando cerca de ti ahora',
+    'search.title': 'Buscar barrio',
+    'search.hint': 'Ej: Pirajá, Itapuã, Barra…',
+    'search.loading': 'Cargando lista de barrios…',
+    'search.empty': 'Ningún barrio encontrado para "{q}".',
   },
 };

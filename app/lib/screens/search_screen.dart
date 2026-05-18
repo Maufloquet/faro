@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
-
-import '../core/design/tokens.dart';
 
 /// Tela de busca por bairro de Salvador.
 ///
@@ -38,7 +38,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final directory = ref.watch(bairrosDirectoryProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buscar bairro', style: TextStyle(fontFamily: 'Georgia')),
+        title: Text(FaroStrings.searchTitle, style: const TextStyle(fontFamily: 'Georgia')),
         elevation: 0,
       ),
       body: Column(
@@ -51,7 +51,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               textInputAction: TextInputAction.search,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
-                hintText: 'Ex: Pirajá, Itapuã, Barra…',
+                hintText: FaroStrings.searchHint,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 suffixIcon: _query.isEmpty
                     ? null
@@ -85,8 +85,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       _query.isEmpty
-                          ? 'Carregando lista de bairros…'
-                          : 'Nenhum bairro encontrado com "$_query".',
+                          ? FaroStrings.searchLoading
+                          : FaroStrings.searchEmpty(_query),
                       style: const TextStyle(color: FaroColors.textSoft),
                     ),
                   );

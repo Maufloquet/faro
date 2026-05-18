@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/design/tokens.dart';
+import '../core/i18n/faro_strings.dart';
 import 'map_screen.dart';
 import 'onboarding_screen.dart';
-
-import '../core/design/tokens.dart';
 
 /// Splash de marca antes do mapa carregar.
 ///
@@ -94,10 +94,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'O que está acontecendo perto de você agora',
+              Text(
+                FaroStrings.splashTagline,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Georgia',
                   fontStyle: FontStyle.italic,
                   fontSize: 14,
