@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../core/design/tokens.dart';
 import '../services/analytics_service.dart';
 import '../services/background_location_service.dart';
 import '../services/local_notification_service.dart';
+import '../services/reference_location_service.dart';
 
 /// Tela /sobre/ — transparência editorial pública.
 ///
@@ -34,6 +36,8 @@ class _AboutScreenState extends State<AboutScreen> {
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: const [
           _BackgroundAlertsToggle(),
+          SizedBox(height: 12),
+          _ReferenceLocationCard(),
           SizedBox(height: 18),
           _Section(
             title: 'O que somos',
@@ -121,7 +125,7 @@ class _Section extends StatelessWidget {
               fontFamily: 'Georgia',
               fontSize: 17,
               height: 1.25,
-              color: Color(0xFF1A1A1A),
+              color: FaroColors.textPrimary,
             ),
           ),
           const SizedBox(height: 7),
@@ -130,7 +134,7 @@ class _Section extends StatelessWidget {
             style: const TextStyle(
               fontSize: 14,
               height: 1.55,
-              color: Color(0xFF3A3A3A),
+              color: FaroColors.textSecondary,
             ),
           ),
         ],
@@ -232,7 +236,7 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
           const Padding(
             padding: EdgeInsets.only(top: 2),
             child: Icon(Icons.notifications_active_outlined,
-                size: 22, color: Color(0xFF7A5C2C)),
+                size: 22, color: FaroColors.editorialBrown),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -244,7 +248,7 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
                   style: TextStyle(
                     fontFamily: 'Georgia',
                     fontSize: 15,
-                    color: Color(0xFF1A1A1A),
+                    color: FaroColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -255,7 +259,7 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
                   style: const TextStyle(
                     fontSize: 12.5,
                     height: 1.45,
-                    color: Color(0xFF3A3A3A),
+                    color: FaroColors.textSecondary,
                   ),
                 ),
               ],
@@ -264,7 +268,193 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
           Switch(
             value: _enabled,
             onChanged: _busy ? null : _toggle,
-            activeThumbColor: const Color(0xFF2A4A7A),
+            activeThumbColor: FaroColors.primary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card que permite o usuário definir 1 endereço fixo de referência
+/// (hotel, casa, trabalho) e receber alerta quando há relato perto **mesmo
+/// se estiver longe do local agora**. Útil pra turista hospedado em
+/// algum lugar e quer saber do entorno do hotel ao longo do dia.
+class _ReferenceLocationCard extends StatefulWidget {
+  const _ReferenceLocationCard();
+
+  @override
+  State<_ReferenceLocationCard> createState() => _ReferenceLocationCardState();
+}
+
+class _ReferenceLocationCardState extends State<_ReferenceLocationCard> {
+  ReferenceLocation? _current;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final r = await ReferenceLocationService.instance.current();
+    if (!mounted) return;
+    setState(() => _current = r);
+  }
+
+  Future<void> _saveFromCurrentLocation() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      // Permissão whileInUse já é suficiente pra captura pontual.
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        _showInfo('Permissão de localização necessária pra salvar este local.');
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+
+      final label = await _askLabel();
+      if (label == null) return; // usuário cancelou
+
+      await ReferenceLocationService.instance.save(
+        ReferenceLocation(lat: pos.latitude, lng: pos.longitude, label: label),
+      );
+      await _load();
+      if (mounted) _showInfo('Local salvo. Faro vai te avisar de relatos por aqui.');
+    } catch (e) {
+      _showInfo('Não foi possível salvar agora. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<String?> _askLabel() async {
+    final controller = TextEditingController(text: _current?.label ?? 'Hotel');
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Como chamar este local?',
+          style: TextStyle(fontFamily: FaroFonts.serifEditorial, fontSize: 18),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Hotel, Casa, Trabalho...',
+            border: OutlineInputBorder(),
+          ),
+          maxLength: 40,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: FaroColors.primary),
+            onPressed: () {
+              final v = controller.text.trim();
+              Navigator.of(ctx).pop(v.isEmpty ? 'Local salvo' : v);
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _remove() async {
+    await ReferenceLocationService.instance.clear();
+    await _load();
+    if (mounted) _showInfo('Local removido.');
+  }
+
+  void _showInfo(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = _current;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: FaroColors.sandSoft,
+        borderRadius: BorderRadius.circular(FaroRadii.card),
+        border: Border.all(color: FaroColors.sandBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.place_outlined,
+                    size: 22, color: FaroColors.editorialBrown),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Local de referência',
+                      style: TextStyle(
+                        fontFamily: FaroFonts.serifEditorial,
+                        fontSize: 15,
+                        color: FaroColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      r == null
+                          ? 'Salve um lugar fixo (hotel, casa, trabalho) e o Faro avisa quando aparecer relato por lá — mesmo se você estiver longe agora.'
+                          : '${r.label} · alertando o entorno deste ponto',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        height: 1.45,
+                        color: FaroColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (r != null)
+                TextButton(
+                  onPressed: _busy ? null : _remove,
+                  style: TextButton.styleFrom(
+                    foregroundColor: FaroColors.destructive,
+                  ),
+                  child: const Text('Remover'),
+                ),
+              const SizedBox(width: 4),
+              FilledButton.icon(
+                onPressed: _busy ? null : _saveFromCurrentLocation,
+                style: FilledButton.styleFrom(
+                  backgroundColor: FaroColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+                icon: const Icon(Icons.my_location, size: 16),
+                label: Text(r == null ? 'Usar minha localização' : 'Trocar'),
+              ),
+            ],
           ),
         ],
       ),

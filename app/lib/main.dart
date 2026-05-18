@@ -18,6 +18,7 @@ import 'services/density_service.dart';
 import 'services/dev_data_source.dart';
 import 'services/local_notification_service.dart';
 import 'services/occurrences_service.dart';
+import 'services/reference_location_service.dart';
 
 /// Modo dev: lê ocorrências do asset local, sem precisar de Firebase.
 /// Default agora é FALSE — o app usa Firestore real. Pra rodar offline com
@@ -88,6 +89,11 @@ Future<void> main() async {
       // numa sessão anterior. Caso contrário fica dormindo até toggle no
       // /sobre/. Roda em fire-and-forget pra não atrasar o boot.
       unawaited(_resumeBackgroundTracking());
+
+      // Local de referência (turista/casa): re-assina o tópico FCM do
+      // ponto salvo. FCM pode perder a subscription se o device ficou
+      // muito tempo offline, então re-afirmamos no boot.
+      unawaited(ReferenceLocationService.instance.resumeOnBoot());
     } else if (kDebugMode) {
       debugPrint('[Faro] modo dev: lendo ocorrências de assets/, sem Firebase.');
     }

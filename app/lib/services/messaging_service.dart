@@ -70,6 +70,16 @@ class MessagingService {
     }
   }
 
+  /// Wrappers públicos pros outros services (ex.: ReferenceLocationService)
+  /// que precisam assinar tópicos próprios sem replicar tratamento de erro.
+  Future<void> subscribeToTopic(String topic) async {
+    await FirebaseMessaging.instance.subscribeToTopic(topic);
+  }
+
+  Future<void> unsubscribeFromTopic(String topic) async {
+    await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
+  }
+
   /// iOS precisa de APNS token resolvido antes de assinar tópicos.
   Future<bool> _hasApnsToken() async {
     if (!Platform.isIOS) return true;

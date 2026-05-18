@@ -45,57 +45,69 @@ exports.onOccurrenceCreated = onDocumentCreated(
     const geohash5 = typeof data.geohash === "string" ? data.geohash.substring(0, 5) : null;
     if (!geohash5) return;
 
-    const topic = `region_${geohash5}`;
     const reason = mapReason(data.mainReason);
     const where = data.neighborhood || data.city || "área próxima";
 
-    const message = {
-      notification: {
-        title: "Faro · novo relato perto",
-        body: `${reason} em ${where}`,
-      },
-      data: {
-        occurrenceId: event.params.occurrenceId,
-        type: "proximity_alert",
-        geohash5,
-      },
-      android: {
-        priority: "high",
-        notification: {
-          channelId: "faro_proximity",
-        },
-      },
-      apns: {
-        // headers garantem entrega imediata + categoria de alerta
-        headers: {
-          "apns-priority": "10",
-          "apns-push-type": "alert",
-        },
-        payload: {
-          aps: {
-            sound: "default",
-            badge: 1,
-            // mutable-content permite que extension service modifique
-            // o payload antes de mostrar (útil pra ricos/imagens futuras)
-            "mutable-content": 1,
-            // content-available acorda o app brevemente pra processar
-            // a entrega — útil pra atualização de badge/lista mesmo
-            // antes do usuário tocar
-            "content-available": 1,
-          },
-        },
-      },
-      topic,
-    };
+    // Dois tópicos paralelos:
+    //   region_{geohash5}    — quem está geograficamente próximo agora
+    //   reference_{geohash5} — quem definiu endereço de referência aqui
+    // O 2º é pra turista/viajante: notif sobre a área do hotel mesmo se
+    // ele não estiver no hotel naquele momento.
+    const topics = [
+      { name: `region_${geohash5}`, scope: "region" },
+      { name: `reference_${geohash5}`, scope: "reference" },
+    ];
 
-    try {
-      await admin.messaging().send(message);
-      logger.info(`FCM enviado · topic=${topic} · type=${data.source}`);
-    } catch (e) {
-      logger.error(`FCM falhou · topic=${topic} · ${e.message}`);
+    for (const t of topics) {
+      const message = buildMessage({
+        title: t.scope === "reference"
+          ? "Próximo do seu endereço salvo"
+          : "Faro · novo relato perto",
+        body: `${reason} em ${where}`,
+        occurrenceId: event.params.occurrenceId,
+        geohash5,
+        scope: t.scope,
+        topic: t.name,
+      });
+      try {
+        await admin.messaging().send(message);
+        logger.info(`FCM enviado · topic=${t.name} · type=${data.source}`);
+      } catch (e) {
+        logger.error(`FCM falhou · topic=${t.name} · ${e.message}`);
+      }
     }
   }
 );
+
+function buildMessage({ title, body, occurrenceId, geohash5, scope, topic }) {
+  return {
+    notification: { title, body },
+    data: {
+      occurrenceId,
+      type: scope === "reference" ? "reference_alert" : "proximity_alert",
+      geohash5,
+    },
+    android: {
+      priority: "high",
+      notification: { channelId: "faro_proximity" },
+    },
+    apns: {
+      headers: {
+        "apns-priority": "10",
+        "apns-push-type": "alert",
+      },
+      payload: {
+        aps: {
+          sound: "default",
+          badge: 1,
+          "mutable-content": 1,
+          "content-available": 1,
+        },
+      },
+    },
+    topic,
+  };
+}
 
 function mapReason(raw) {
   if (!raw) return "Relato";
@@ -115,4 +127,4 @@ function mapReason(raw) {
 }
 
 // Exportado para testes unitários
-exports._internal = { mapReason };
+exports._internal = { mapReason, buildMessage };

@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/analytics_service.dart';
 import 'map_screen.dart';
 
+import '../core/design/tokens.dart';
+
 /// Onboarding de UMA tela, bloqueante na primeira abertura.
 ///
 /// Princípio do relatório §7.2: onboarding de múltiplas telas tem
@@ -47,7 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F3EC),
+      backgroundColor: FaroColors.sand,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -98,7 +100,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: FilledButton(
                   onPressed: _agreed ? _complete : null,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2A4A7A),
+                    backgroundColor: FaroColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -126,7 +128,7 @@ class _Header extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFF2A4A7A),
+            color: FaroColors.primary,
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(Icons.travel_explore, size: 30, color: Colors.white),
@@ -138,7 +140,7 @@ class _Header extends StatelessWidget {
             fontFamily: 'Georgia',
             fontSize: 26,
             height: 1.15,
-            color: Color(0xFF1A1A1A),
+            color: FaroColors.textPrimary,
           ),
         ),
         const SizedBox(height: 6),
@@ -149,7 +151,7 @@ class _Header extends StatelessWidget {
             fontStyle: FontStyle.italic,
             fontSize: 14,
             height: 1.4,
-            color: Color(0xFF555555),
+            color: FaroColors.textMuted,
           ),
         ),
       ],
@@ -172,7 +174,7 @@ class _Principle extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Icon(icon, size: 22, color: const Color(0xFF7A5C2C)),
+            child: Icon(icon, size: 22, color: FaroColors.editorialBrown),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -185,7 +187,7 @@ class _Principle extends StatelessWidget {
                     fontFamily: 'Georgia',
                     fontSize: 16,
                     height: 1.25,
-                    color: Color(0xFF1A1A1A),
+                    color: FaroColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -194,7 +196,7 @@ class _Principle extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13.5,
                     height: 1.5,
-                    color: Color(0xFF3A3A3A),
+                    color: FaroColors.textSecondary,
                   ),
                 ),
               ],
@@ -225,7 +227,7 @@ class _AcceptanceRow extends StatelessWidget {
               value: checked,
               onChanged: onChanged,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              activeColor: const Color(0xFF2A4A7A),
+              activeColor: FaroColors.primary,
             ),
             const SizedBox(width: 6),
             const Expanded(
@@ -234,7 +236,7 @@ class _AcceptanceRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12.5,
                   height: 1.4,
-                  color: Color(0xFF3A3A3A),
+                  color: FaroColors.textSecondary,
                 ),
               ),
             ),
