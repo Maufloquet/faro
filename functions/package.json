@@ -6,7 +6,7 @@
     "shell": "firebase functions:shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "node --test test/"
+    "test": "node --test \"test/*.test.js\""
   },
   "engines": {
     "node": "22"

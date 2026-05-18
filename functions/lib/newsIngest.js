@@ -205,3 +205,6 @@ function mapType(t) {
   if (!t) return "Outros";
   return TYPE_MAP[t.toLowerCase()] || "Outros";
 }
+
+// Exportado para testes unitários
+exports._internal = { sha1, mapType, TYPE_MAP };

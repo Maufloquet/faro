@@ -101,3 +101,6 @@ function mapReason(raw) {
   };
   return map[raw] || raw;
 }
+
+// Exportado para testes unitários
+exports._internal = { mapReason };
