@@ -138,6 +138,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     } catch (_) {
       return;
     }
+
+    // Leitura imediata: stream com distanceFilter:10 não emite até o
+    // usuário se mover 10m. Se ele ativa parado, ficaria sem seta nenhuma
+    // (o dot nativo também sumiu). Pedimos uma posição one-shot pra
+    // pintar a seta na hora.
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 6),
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
+      final controller = _map;
+      if (controller != null) {
+        await controller.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(pos.latitude, pos.longitude),
+              zoom: _drivingFollowZoom,
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      // Ignora: o stream abaixo eventualmente cobre.
+    }
+
     _drivingSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
