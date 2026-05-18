@@ -315,6 +315,55 @@ class FaroStrings {
   static String get occSourceUnknown => _t('occ.source.unknown');
   static String get occAbsoluteAt => _t('occ.absolute_at');
   static String get occDisclaimer => _t('occ.disclaimer');
+
+  // ─── Areas screen ─────────────────────────────────────────────────────
+  static String get areasTitle => _t('areas.title');
+  static String get areasTabNeighborhoods => _t('areas.tab.neighborhoods');
+  static String get areasTabLines => _t('areas.tab.lines');
+  static String get areasTabPatterns => _t('areas.tab.patterns');
+  static String get areasDisclaimerBody => _t('areas.disclaimer.body');
+  static String areasReportCount(int count) {
+    final key = count == 1 ? 'areas.report_count_one' : 'areas.report_count_many';
+    return _t(key).replaceAll('{count}', count.toString());
+  }
+  static String areasLastReport(String when) =>
+      _t('areas.last_report').replaceAll('{when}', when);
+  static String get areasViewOnMap => _t('areas.view_on_map');
+  static String get areasNoLinesBody => _t('areas.no_lines_body');
+  static String get areasNoPatternsBody => _t('areas.no_patterns_body');
+  static String get areasBusLinesHeaderTitle => _t('areas.bus_lines.header.title');
+  static String get areasBusLinesHeaderBody => _t('areas.bus_lines.header.body');
+  static String areasBusLineCited(int count) {
+    final key = count == 1 ? 'areas.bus_line.cited_one' : 'areas.bus_line.cited_many';
+    return _t(key).replaceAll('{count}', count.toString());
+  }
+  static String areasBusLineNeighborhoods(String list) =>
+      _t('areas.bus_line.neighborhoods').replaceAll('{list}', list);
+  static String areasBusLineReasons(String list) =>
+      _t('areas.bus_line.reasons').replaceAll('{list}', list);
+  static String get areasPatternsTitle => _t('areas.patterns.title');
+  static String areasPatternsPeak(String range) =>
+      _t('areas.patterns.peak').replaceAll('{range}', range);
+  static String get areasPatternsHint => _t('areas.patterns.hint');
+  static String get areasChartByHour => _t('areas.chart.by_hour');
+  static String get areasChartByWeekday => _t('areas.chart.by_weekday');
+  static String get areasEmptyTitle => _t('areas.empty.title');
+  static String get areasEmptyBody => _t('areas.empty.body');
+
+  // ─── Dias da semana (1=seg ... 7=dom) ─────────────────────────────────
+  static String weekdayShort(int weekday) {
+    const keys = {
+      1: 'weekday.mon',
+      2: 'weekday.tue',
+      3: 'weekday.wed',
+      4: 'weekday.thu',
+      5: 'weekday.fri',
+      6: 'weekday.sat',
+      7: 'weekday.sun',
+    };
+    final k = keys[weekday];
+    return k == null ? '?' : _t(k);
+  }
 }
 
 const Map<String, Map<String, String>> _table = {
@@ -532,6 +581,43 @@ const Map<String, Map<String, String>> _table = {
     'occ.absolute_at': 'às',
     'occ.disclaimer':
         'Relato baseado em fonte pública. O Faro não garante segurança em nenhuma região — só comunica o que foi reportado. Erros acontecem.',
+    'areas.title': 'Atividade por área',
+    'areas.tab.neighborhoods': 'Bairros',
+    'areas.tab.lines': 'Linhas',
+    'areas.tab.patterns': 'Padrões',
+    'areas.disclaimer.body':
+        'Mais relatos numa área podem indicar mais policiamento ativo, mais cobertura de mídia ou mais pessoas reportando — não necessariamente mais crime real. Use como contexto, não como julgamento.',
+    'areas.report_count_one': '{count} relato',
+    'areas.report_count_many': '{count} relatos',
+    'areas.last_report': 'Último relato: {when}',
+    'areas.view_on_map': 'Ver no mapa',
+    'areas.no_lines_body':
+        'Sem linhas de ônibus citadas nesta janela. Linhas só aparecem quando uma matéria cita explicitamente o número/código da linha (ex.: "linha 1234"). Janelas curtas costumam ter poucos.',
+    'areas.no_patterns_body':
+        'Sem dados no período. Aumente a janela acima pra ver o padrão.',
+    'areas.bus_lines.header.title': 'Linhas de ônibus citadas',
+    'areas.bus_lines.header.body':
+        'Linhas mencionadas em matérias de jornal sobre relatos do período. NÃO é ranking de linha perigosa — pessoa que depende da linha não pode trocar. Use pra se preparar (escolher horário, descer um ponto antes ou depois).',
+    'areas.bus_line.cited_one': 'citada em {count} relato',
+    'areas.bus_line.cited_many': 'citada em {count} relatos',
+    'areas.bus_line.neighborhoods': 'Bairros: {list}',
+    'areas.bus_line.reasons': 'Tipos: {list}',
+    'areas.patterns.title': 'Quando acontecem',
+    'areas.patterns.peak': 'Horário com mais relatos: {range}',
+    'areas.patterns.hint':
+        'Padrão temporal dos relatos do período. NÃO é "evite esse horário" — quem precisa sair à noite não tem essa escolha. Use pra escolher quando der flexibilidade.',
+    'areas.chart.by_hour': 'POR HORA DO DIA',
+    'areas.chart.by_weekday': 'POR DIA DA SEMANA',
+    'areas.empty.title': 'Sem áreas com volume suficiente nesta janela.',
+    'areas.empty.body':
+        'Para entrar nesta lista, uma área precisa ter pelo menos 5 relatos no período. Isso evita listar bairros com 1 ou 2 ocorrências isoladas.',
+    'weekday.mon': 'Seg',
+    'weekday.tue': 'Ter',
+    'weekday.wed': 'Qua',
+    'weekday.thu': 'Qui',
+    'weekday.fri': 'Sex',
+    'weekday.sat': 'Sáb',
+    'weekday.sun': 'Dom',
   },
   'en': {
     'onboarding.headline': 'Welcome to Faro',
@@ -744,6 +830,43 @@ const Map<String, Map<String, String>> _table = {
     'occ.absolute_at': 'at',
     'occ.disclaimer':
         'Report based on a public source. Faro does not guarantee safety in any area — it only communicates what has been reported. Mistakes happen.',
+    'areas.title': 'Activity by area',
+    'areas.tab.neighborhoods': 'Neighborhoods',
+    'areas.tab.lines': 'Lines',
+    'areas.tab.patterns': 'Patterns',
+    'areas.disclaimer.body':
+        'More reports in an area can mean more active policing, more media coverage, or more people reporting — not necessarily more actual crime. Use it as context, not as judgment.',
+    'areas.report_count_one': '{count} report',
+    'areas.report_count_many': '{count} reports',
+    'areas.last_report': 'Latest report: {when}',
+    'areas.view_on_map': 'View on map',
+    'areas.no_lines_body':
+        'No bus lines cited in this window. Lines only appear when a news article explicitly mentions the number/code (e.g. "line 1234"). Short windows often have few.',
+    'areas.no_patterns_body':
+        'No data in this period. Expand the window above to see the pattern.',
+    'areas.bus_lines.header.title': 'Cited bus lines',
+    'areas.bus_lines.header.body':
+        'Lines mentioned in news articles about reports from the period. NOT a ranking of dangerous lines — people who depend on a line cannot switch. Use it to prepare (pick a time, get off a stop earlier or later).',
+    'areas.bus_line.cited_one': 'cited in {count} report',
+    'areas.bus_line.cited_many': 'cited in {count} reports',
+    'areas.bus_line.neighborhoods': 'Neighborhoods: {list}',
+    'areas.bus_line.reasons': 'Types: {list}',
+    'areas.patterns.title': 'When they happen',
+    'areas.patterns.peak': 'Most reports during: {range}',
+    'areas.patterns.hint':
+        'Temporal pattern of reports in this period. NOT "avoid this time" — those who need to go out at night don\'t have that choice. Use it to pick a time when you have flexibility.',
+    'areas.chart.by_hour': 'BY HOUR OF DAY',
+    'areas.chart.by_weekday': 'BY WEEKDAY',
+    'areas.empty.title': 'No areas with enough volume in this window.',
+    'areas.empty.body':
+        'To appear in this list, an area must have at least 5 reports in the period. This avoids listing neighborhoods with 1 or 2 isolated occurrences.',
+    'weekday.mon': 'Mon',
+    'weekday.tue': 'Tue',
+    'weekday.wed': 'Wed',
+    'weekday.thu': 'Thu',
+    'weekday.fri': 'Fri',
+    'weekday.sat': 'Sat',
+    'weekday.sun': 'Sun',
   },
   'es': {
     'onboarding.headline': 'Bienvenido a Faro',
@@ -958,5 +1081,42 @@ const Map<String, Map<String, String>> _table = {
     'occ.absolute_at': 'a las',
     'occ.disclaimer':
         'Reporte basado en una fuente pública. Faro no garantiza la seguridad de ninguna zona — solo comunica lo que fue reportado. Los errores pasan.',
+    'areas.title': 'Actividad por zona',
+    'areas.tab.neighborhoods': 'Barrios',
+    'areas.tab.lines': 'Líneas',
+    'areas.tab.patterns': 'Patrones',
+    'areas.disclaimer.body':
+        'Más reportes en una zona pueden indicar más vigilancia policial, más cobertura mediática o más personas reportando — no necesariamente más crimen real. Úsalo como contexto, no como juicio.',
+    'areas.report_count_one': '{count} reporte',
+    'areas.report_count_many': '{count} reportes',
+    'areas.last_report': 'Último reporte: {when}',
+    'areas.view_on_map': 'Ver en el mapa',
+    'areas.no_lines_body':
+        'Sin líneas de autobús citadas en esta ventana. Las líneas solo aparecen cuando una noticia menciona explícitamente el número/código (ej.: "línea 1234"). Las ventanas cortas suelen tener pocas.',
+    'areas.no_patterns_body':
+        'Sin datos en el período. Amplía la ventana arriba para ver el patrón.',
+    'areas.bus_lines.header.title': 'Líneas de autobús citadas',
+    'areas.bus_lines.header.body':
+        'Líneas mencionadas en noticias sobre reportes del período. NO es un ranking de líneas peligrosas — quien depende de la línea no puede cambiarla. Úsalo para prepararte (elegir horario, bajar una parada antes o después).',
+    'areas.bus_line.cited_one': 'citada en {count} reporte',
+    'areas.bus_line.cited_many': 'citada en {count} reportes',
+    'areas.bus_line.neighborhoods': 'Barrios: {list}',
+    'areas.bus_line.reasons': 'Tipos: {list}',
+    'areas.patterns.title': 'Cuándo ocurren',
+    'areas.patterns.peak': 'Horario con más reportes: {range}',
+    'areas.patterns.hint':
+        'Patrón temporal de los reportes del período. NO es "evita este horario" — quien necesita salir de noche no tiene esa elección. Úsalo para elegir cuando haya flexibilidad.',
+    'areas.chart.by_hour': 'POR HORA DEL DÍA',
+    'areas.chart.by_weekday': 'POR DÍA DE LA SEMANA',
+    'areas.empty.title': 'Sin zonas con volumen suficiente en esta ventana.',
+    'areas.empty.body':
+        'Para entrar en esta lista, una zona necesita al menos 5 reportes en el período. Esto evita listar barrios con 1 o 2 ocurrencias aisladas.',
+    'weekday.mon': 'Lun',
+    'weekday.tue': 'Mar',
+    'weekday.wed': 'Mié',
+    'weekday.thu': 'Jue',
+    'weekday.fri': 'Vie',
+    'weekday.sat': 'Sáb',
+    'weekday.sun': 'Dom',
   },
 };

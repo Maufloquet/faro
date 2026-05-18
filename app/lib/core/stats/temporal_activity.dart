@@ -1,6 +1,7 @@
 library;
 
 import '../../models/occurrence.dart';
+import '../i18n/faro_strings.dart';
 
 /// Distribuição por hora do dia (0-23). Sempre 24 buckets — buckets vazios
 /// retornam 0. Base pra mini-gráfico "quando concentra" e pra dashboard B2B.
@@ -21,17 +22,7 @@ class WeekdayBucket {
   const WeekdayBucket(this.weekday, this.count);
 }
 
-const _weekdayLabels = {
-  1: 'Seg',
-  2: 'Ter',
-  3: 'Qua',
-  4: 'Qui',
-  5: 'Sex',
-  6: 'Sáb',
-  7: 'Dom',
-};
-
-String labelForWeekday(int weekday) => _weekdayLabels[weekday] ?? '?';
+String labelForWeekday(int weekday) => FaroStrings.weekdayShort(weekday);
 
 /// Conta ocorrências por hora local do relato. Resultado sempre tem 24
 /// buckets ordenados de 0 a 23 (mesmo que zero).
