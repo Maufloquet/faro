@@ -16,9 +16,15 @@ import '../models/occurrence.dart';
 const _assetPath = 'assets/dev_occurrences.json';
 
 Future<List<Occurrence>> _loadFromAsset() async {
-  final raw = await rootBundle.loadString(_assetPath);
-  final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
-  return list.map(_mapOne).whereType<Occurrence>().toList();
+  try {
+    final raw = await rootBundle.loadString(_assetPath);
+    final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+    return list.map(_mapOne).whereType<Occurrence>().toList();
+  } on FlutterError {
+    // Asset ausente — release build com strip aplicado. Falha graciosa
+    // pra permitir que o app rode mesmo se USE_DEV_DATA for true por engano.
+    return const [];
+  }
 }
 
 double? _toDouble(Object? v) {
