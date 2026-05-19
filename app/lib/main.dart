@@ -20,6 +20,7 @@ import 'services/analytics_service.dart';
 import 'services/background_location_service.dart';
 import 'services/density_service.dart';
 import 'services/dev_data_source.dart';
+import 'services/favorites_service.dart';
 import 'services/local_notification_service.dart';
 import 'services/occurrences_service.dart';
 import 'services/reference_location_service.dart';
@@ -109,10 +110,11 @@ Future<void> main() async {
       unawaited(ReferenceLocationService.instance.resumeOnBoot());
 
       // Quando o usuário faz login com Google (não-anônimo), puxamos
-      // o local de referência salvo em outro device.
+      // o local de referência + favoritos salvos em outro device.
       FirebaseAuth.instance.authStateChanges().listen((user) {
         if (user != null && !user.isAnonymous) {
           unawaited(ReferenceLocationService.instance.pullFromCloud());
+          unawaited(FavoritesService.instance.pullFromCloud());
         }
       });
     } else {
