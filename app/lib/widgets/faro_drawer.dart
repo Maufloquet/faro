@@ -167,9 +167,19 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
+            FaroStrings.slogan,
+            style: FaroTextStyles.body(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: FaroColors.editorialBrown,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
             FaroStrings.drawerTagline,
             style: FaroTextStyles.tagline(
-              fontSize: 12.5,
+              fontSize: 11.5,
               color: FaroColors.textMuted,
               height: 1.35,
             ),

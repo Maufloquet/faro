@@ -76,12 +76,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   color: FaroColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
+              Text(
+                FaroStrings.slogan,
+                textAlign: TextAlign.center,
+                style: FaroTextStyles.body(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: FaroColors.editorialBrown,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
               Text(
                 FaroStrings.splashTagline,
                 textAlign: TextAlign.center,
                 style: FaroTextStyles.tagline(
-                  color: const Color(0xFF6A6A6A),
+                  fontSize: 13,
+                  color: const Color(0xFF8A8A82),
                 ),
               ),
             ],

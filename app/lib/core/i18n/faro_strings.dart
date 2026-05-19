@@ -75,7 +75,11 @@ class FaroStrings {
   static String get silenceDisclaimer => _t('disclaimer.silence');
   static String get notARiskRanking => _t('disclaimer.not_a_ranking');
 
-  // ─── Splash ───────────────────────────────────────────────────────────
+  // ─── Splash + slogan de marca ─────────────────────────────────────────
+  /// Slogan principal — aparece sob o nome "Faro" no splash e no drawer.
+  static String get slogan => _t('slogan');
+  /// Sub-slogan descritivo — só aparece no splash, em itálico, abaixo
+  /// do slogan principal.
   static String get splashTagline => _t('splash.tagline');
 
   // ─── Busca de bairro ──────────────────────────────────────────────────
@@ -526,6 +530,7 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.cta': 'Entendi, abrir o mapa',
     'disclaimer.silence': 'Silêncio nos dados não é silêncio nas ruas',
     'disclaimer.not_a_ranking': 'Isto NÃO é um ranking de risco',
+    'slogan': 'Contexto. Não veredito.',
     'splash.tagline': 'O que está acontecendo perto de você agora',
     'search.title': 'Buscar bairro',
     'search.hint': 'Ex: Pirajá, Itapuã, Barra…',
@@ -852,6 +857,7 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.cta': 'Got it, open the map',
     'disclaimer.silence': 'Silence in the data is not silence on the streets',
     'disclaimer.not_a_ranking': 'This is NOT a risk ranking',
+    'slogan': 'Context. Not verdict.',
     'splash.tagline': 'What is happening near you right now',
     'search.title': 'Search neighborhood',
     'search.hint': 'e.g. Pirajá, Itapuã, Barra…',
@@ -1176,6 +1182,7 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.cta': 'Entendido, abrir el mapa',
     'disclaimer.silence': 'El silencio en los datos no es silencio en la calle',
     'disclaimer.not_a_ranking': 'Esto NO es un ranking de riesgo',
+    'slogan': 'Contexto. No veredicto.',
     'splash.tagline': 'Lo que está pasando cerca de ti ahora',
     'search.title': 'Buscar barrio',
     'search.hint': 'Ej: Pirajá, Itapuã, Barra…',
