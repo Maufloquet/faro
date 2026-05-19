@@ -12,7 +12,20 @@
           "package_name": "br.com.projetoseg.projeto_seg"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "640150347302-uo16b1dtehf1crdte50c0706c8k2tgdc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "br.com.projetoseg.projeto_seg",
+            "certificate_hash": "d055d9778cd01cca352e77aa286012c7875bcd7f"
+          }
+        },
+        {
+          "client_id": "640150347302-n2h6d4n4pc615fd1k8rbpaligacls2f4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBgBPCzdtxN55w6x528Fc20HDRWenqhCig"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "640150347302-n2h6d4n4pc615fd1k8rbpaligacls2f4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "640150347302-05gm35902ogcama5bqp1e5tkbi3e93e9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.projetoseg.projetoSeg"
+              }
+            }
+          ]
         }
       }
     }

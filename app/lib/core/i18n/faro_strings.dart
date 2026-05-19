@@ -461,6 +461,20 @@ class FaroStrings {
   static String get menuHelp => _t('menu.help');
   static String get menuAbout => _t('menu.about');
 
+  // ─── Cheguei bem ──────────────────────────────────────────────────────
+  static String get safeArrivalAction => _t('safe_arrival.action');
+  static String get safeArrivalConfirmed => _t('safe_arrival.confirmed');
+  static String get safeArrivalLocationDenied =>
+      _t('safe_arrival.location_denied');
+  static String get safeArrivalFailed => _t('safe_arrival.failed');
+  static String safeArrivalCountToday(int count) {
+    final key = count == 1
+        ? 'safe_arrival.count_one'
+        : 'safe_arrival.count_many';
+    return _t(key).replaceAll('{count}', count.toString());
+  }
+  static String get safeArrivalHint => _t('safe_arrival.hint');
+
   // ─── Favoritos ────────────────────────────────────────────────────────
   static String get favoritesTitle => _t('favorites.title');
   static String get favoritesEmptyTitle => _t('favorites.empty.title');
@@ -868,6 +882,13 @@ const Map<String, Map<String, String>> _table = {
     'menu.help': 'Como o Faro funciona',
     'menu.favorites': 'Favoritos',
     'menu.about': 'Sobre o Faro',
+    'safe_arrival.action': 'Cheguei bem',
+    'safe_arrival.confirmed': 'Obrigado. Esse "chegou bem" ajuda quem vai depois de você.',
+    'safe_arrival.location_denied': 'Precisamos da sua localização pra registrar onde você chegou bem.',
+    'safe_arrival.failed': 'Não foi possível registrar agora. Tente novamente.',
+    'safe_arrival.count_one': '1 pessoa registrou "cheguei bem" aqui hoje',
+    'safe_arrival.count_many': '{count} pessoas registraram "cheguei bem" aqui hoje',
+    'safe_arrival.hint': 'Toque ao chegar em casa, no hotel ou em qualquer destino — registra anonimamente um trajeto sem incidente. Ajuda a desfazer estigma de bairro.',
     'favorites.title': 'Favoritos',
     'favorites.empty.title': 'Você ainda não tem favoritos',
     'favorites.empty.body':
@@ -1215,6 +1236,13 @@ const Map<String, Map<String, String>> _table = {
     'menu.help': 'How Faro works',
     'menu.favorites': 'Favorites',
     'menu.about': 'About Faro',
+    'safe_arrival.action': 'I made it safely',
+    'safe_arrival.confirmed': 'Thanks. Your "made it safely" helps the next person passing through.',
+    'safe_arrival.location_denied': 'We need your location to record where you made it safely.',
+    'safe_arrival.failed': 'Could not record right now. Try again.',
+    'safe_arrival.count_one': '1 person reported "made it safely" here today',
+    'safe_arrival.count_many': '{count} people reported "made it safely" here today',
+    'safe_arrival.hint': 'Tap when you arrive home, at your hotel, or anywhere — anonymously records a trip without incident. Helps undo neighborhood stigma.',
     'favorites.title': 'Favorites',
     'favorites.empty.title': 'No favorites yet',
     'favorites.empty.body':
@@ -1564,6 +1592,13 @@ const Map<String, Map<String, String>> _table = {
     'menu.help': 'Cómo funciona Faro',
     'menu.favorites': 'Favoritos',
     'menu.about': 'Sobre Faro',
+    'safe_arrival.action': 'Llegué bien',
+    'safe_arrival.confirmed': 'Gracias. Tu "llegué bien" ayuda a quien viene después de ti.',
+    'safe_arrival.location_denied': 'Necesitamos tu ubicación para registrar dónde llegaste bien.',
+    'safe_arrival.failed': 'No fue posible registrar ahora. Intenta de nuevo.',
+    'safe_arrival.count_one': '1 persona registró "llegué bien" aquí hoy',
+    'safe_arrival.count_many': '{count} personas registraron "llegué bien" aquí hoy',
+    'safe_arrival.hint': 'Toca al llegar a casa, al hotel o a cualquier destino — registra anónimamente un trayecto sin incidente. Ayuda a deshacer el estigma de barrio.',
     'favorites.title': 'Favoritos',
     'favorites.empty.title': 'Aún no tienes favoritos',
     'favorites.empty.body':
