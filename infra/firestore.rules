@@ -16,10 +16,25 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Users — perfil e reputação. Cada um lê/escreve só o próprio.
+    // Users — perfil e dados sincronizados. Cada um lê/escreve só o próprio.
+    // O doc do user guarda referenceLocation (hotel/casa). Validação de
+    // estrutura mantém a regra simples — sem listar todos os campos.
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId;
+
+      // Subcoleção de favoritos do usuário. Mesmo dono lê/escreve. Doc id
+      // é o slug do bairro (ex.: "mata-escura") — gerado client side via
+      // normalizeNeighborhoodId em favorites_service.dart.
+      match /favorites/{favoriteId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.name is string
+          && request.resource.data.lat is number
+          && request.resource.data.lng is number;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Regions — score agregado por região. Leitura pública, escrita só Cloud Function.
@@ -41,6 +56,43 @@ service cloud.firestore {
             || (request.resource.data.detail is string
                 && request.resource.data.detail.size() < 500));
       allow update, delete: if false;
+    }
+
+    // Safe arrivals — "Cheguei bem". Sinal POSITIVO anônimo, agregado
+    // por (geohash5, dia). Doc id = "{cell}_{day}".
+    //
+    // - Leitura pública: app precisa exibir contagens nos cards
+    // - Create: user autenticado (anonymous basta), count=1 no primeiro
+    //   registro do dia. Validamos campos pra evitar lixo.
+    // - Update: só pode incrementar count em +1 a cada vez. Anti-spam
+    //   minimal — escrita massiva fica vidente em audit log.
+    match /safe_arrivals/{cellDay} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.cell is string
+        && request.resource.data.cell.size() == 5
+        && request.resource.data.day is string
+        && request.resource.data.count == 1;
+      allow update: if request.auth != null
+        && request.resource.data.cell == resource.data.cell
+        && request.resource.data.day == resource.data.day
+        && request.resource.data.count == resource.data.count + 1;
+      allow delete: if false;
+    }
+
+    // News seen — cache do pipeline de ingest pra dedupar URLs já
+    // classificadas. Só Cloud Functions (admin SDK) bypassa as rules
+    // pra escrever. Bloqueado pra todos os clientes.
+    match /news_seen/{hash} {
+      allow read, write: if false;
+    }
+
+    // OSM — pontos de ônibus e outras camadas mapeadas (single docs
+    // grandes, atualizados manualmente via osmFetch HTTP function).
+    // Leitura pública (app consome direto), escrita só admin.
+    match /osm/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // Tudo o que não estiver mapeado: fechado por default.
