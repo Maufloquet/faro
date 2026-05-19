@@ -19,7 +19,9 @@ class OccurrenceTile extends StatelessWidget {
     final neighborhood = titleCasePtBr(occurrence.neighborhood);
     final city = titleCasePtBr(occurrence.city);
     final where = _composeLocation(neighborhood, city);
-    final what = occurrence.mainReason ?? FaroStrings.occReportFallback;
+    final what = occurrence.mainReason == null
+        ? FaroStrings.occReportFallback
+        : FaroStrings.reasonLabel(occurrence.mainReason!);
     final when = _relativeTime(occurrence.date);
 
     return InkWell(

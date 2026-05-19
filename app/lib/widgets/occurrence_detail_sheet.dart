@@ -35,7 +35,9 @@ class OccurrenceDetailSheet extends StatelessWidget {
     final risk = _classify(occurrence.date);
     final where = titleCasePtBr(occurrence.neighborhood);
     final city = titleCasePtBr(occurrence.city);
-    final what = occurrence.mainReason ?? FaroStrings.occReportFallback;
+    final what = occurrence.mainReason == null
+        ? FaroStrings.occReportFallback
+        : FaroStrings.reasonLabel(occurrence.mainReason!);
     final when = _absoluteTime(occurrence.date);
     final relative = _relativeTime(occurrence.date);
 

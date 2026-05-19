@@ -26,8 +26,11 @@ class FilterPill extends StatelessWidget {
     final reasonsLabel = activeReasons.isEmpty
         ? FaroStrings.filterAllTypes
         : activeReasons.length == 1
-            ? activeReasons.first
-            : FaroStrings.filterMore(activeReasons.first, activeReasons.length - 1);
+            ? FaroStrings.reasonLabel(activeReasons.first)
+            : FaroStrings.filterMore(
+                FaroStrings.reasonLabel(activeReasons.first),
+                activeReasons.length - 1,
+              );
 
     return Material(
       color: hasReasons ? FaroColors.primary : Colors.white,
@@ -211,8 +214,10 @@ class _FilterSheetState extends State<FilterSheet> {
                 runSpacing: 8,
                 children: reasonEntries.map((e) {
                   final selected = _reasons.contains(e.key);
+                  // e.key fica como veio do Firestore (PT) pra preservar
+                  // o filtro internamente. O display traduz pra o locale.
                   return _Chip(
-                    label: '${e.key} · ${e.value}',
+                    label: '${FaroStrings.reasonLabel(e.key)} · ${e.value}',
                     selected: selected,
                     onTap: () => setState(() {
                       if (selected) {

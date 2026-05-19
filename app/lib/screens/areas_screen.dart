@@ -363,7 +363,7 @@ class _AreaCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      entry.key,
+                      FaroStrings.reasonLabel(entry.key),
                       style: const TextStyle(fontSize: 13, color: FaroColors.textSecondary),
                     ),
                   ),
@@ -563,7 +563,10 @@ class _BusLineCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               FaroStrings.areasBusLineReasons(
-                activity.reasonBreakdown.take(3).map((e) => e.key).join(' · '),
+                activity.reasonBreakdown
+                    .take(3)
+                    .map((e) => FaroStrings.reasonLabel(e.key))
+                    .join(' · '),
               ),
               style: const TextStyle(fontSize: 12.5, color: FaroColors.textMuted),
             ),

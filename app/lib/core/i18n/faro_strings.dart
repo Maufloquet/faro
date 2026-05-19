@@ -438,6 +438,35 @@ class FaroStrings {
     }
   }
 
+  // ─── Categorias de relato (mainReason) ────────────────────────────────
+  /// Traduz uma categoria de relato vinda do Firestore. As chaves PT são
+  /// fixadas em [TYPE_MAP] em `functions/lib/newsIngest.js` — qualquer
+  /// nova categoria precisa ser adicionada nos 3 lados (backend + 3
+  /// idiomas aqui). Strings desconhecidas caem no fallback (retorna como
+  /// veio) pra não esconder dados.
+  static String reasonLabel(String reason) {
+    switch (reason) {
+      case 'Tiroteio':
+        return _t('reason.shooting');
+      case 'Homicídio':
+        return _t('reason.homicide');
+      case 'Roubo':
+        return _t('reason.robbery');
+      case 'Ação policial':
+        return _t('reason.police_action');
+      case 'Sequestro':
+        return _t('reason.kidnapping');
+      case 'Agressão':
+        return _t('reason.assault');
+      case 'Outros':
+        return _t('reason.other');
+      case 'Não categorizado':
+        return _t('reason.uncategorized');
+      default:
+        return reason;
+    }
+  }
+
   // ─── Dias da semana (1=seg ... 7=dom) ─────────────────────────────────
   static String weekdayShort(int weekday) {
     const keys = {
@@ -700,6 +729,14 @@ const Map<String, Map<String, String>> _table = {
     'areas.empty.title': 'Sem áreas com volume suficiente nesta janela.',
     'areas.empty.body':
         'Para entrar nesta lista, uma área precisa ter pelo menos 5 relatos no período. Isso evita listar bairros com 1 ou 2 ocorrências isoladas.',
+    'reason.shooting': 'Tiroteio',
+    'reason.homicide': 'Homicídio',
+    'reason.robbery': 'Roubo',
+    'reason.police_action': 'Ação policial',
+    'reason.kidnapping': 'Sequestro',
+    'reason.assault': 'Agressão',
+    'reason.other': 'Outros',
+    'reason.uncategorized': 'Não categorizado',
     'weekday.mon': 'Seg',
     'weekday.tue': 'Ter',
     'weekday.wed': 'Qua',
@@ -1007,6 +1044,14 @@ const Map<String, Map<String, String>> _table = {
     'areas.empty.title': 'No areas with enough volume in this window.',
     'areas.empty.body':
         'To appear in this list, an area must have at least 5 reports in the period. This avoids listing neighborhoods with 1 or 2 isolated occurrences.',
+    'reason.shooting': 'Shooting',
+    'reason.homicide': 'Homicide',
+    'reason.robbery': 'Robbery',
+    'reason.police_action': 'Police action',
+    'reason.kidnapping': 'Kidnapping',
+    'reason.assault': 'Assault',
+    'reason.other': 'Other',
+    'reason.uncategorized': 'Uncategorized',
     'weekday.mon': 'Mon',
     'weekday.tue': 'Tue',
     'weekday.wed': 'Wed',
@@ -1316,6 +1361,14 @@ const Map<String, Map<String, String>> _table = {
     'areas.empty.title': 'Sin zonas con volumen suficiente en esta ventana.',
     'areas.empty.body':
         'Para entrar en esta lista, una zona necesita al menos 5 reportes en el período. Esto evita listar barrios con 1 o 2 ocurrencias aisladas.',
+    'reason.shooting': 'Tiroteo',
+    'reason.homicide': 'Homicidio',
+    'reason.robbery': 'Robo',
+    'reason.police_action': 'Acción policial',
+    'reason.kidnapping': 'Secuestro',
+    'reason.assault': 'Agresión',
+    'reason.other': 'Otros',
+    'reason.uncategorized': 'Sin categorizar',
     'weekday.mon': 'Lun',
     'weekday.tue': 'Mar',
     'weekday.wed': 'Mié',
