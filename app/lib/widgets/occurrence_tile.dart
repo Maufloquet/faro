@@ -18,9 +18,7 @@ class OccurrenceTile extends StatelessWidget {
     final risk = _classifyAge(occurrence.date);
     final neighborhood = titleCasePtBr(occurrence.neighborhood);
     final city = titleCasePtBr(occurrence.city);
-    final where = neighborhood.isNotEmpty
-        ? neighborhood
-        : (city.isNotEmpty ? city : FaroStrings.occNoLocation);
+    final where = _composeLocation(neighborhood, city);
     final what = occurrence.mainReason ?? FaroStrings.occReportFallback;
     final when = _relativeTime(occurrence.date);
 
@@ -41,6 +39,8 @@ class OccurrenceTile extends StatelessWidget {
                 children: [
                   Text(
                     where,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: 'Georgia',
                       fontSize: 15.5,
@@ -76,6 +76,19 @@ class OccurrenceTile extends StatelessWidget {
     if (hours < 2) return RiskLevel.confirmedActivity;
     if (hours < 12) return RiskLevel.lightActivity;
     return RiskLevel.noRecentReports;
+  }
+
+  /// Formata a localização do tile. Quando temos bairro + cidade, mostra
+  /// "Bairro · Cidade" (separador editorial Faro) pra que o usuário saiba
+  /// de onde é o relato — especialmente útil em modo RMS (Lauro, Camaçari,
+  /// Simões Filho) onde o nome do bairro pode coincidir entre municípios.
+  String _composeLocation(String neighborhood, String city) {
+    if (neighborhood.isNotEmpty && city.isNotEmpty) {
+      return '$neighborhood · $city';
+    }
+    if (neighborhood.isNotEmpty) return neighborhood;
+    if (city.isNotEmpty) return city;
+    return FaroStrings.occNoLocation;
   }
 
   String _relativeTime(DateTime date) {
