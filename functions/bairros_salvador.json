@@ -783,5 +783,15 @@
     "lat": -12.9778,
     "lng": -38.4995,
     "source": "manual"
+  },
+  "Gamboa": {
+    "lat": -12.9833,
+    "lng": -38.5210,
+    "source": "OSM"
+  },
+  "Canabrava": {
+    "lat": -12.9415,
+    "lng": -38.4350,
+    "source": "manual"
   }
 }
