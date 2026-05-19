@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const FaroLogo(size: 96),
+              const FaroLogo(size: 96, animated: true),
               const SizedBox(height: 22),
               Text(
                 'Faro',

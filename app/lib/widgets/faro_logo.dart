@@ -12,11 +12,16 @@ import '../core/design/tokens.dart';
 /// quebra a leitura "círculo cheio / loading / wifi" e sugere visualmente
 /// que a luz **sai** do centro (pulso, atenção, captação) sem fechar
 /// certezas — alinhado ao princípio editorial "não afirmamos seguro".
-class FaroLogo extends StatelessWidget {
+class FaroLogo extends StatefulWidget {
   final double size;
   final Color? color;
   final Color? accentColor;
   final bool inverted;
+
+  /// Quando true, anima sutilmente o anel externo (escala 0.96-1.04 em
+  /// loop) — usado no splash pra dar sensação de "pulso vivo". Default
+  /// false pra não distrair em drawer/onboarding onde o logo é estático.
+  final bool animated;
 
   const FaroLogo({
     super.key,
@@ -24,15 +29,69 @@ class FaroLogo extends StatelessWidget {
     this.color,
     this.accentColor,
     this.inverted = false,
+    this.animated = false,
   });
 
   @override
+  State<FaroLogo> createState() => _FaroLogoState();
+}
+
+class _FaroLogoState extends State<FaroLogo>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _controller;
+  Animation<double>? _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animated) {
+      _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 2200),
+      )..repeat(reverse: true);
+      _pulse = Tween<double>(begin: 0.96, end: 1.04).animate(
+        CurvedAnimation(parent: _controller!, curve: Curves.easeInOut),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final mainColor = inverted ? Colors.white : (color ?? FaroColors.primary);
-    final accent = accentColor ?? FaroColors.editorialOcher;
+    final mainColor =
+        widget.inverted ? Colors.white : (widget.color ?? FaroColors.primary);
+    final accent = widget.accentColor ?? FaroColors.editorialOcher;
+
+    if (!widget.animated) {
+      return _staticLogo(mainColor, accent);
+    }
+    return AnimatedBuilder(
+      animation: _pulse!,
+      builder: (_, _) {
+        return SizedBox(
+          width: widget.size,
+          height: widget.size,
+          child: CustomPaint(
+            painter: _FaroLogoPainter(
+              color: mainColor,
+              accent: accent,
+              outerScale: _pulse!.value,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _staticLogo(Color mainColor, Color accent) {
     return SizedBox(
-      width: size,
-      height: size,
+      width: widget.size,
+      height: widget.size,
       child: CustomPaint(
         painter: _FaroLogoPainter(color: mainColor, accent: accent),
       ),
@@ -88,8 +147,15 @@ class FaroLogoLockup extends StatelessWidget {
 class _FaroLogoPainter extends CustomPainter {
   final Color color;
   final Color accent;
+  /// Multiplicador do raio do anel externo (1.0 = neutro). Usado pelo
+  /// modo animado pra criar pulso sutil (0.96 ↔ 1.04).
+  final double outerScale;
 
-  _FaroLogoPainter({required this.color, required this.accent});
+  _FaroLogoPainter({
+    required this.color,
+    required this.accent,
+    this.outerScale = 1.0,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -109,10 +175,11 @@ class _FaroLogoPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeWidth = strokeWidth;
 
-    // Anel externo — translúcido (alcance)
+    // Anel externo — translúcido (alcance). Aplica `outerScale` quando
+    // animado pra dar pulso sutil; nos casos estáticos vale 1.0.
     paint.color = color.withValues(alpha: 0.32);
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: maxRadius * 0.78),
+      Rect.fromCircle(center: center, radius: maxRadius * 0.78 * outerScale),
       startAngle,
       sweepAngle,
       false,
@@ -149,5 +216,7 @@ class _FaroLogoPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_FaroLogoPainter old) =>
-      old.color != color || old.accent != accent;
+      old.color != color ||
+      old.accent != accent ||
+      old.outerScale != outerScale;
 }
