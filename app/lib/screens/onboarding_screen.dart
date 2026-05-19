@@ -126,7 +126,7 @@ class _Header extends StatelessWidget {
         Text(
           FaroStrings.onboardingHeadline,
           style: const TextStyle(
-            fontFamily: 'Georgia',
+            fontFamily: 'Fraunces',
             fontSize: 26,
             height: 1.15,
             color: FaroColors.textPrimary,
@@ -136,7 +136,7 @@ class _Header extends StatelessWidget {
         Text(
           FaroStrings.onboardingSubhead,
           style: const TextStyle(
-            fontFamily: 'Georgia',
+            fontFamily: 'Fraunces',
             fontStyle: FontStyle.italic,
             fontSize: 14,
             height: 1.4,
@@ -173,7 +173,7 @@ class _Principle extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontSize: 16,
                     height: 1.25,
                     color: FaroColors.textPrimary,

@@ -73,7 +73,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                       Text(
                         where.isNotEmpty ? where : FaroStrings.occNoLocation,
                         style: const TextStyle(
-                          fontFamily: 'Georgia',
+                          fontFamily: 'Fraunces',
                           fontSize: 22,
                           height: 1.2,
                           color: FaroColors.textPrimary,
@@ -102,7 +102,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
                 child: Text(
                   occurrence.externalTitle!,
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontStyle: FontStyle.italic,
                     fontSize: 14,
                     height: 1.4,

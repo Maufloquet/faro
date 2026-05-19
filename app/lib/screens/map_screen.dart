@@ -1067,7 +1067,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             FaroStrings.sheetEmptyTitle(scope),
             style: const TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Fraunces',
               fontSize: 15.5,
               height: 1.3,
               color: FaroColors.textPrimary,
@@ -1116,7 +1116,7 @@ class _SummaryHeader extends StatelessWidget {
                 ? FaroStrings.sheetSummaryEmpty(scope)
                 : FaroStrings.sheetSummaryCount(count, scope),
             style: const TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Fraunces',
               fontSize: 17,
               height: 1.2,
               color: FaroColors.textPrimary,

@@ -93,11 +93,22 @@ class FaroRadii {
   static const double chip = 16;
 }
 
-/// Fontes editoriais. `serifEditorial` pra título institucional /
-/// headlines de tom autoral. `sansBody` é o padrão de UI.
+/// Fontes editoriais — carregadas via google_fonts no theme global.
+///
+/// **Fraunces** (serif editorial moderno, no espírito de revistas como
+/// MIT Tech Review): títulos, headlines, marca. Substitui Georgia, que
+/// caía pro genérico Roboto no Android.
+///
+/// **Inter** (sans humanista usada em Linear, Vercel, Notion): body, UI,
+/// labels. Substitui Helvetica/Roboto.
+///
+/// Os identificadores do `fontFamily` ficam aqui pra retro-compatibilidade
+/// com call sites antigos (`fontFamily: 'Fraunces'`). O theme global em
+/// `app_theme.dart` aplica `GoogleFonts.frauncesTextTheme(...)` que
+/// resolve as referências em runtime.
 class FaroFonts {
   FaroFonts._();
 
-  static const String serifEditorial = 'Georgia';
-  static const String sansBody = 'Helvetica';
+  static const String serifEditorial = 'Fraunces';
+  static const String sansBody = 'Inter';
 }

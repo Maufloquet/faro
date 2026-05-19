@@ -30,7 +30,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
       appBar: AppBar(
         title: Text(
           FaroStrings.languageTitle,
-          style: const TextStyle(fontFamily: 'Georgia'),
+          style: const TextStyle(fontFamily: 'Fraunces'),
         ),
         elevation: 0,
       ),
@@ -101,7 +101,7 @@ class _Option extends StatelessWidget {
       title: Text(
         label,
         style: const TextStyle(
-          fontFamily: 'Georgia',
+          fontFamily: 'Fraunces',
           fontSize: 15.5,
           color: FaroColors.textPrimary,
         ),

@@ -38,7 +38,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final directory = ref.watch(bairrosDirectoryProvider);
     return Scaffold(
       appBar: AppBar(
-        title: Text(FaroStrings.searchTitle, style: const TextStyle(fontFamily: 'Georgia')),
+        title: Text(FaroStrings.searchTitle, style: const TextStyle(fontFamily: 'Fraunces')),
         elevation: 0,
       ),
       body: Column(
@@ -102,7 +102,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       title: Text(
                         b.displayName,
                         style: const TextStyle(
-                          fontFamily: 'Georgia',
+                          fontFamily: 'Fraunces',
                           fontSize: 15,
                         ),
                       ),

@@ -44,7 +44,7 @@ class OccurrenceTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontFamily: 'Georgia',
+                      fontFamily: 'Fraunces',
                       fontSize: 15.5,
                       height: 1.2,
                       color: FaroColors.textPrimary,

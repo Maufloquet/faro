@@ -19,6 +19,7 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   flutter_riverpod: ^3.0.0
   geolocator: ^14.0.0
+  google_fonts: ^6.2.1
   google_maps_flutter: ^2.10.0
   http: ^1.2.0
   intl: ^0.20.0
@@ -40,6 +41,15 @@ flutter:
   # Nota: assets/dev_occurrences.json (~328KB) é usado apenas em modo
   # dev (USE_DEV_DATA=true). No release vai pro bundle mas é morto.
   # Pra strip em release builds, ver tool/build_release.sh.
+  fonts:
+    # Fontes de marca — variable fonts (1 arquivo cobre todos os weights).
+    # Fraunces (serif editorial) + Inter (UI sans). Total ~1.2 MB no bundle.
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
 
 flutter_launcher_icons:
   android: true

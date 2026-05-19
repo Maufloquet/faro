@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/design/tokens.dart';
+import '../core/design/typography.dart';
 import '../core/driving/driving_mode.dart';
 import '../core/i18n/faro_strings.dart';
 import '../core/i18n/locale_notifier.dart';
@@ -152,15 +153,13 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              FaroLogo(size: 38),
-              SizedBox(width: 14),
+              const FaroLogo(size: 38),
+              const SizedBox(width: 14),
               Text(
                 'Faro',
-                style: TextStyle(
-                  fontFamily: 'Georgia',
-                  fontSize: 22,
+                style: FaroTextStyles.headlineMedium(
                   color: FaroColors.textPrimary,
                 ),
               ),
@@ -169,12 +168,10 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             FaroStrings.drawerTagline,
-            style: const TextStyle(
-              fontFamily: 'Georgia',
-              fontStyle: FontStyle.italic,
+            style: FaroTextStyles.tagline(
               fontSize: 12.5,
-              height: 1.35,
               color: FaroColors.textMuted,
+              height: 1.35,
             ),
           ),
         ],
@@ -225,7 +222,7 @@ class _Item extends StatelessWidget {
       title: Text(
         label,
         style: const TextStyle(
-          fontFamily: 'Georgia',
+          fontFamily: 'Fraunces',
           fontSize: 15,
           color: FaroColors.textPrimary,
         ),

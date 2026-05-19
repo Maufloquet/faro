@@ -73,7 +73,7 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(FaroStrings.contestTitle, style: const TextStyle(fontFamily: 'Georgia')),
+        title: Text(FaroStrings.contestTitle, style: const TextStyle(fontFamily: 'Fraunces')),
         elevation: 0,
       ),
       body: ListView(
@@ -93,7 +93,7 @@ class _ContestationScreenState extends ConsumerState<ContestationScreen> {
           Text(
             where.isEmpty ? FaroStrings.occNoLocation : where,
             style: const TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Fraunces',
               fontSize: 16,
               height: 1.3,
               color: FaroColors.textPrimary,

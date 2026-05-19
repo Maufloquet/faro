@@ -30,7 +30,7 @@ class _AboutScreenState extends State<AboutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(FaroStrings.aboutTitle, style: const TextStyle(fontFamily: 'Georgia')),
+        title: Text(FaroStrings.aboutTitle, style: const TextStyle(fontFamily: 'Fraunces')),
         elevation: 0,
       ),
       body: ListView(
@@ -93,7 +93,7 @@ class _Section extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Fraunces',
               fontSize: 17,
               height: 1.25,
               color: FaroColors.textPrimary,
@@ -217,7 +217,7 @@ class _BackgroundAlertsToggleState extends State<_BackgroundAlertsToggle> {
                 Text(
                   FaroStrings.aboutBgAlertsTitle,
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontSize: 15,
                     color: FaroColors.textPrimary,
                   ),

@@ -252,7 +252,7 @@ class _Disclaimer extends StatelessWidget {
               Text(
                 FaroStrings.notARiskRanking,
                 style: const TextStyle(
-                  fontFamily: 'Georgia',
+                  fontFamily: 'Fraunces',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: FaroColors.editorialBrown,
@@ -346,7 +346,7 @@ class _AreaCard extends StatelessWidget {
                 child: Text(
                   '$rank',
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: FaroColors.editorialBrown,
@@ -358,7 +358,7 @@ class _AreaCard extends StatelessWidget {
                 child: Text(
                   name,
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontSize: 17,
                     color: FaroColors.textPrimary,
                   ),
@@ -513,7 +513,7 @@ class _TransportHeader extends StatelessWidget {
                 child: Text(
                   FaroStrings.areasTransportHeaderTitle,
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: FaroColors.primary,
@@ -639,7 +639,7 @@ class _TransportAreaCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontSize: 16,
                     color: FaroColors.textPrimary,
                   ),
@@ -738,7 +738,7 @@ class _TemporalSection extends StatelessWidget {
               Text(
                 FaroStrings.areasPatternsTitle,
                 style: const TextStyle(
-                  fontFamily: 'Georgia',
+                  fontFamily: 'Fraunces',
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: FaroColors.textPrimary,
@@ -780,7 +780,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             FaroStrings.areasEmptyTitle,
             style: const TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Fraunces',
               fontSize: 15.5,
               height: 1.3,
               color: FaroColors.textPrimary,

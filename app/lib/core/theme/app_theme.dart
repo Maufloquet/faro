@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Paleta editorial do produto.
 ///
@@ -51,24 +52,46 @@ extension RiskLevelExt on RiskLevel {
 class AppTheme {
   static ThemeData light() {
     const seed = Color(0xFF2A4A7A);
-    return ThemeData(
+    final base = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(seedColor: seed),
-      fontFamily: 'Helvetica',
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(fontFamily: 'Georgia', fontSize: 32, height: 1.2),
-        displayMedium: TextStyle(fontFamily: 'Georgia', fontSize: 24, height: 1.2),
-        headlineSmall: TextStyle(fontFamily: 'Georgia', fontSize: 18, height: 1.3),
+    );
+    return base.copyWith(
+      // UI default = Inter; títulos/headlines mapeiam pra Fraunces logo
+      // abaixo via merge. As legendas `fontFamily: 'Fraunces'` espalhadas
+      // pelos widgets também resolvem pra Fraunces porque o
+      // `frauncesTextTheme` injeta a serif onde houver semelhança.
+      textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
+        displayLarge: GoogleFonts.fraunces(
+          textStyle: base.textTheme.displayLarge,
+          fontSize: 32,
+          height: 1.2,
+          fontWeight: FontWeight.w500,
+        ),
+        displayMedium: GoogleFonts.fraunces(
+          textStyle: base.textTheme.displayMedium,
+          fontSize: 24,
+          height: 1.2,
+          fontWeight: FontWeight.w500,
+        ),
+        headlineSmall: GoogleFonts.fraunces(
+          textStyle: base.textTheme.headlineSmall,
+          fontSize: 18,
+          height: 1.3,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
 
   static ThemeData dark() {
     const seed = Color(0xFF2A4A7A);
-    return ThemeData(
+    final base = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
-      fontFamily: 'Helvetica',
+    );
+    return base.copyWith(
+      textTheme: GoogleFonts.interTextTheme(base.textTheme),
     );
   }
 }

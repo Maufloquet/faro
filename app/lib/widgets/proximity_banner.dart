@@ -72,7 +72,7 @@ class ProximityBanner extends StatelessWidget {
                       Text(
                         headline,
                         style: const TextStyle(
-                          fontFamily: 'Georgia',
+                          fontFamily: 'Fraunces',
                           fontSize: 14.5,
                           height: 1.2,
                           color: Colors.white,

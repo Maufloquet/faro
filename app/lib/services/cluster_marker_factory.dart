@@ -87,13 +87,13 @@ class ClusterMarkerFactory {
     // Texto do count
     final paragraphStyle = ui.ParagraphStyle(
       textAlign: TextAlign.center,
-      fontFamily: 'Georgia',
+      fontFamily: 'Fraunces',
       fontSize: (logicalSize * 0.46) * dpr,
       fontWeight: FontWeight.w600,
     );
     final textStyle = ui.TextStyle(
       color: const Color(0xFF1A1A1A),
-      fontFamily: 'Georgia',
+      fontFamily: 'Fraunces',
       fontSize: (logicalSize * 0.46) * dpr,
       fontWeight: FontWeight.w600,
     );

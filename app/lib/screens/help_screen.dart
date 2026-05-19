@@ -27,7 +27,7 @@ class _HelpScreenState extends State<HelpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(FaroStrings.helpTitle, style: const TextStyle(fontFamily: 'Georgia')),
+        title: Text(FaroStrings.helpTitle, style: const TextStyle(fontFamily: 'Fraunces')),
         elevation: 0,
         actions: [
           IconButton(
@@ -108,7 +108,7 @@ class _Hero extends StatelessWidget {
           Text(
             FaroStrings.helpHeroTitle,
             style: TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Fraunces',
               fontSize: 28,
               height: 1.15,
               color: Theme.of(context).colorScheme.onSurface,
@@ -156,7 +156,7 @@ class _FeatureCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Fraunces',
                     fontSize: 16,
                     height: 1.25,
                     color: FaroColors.textPrimary,

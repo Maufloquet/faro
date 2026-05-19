@@ -28,7 +28,7 @@ class _DrivingProfileScreenState extends ConsumerState<DrivingProfileScreen> {
       appBar: AppBar(
         title: Text(
           FaroStrings.drivingProfileTitle,
-          style: const TextStyle(fontFamily: 'Georgia'),
+          style: const TextStyle(fontFamily: 'Fraunces'),
         ),
         elevation: 0,
       ),
@@ -97,7 +97,7 @@ class _Option extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                fontFamily: 'Georgia',
+                fontFamily: 'Fraunces',
                 fontSize: 15.5,
                 color: FaroColors.textPrimary,
               ),

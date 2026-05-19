@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../core/design/tokens.dart';
+import '../core/design/typography.dart';
 import '../core/i18n/faro_strings.dart';
 import '../widgets/faro_logo.dart';
 import 'map_screen.dart';
@@ -69,26 +70,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             children: [
               const FaroLogo(size: 96),
               const SizedBox(height: 22),
-              const Text(
+              Text(
                 'Faro',
-                style: TextStyle(
-                  fontFamily: 'Georgia',
-                  fontSize: 38,
-                  height: 1.1,
+                style: FaroTextStyles.headlineDisplay(
                   color: FaroColors.textPrimary,
-                  letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 FaroStrings.splashTagline,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Georgia',
-                  fontStyle: FontStyle.italic,
-                  fontSize: 14,
-                  height: 1.4,
-                  color: Color(0xFF6A6A6A),
+                style: FaroTextStyles.tagline(
+                  color: const Color(0xFF6A6A6A),
                 ),
               ),
             ],
