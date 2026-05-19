@@ -4,10 +4,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../core/design/tokens.dart';
 import '../core/i18n/faro_strings.dart';
 import '../screens/trajectory_screen.dart';
+import 'map_floating_button.dart';
 
-/// Botão circular que abre o sheet de camadas. Substitui os botões
-/// individuais de "mapa/satélite" e "pontos de ônibus" — fica mais
-/// limpo e prepara espaço pra camadas futuras (iluminação, hospitais 24h).
+/// Botão circular que abre o sheet de camadas. Usa o base
+/// [MapFloatingButton] pra herdar sombra/borda editorial.
 class LayersButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool hasActiveLayers;
@@ -19,22 +19,10 @@ class LayersButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: hasActiveLayers ? FaroColors.primary : Colors.white,
-      elevation: 4,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(11),
-          child: Icon(
-            Icons.layers_outlined,
-            size: 22,
-            color: hasActiveLayers ? Colors.white : FaroColors.primary,
-          ),
-        ),
-      ),
+    return MapFloatingButton(
+      icon: Icons.layers_outlined,
+      active: hasActiveLayers,
+      onTap: onTap,
     );
   }
 }

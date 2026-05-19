@@ -27,6 +27,7 @@ import '../widgets/driving_mode_button.dart';
 import '../widgets/faro_drawer.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/layers_sheet.dart';
+import '../widgets/map_floating_button.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
 import '../widgets/proximity_banner.dart';
@@ -606,31 +607,25 @@ class _LocateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      elevation: 4,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: loading ? null : onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(11),
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.4,
-                    color: FaroColors.primary,
-                  ),
-                )
-              : const Icon(
-                  Icons.my_location,
-                  size: 22,
-                  color: FaroColors.primary,
-                ),
+    // Quando loading, mostramos o spinner sobre o botão base. Mantemos
+    // o tap desabilitado pra evitar requests concorrentes.
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        MapFloatingButton(
+          icon: Icons.my_location,
+          onTap: loading ? null : onTap,
         ),
-      ),
+        if (loading)
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.4,
+              color: FaroColors.primary,
+            ),
+          ),
+      ],
     );
   }
 }

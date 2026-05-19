@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/design/tokens.dart';
 import '../core/driving/driving_mode.dart';
 import '../core/i18n/faro_strings.dart';
+import 'map_floating_button.dart';
 
 /// Botão flutuante de "Modo direção". Maior que os botões irmãos
 /// (Layers/Locate) — Fitts' Law: alvo grande pra polegar de motorista,
@@ -27,25 +27,13 @@ class DrivingModeButton extends StatelessWidget {
       DrivingMode.bike => FaroStrings.drivingBike,
       DrivingMode.off => FaroStrings.menuDrivingMode,
     };
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: active ? FaroColors.primary : Colors.white,
-        elevation: 6,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Icon(
-              iconData,
-              size: 26,
-              color: active ? Colors.white : FaroColors.primary,
-            ),
-          ),
-        ),
-      ),
+    return MapFloatingButton(
+      icon: iconData,
+      active: active,
+      onTap: onTap,
+      tooltip: tooltip,
+      size: 56,
+      iconSize: 26,
     );
   }
 }
