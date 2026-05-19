@@ -6,6 +6,7 @@ admin.initializeApp();
 // Schedulers
 exports.syncFogoCruzado = require("./lib/fogoCruzadoSync").syncFogoCruzado;
 exports.ingestNewsBahia = require("./lib/newsIngest").ingestNewsBahia;
+exports.ingestOsmNotes = require("./lib/osmNotesIngest").ingestOsmNotes;
 exports.cleanupOccurrences = require("./lib/cleanupOccurrences").cleanupOccurrences;
 
 // HTTP (manual one-shot)

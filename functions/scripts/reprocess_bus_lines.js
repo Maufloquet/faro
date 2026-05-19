@@ -74,16 +74,28 @@ async function main() {
       (opts.dryRun ? " · DRY-RUN" : ""),
   );
 
+  // Filtra `source` no cliente pra evitar criar índice composto
+  // (source, date) só pra esse script one-shot. O over-fetch é
+  // pequeno — fogo_cruzado também volta mas é descartado abaixo.
   let query = db
     .collection("occurrences")
-    .where("source", "==", "media")
     .where("date", ">=", admin.firestore.Timestamp.fromDate(cutoff))
     .orderBy("date", "desc");
-  if (Number.isFinite(opts.limit)) query = query.limit(opts.limit);
+  if (Number.isFinite(opts.limit)) {
+    // Sobre-fetch defensivo: ~50% dos docs costumam ser fogo_cruzado,
+    // que serão descartados. Multiplicamos pra não cortar curto.
+    query = query.limit(opts.limit * 3);
+  }
   const snap = await query.get();
 
-  console.log(`✓ ${snap.size} documentos a reprocessar`);
-  if (snap.empty) return;
+  const mediaDocs = snap.docs.filter((d) => d.data().source === "media");
+  const work = Number.isFinite(opts.limit)
+    ? mediaDocs.slice(0, opts.limit)
+    : mediaDocs;
+  console.log(
+    `✓ ${snap.size} docs lidos · ${mediaDocs.length} são source=media · ${work.length} a reprocessar`,
+  );
+  if (work.length === 0) return;
 
   const stats = {
     processed: 0,
@@ -93,7 +105,7 @@ async function main() {
     new_lines: 0,
   };
 
-  for (const doc of snap.docs) {
+  for (const doc of work) {
     stats.processed++;
     const data = doc.data();
     const title = data.externalTitle;
@@ -143,7 +155,7 @@ async function main() {
 
     if (stats.processed % 50 === 0) {
       console.log(
-        `  … ${stats.processed}/${snap.size} (mudou=${stats.changed}, +linhas=${stats.new_lines}, erros=${stats.errors})`,
+        `  … ${stats.processed}/${work.length} (mudou=${stats.changed}, +linhas=${stats.new_lines}, erros=${stats.errors})`,
       );
     }
   }
