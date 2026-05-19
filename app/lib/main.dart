@@ -107,6 +107,14 @@ Future<void> main() async {
       // ponto salvo. FCM pode perder a subscription se o device ficou
       // muito tempo offline, então re-afirmamos no boot.
       unawaited(ReferenceLocationService.instance.resumeOnBoot());
+
+      // Quando o usuário faz login com Google (não-anônimo), puxamos
+      // o local de referência salvo em outro device.
+      FirebaseAuth.instance.authStateChanges().listen((user) {
+        if (user != null && !user.isAnonymous) {
+          unawaited(ReferenceLocationService.instance.pullFromCloud());
+        }
+      });
     } else {
       _log.debug('modo dev: lendo ocorrências de assets/, sem Firebase.');
     }

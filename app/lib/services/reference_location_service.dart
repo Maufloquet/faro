@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -92,6 +96,10 @@ class ReferenceLocationService {
     await prefs.setString(_labelKey, loc.label);
     await prefs.setString(_topicKey, newTopic);
     _log.info('referência salva: ${loc.label} ($newTopic)');
+
+    // Sync pra cloud só quando o usuário está logado (não-anônimo).
+    // Falha silenciosa — local de referência continua funcional só no device.
+    unawaited(_syncToCloud(loc));
   }
 
   /// Remove o endereço salvo e desinscreve do tópico correspondente.
@@ -110,6 +118,78 @@ class ReferenceLocationService {
     await prefs.remove(_labelKey);
     await prefs.remove(_topicKey);
     _log.info('referência limpa');
+    unawaited(_clearCloud());
+  }
+
+  // ─── Sync com Firestore (só ativo quando usuário não-anônimo) ─────────
+  //
+  // Persistência fica em `/users/{uid}.referenceLocation`. Anonymous user
+  // continua usando só SharedPreferences (princípio "sem cadastro").
+
+  Future<void> _syncToCloud(ReferenceLocation loc) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'referenceLocation': {
+          'lat': loc.lat,
+          'lng': loc.lng,
+          'label': loc.label,
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      _log.info('cloud sync ok: ${loc.label}');
+    } catch (e, s) {
+      _log.error('cloud sync falhou', e, s);
+    }
+  }
+
+  Future<void> _clearCloud() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'referenceLocation': FieldValue.delete(),
+      }, SetOptions(merge: true));
+    } catch (e, s) {
+      _log.error('cloud clear falhou', e, s);
+    }
+  }
+
+  /// Pull on login — após o usuário entrar com Google, busca a
+  /// referência salva em outro device e popula o prefs local.
+  /// No-op pra anonymous user. Chamado pelo listener de auth no boot.
+  Future<void> pullFromCloud() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final data = doc.data();
+      if (data == null) return;
+      final raw = data['referenceLocation'];
+      if (raw is! Map) return;
+      final lat = (raw['lat'] as num?)?.toDouble();
+      final lng = (raw['lng'] as num?)?.toDouble();
+      final label = raw['label'] as String?;
+      if (lat == null || lng == null) return;
+      final remote = ReferenceLocation(
+        lat: lat,
+        lng: lng,
+        label: label ?? 'Local salvo',
+      );
+      final local = await current();
+      if (local == null ||
+          local.lat != remote.lat ||
+          local.lng != remote.lng) {
+        await save(remote);
+        _log.info('pulled from cloud: ${remote.label}');
+      }
+    } catch (e, s) {
+      _log.error('pull from cloud falhou', e, s);
+    }
   }
 
   /// Re-assina o tópico no boot — útil porque o FCM pode perder
