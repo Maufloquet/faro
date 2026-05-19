@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/design/tokens.dart';
 import '../core/i18n/faro_strings.dart';
 import '../services/analytics_service.dart';
+import '../widgets/faro_logo.dart';
 import 'map_screen.dart';
 
 /// Onboarding de UMA tela, bloqueante na primeira abertura.
@@ -69,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       body: FaroStrings.principleNeverSafeBody,
                     ),
                     _Principle(
-                      icon: Icons.travel_explore,
+                      icon: Icons.layers_outlined,
                       title: FaroStrings.principleContextTitle,
                       body: FaroStrings.principleContextBody,
                     ),
@@ -120,15 +121,7 @@ class _Header extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: FaroColors.primary,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(Icons.travel_explore, size: 30, color: Colors.white),
-        ),
+        const FaroLogo(size: 60),
         const SizedBox(height: 18),
         Text(
           FaroStrings.onboardingHeadline,

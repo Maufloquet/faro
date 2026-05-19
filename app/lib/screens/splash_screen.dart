@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../core/design/tokens.dart';
 import '../core/i18n/faro_strings.dart';
+import '../widgets/faro_logo.dart';
 import 'map_screen.dart';
 import 'onboarding_screen.dart';
 
@@ -66,23 +67,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 88,
-                height: 88,
-                decoration: BoxDecoration(
-                  color: FaroColors.primary,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 4)),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.travel_explore,
-                  size: 46,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 24),
+              const FaroLogo(size: 96),
+              const SizedBox(height: 22),
               const Text(
                 'Faro',
                 style: TextStyle(

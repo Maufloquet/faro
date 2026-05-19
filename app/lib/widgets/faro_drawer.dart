@@ -5,6 +5,7 @@ import '../core/design/tokens.dart';
 import '../core/driving/driving_mode.dart';
 import '../core/i18n/faro_strings.dart';
 import '../core/i18n/locale_notifier.dart';
+import 'faro_logo.dart';
 import '../screens/about_screen.dart';
 import '../screens/areas_screen.dart';
 import '../screens/driving_profile_screen.dart';
@@ -151,20 +152,11 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: FaroColors.primary,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.travel_explore,
-                    size: 20, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              const Text(
+              FaroLogo(size: 38),
+              SizedBox(width: 14),
+              Text(
                 'Faro',
                 style: TextStyle(
                   fontFamily: 'Georgia',
