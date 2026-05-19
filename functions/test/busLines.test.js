@@ -14,6 +14,8 @@ describe("newsIngest.sanitizeBusLines", () => {
     assert.deepEqual(sanitizeBusLines({}), []);
   });
 
+  // ── Formato (A) — códigos numéricos ──────────────────────────────────
+
   it("aceita códigos numéricos simples", () => {
     assert.deepEqual(sanitizeBusLines(["1234"]), ["1234"]);
     assert.deepEqual(sanitizeBusLines(["1234", "5678"]), ["1234", "5678"]);
@@ -24,23 +26,75 @@ describe("newsIngest.sanitizeBusLines", () => {
     assert.deepEqual(sanitizeBusLines(["0220-01"]), ["0220-01"]);
   });
 
-  it("descarta strings sem dígito (defesa contra IA alucinar descrição)", () => {
+  it("normaliza códigos pra UPPERCASE", () => {
+    assert.deepEqual(sanitizeBusLines(["l-105"]), ["L-105"]);
+  });
+
+  // ── Formato (B) — origem-destino ─────────────────────────────────────
+
+  it("aceita linhas nomeadas com hífen (Cajazeiras-Lapa)", () => {
+    assert.deepEqual(sanitizeBusLines(["Cajazeiras-Lapa"]), ["Cajazeiras-Lapa"]);
+  });
+
+  it("aceita linhas nomeadas com barra (Pituba/Rodoviária)", () => {
+    assert.deepEqual(
+      sanitizeBusLines(["Pituba/Rodoviária"]),
+      ["Pituba/Rodoviária"],
+    );
+  });
+
+  it("aceita linhas nomeadas com acentos e espaços (Itinga / Praça da Sé)", () => {
+    assert.deepEqual(
+      sanitizeBusLines(["Itinga / Praça da Sé"]),
+      ["Itinga / Praça da Sé"],
+    );
+  });
+
+  it("normaliza espaços duplos em linhas nomeadas", () => {
+    assert.deepEqual(
+      sanitizeBusLines(["Cajazeiras  -  Lapa"]),
+      ["Cajazeiras - Lapa"],
+    );
+  });
+
+  it("mantém o case original em linhas nomeadas (não força UPPER)", () => {
+    assert.deepEqual(
+      sanitizeBusLines(["Cajazeiras-Lapa"]),
+      ["Cajazeiras-Lapa"],
+    );
+    // Mas dedup é case-insensitive
+    assert.deepEqual(
+      sanitizeBusLines(["Cajazeiras-Lapa", "cajazeiras-lapa"]),
+      ["Cajazeiras-Lapa"],
+    );
+  });
+
+  // ── Rejeições ────────────────────────────────────────────────────────
+
+  it("rejeita strings sem dígito e sem separador (palavra única)", () => {
     assert.deepEqual(sanitizeBusLines(["ônibus para Lauro"]), []);
     assert.deepEqual(sanitizeBusLines(["linha amarela"]), []);
+    assert.deepEqual(sanitizeBusLines(["Pituba"]), []); // só um nome
     assert.deepEqual(sanitizeBusLines(["ABCD"]), []);
   });
 
-  it("descarta strings muito longas (defesa contra IA gerar nome de empresa)", () => {
-    assert.deepEqual(sanitizeBusLines(["1234 - Estação Lapa - Cajazeiras Salvador"]), []);
+  it("rejeita strings com tokens curtos demais", () => {
+    // "Sé" tem só 2 letras — sozinho não vale; o teste de Itinga/Praça da Sé
+    // passa porque "Sé" faz parte de "Praça da Sé" (token de 9 chars).
+    assert.deepEqual(sanitizeBusLines(["A-B"]), []);
+    assert.deepEqual(sanitizeBusLines(["Lapa-Sé"]), []);
   });
 
-  it("descarta strings com caracteres especiais (acentos, parênteses, vírgulas)", () => {
+  it("rejeita strings com mais de 40 chars", () => {
+    assert.deepEqual(
+      sanitizeBusLines(["1234 - Estação Lapa - Cajazeiras Salvador Centro"]),
+      [],
+    );
+  });
+
+  it("rejeita strings mistas com caracteres especiais (parênteses, vírgulas)", () => {
     assert.deepEqual(sanitizeBusLines(["1234 (ALTERNATIVO)"]), []);
     assert.deepEqual(sanitizeBusLines(["linha 1234, sentido Lapa"]), []);
-  });
-
-  it("normaliza pra UPPERCASE e deduplica", () => {
-    assert.deepEqual(sanitizeBusLines(["l-105", "L-105", "l-105"]), ["L-105"]);
   });
 
   it("ignora entradas não-string no array", () => {

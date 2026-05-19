@@ -288,10 +288,20 @@ function mapType(t) {
 }
 
 /**
- * Aceita só o que a IA REALMENTE consegue extrair com confiança: array de
- * strings curtas com dígitos ou códigos curtos tipo "L-105" ou "1234-01".
- * Descarta tudo o que parece nome de bairro ou descrição livre — a IA
- * tende a inventar quando deixamos campo livre.
+ * Aceita 2 formatos de linha que a IA consegue extrair com confiança:
+ *
+ *   (A) **Códigos numéricos** — `"1234"`, `"L-105"`, `"0220-01"`
+ *       Tem dígito + apenas `[A-Za-z0-9.-/]`, sem espaços.
+ *
+ *   (B) **Linha nomeada por origem-destino** — `"Cajazeiras-Lapa"`,
+ *       `"Pituba/Rodoviária"`, `"Itinga / Praça da Sé"`
+ *       Tem separador `-` ou `/`, pelo menos 2 tokens com ≥ 3 letras,
+ *       só letras (incluindo acentuadas) + espaços.
+ *
+ * Bloqueia descrições livres ("ônibus pra Lauro", "linha 1234, sentido X"),
+ * nomes únicos ("Pituba"), e strings longas (> 40 chars).
+ *
+ * A IA recebe regras compatíveis no prompt (groqClient.js).
  */
 function sanitizeBusLines(raw) {
   if (!Array.isArray(raw)) return [];
@@ -299,18 +309,36 @@ function sanitizeBusLines(raw) {
   const out = [];
   for (const v of raw) {
     if (typeof v !== "string") continue;
-    const trimmed = v.trim();
-    if (trimmed.length === 0 || trimmed.length > 20) continue;
-    // Tem que conter ao menos UM dígito — bloqueia descrições tipo "ônibus pra Lauro"
-    if (!/\d/.test(trimmed)) continue;
-    // Lista de chars permitidos: dígitos, letras, hífen, ponto, barra
-    if (!/^[A-Za-z0-9.\-/]+$/.test(trimmed)) continue;
-    const norm = trimmed.toUpperCase();
-    if (seen.has(norm)) continue;
-    seen.add(norm);
+    const trimmed = v.trim().replace(/\s+/g, " "); // normaliza espaços duplos
+    if (trimmed.length === 0 || trimmed.length > 40) continue;
+    if (!isValidBusLineFormat(trimmed)) continue;
+    // Códigos puros vão pra UPPER ("l-105" → "L-105"); nomes mantêm o
+    // case original ("Cajazeiras-Lapa"). Código = tem dígito + chars
+    // compactos. Sem dígito (linha nomeada) preserva o casing.
+    const isCode =
+      /\d/.test(trimmed) && /^[A-Za-z0-9.\-/]+$/.test(trimmed);
+    const norm = isCode ? trimmed.toUpperCase() : trimmed;
+    const dedupKey = norm.toLowerCase();
+    if (seen.has(dedupKey)) continue;
+    seen.add(dedupKey);
     out.push(norm);
   }
   return out;
+}
+
+function isValidBusLineFormat(s) {
+  // (A) Código: contém dígito + apenas chars compactos permitidos.
+  if (/\d/.test(s) && /^[A-Za-z0-9.\-/]+$/.test(s)) return true;
+
+  // (B) Linha nomeada origem-destino: separador `-` ou `/`, só letras
+  //     (com acentos) e espaços. Tokens com ≥ 3 letras cada, ≥ 2 tokens.
+  if (/[-/]/.test(s) && /^[\p{L} \-/]+$/u.test(s)) {
+    const tokens = s.split(/[-/]/).map((t) => t.trim()).filter(Boolean);
+    if (tokens.length < 2) return false;
+    return tokens.every((t) => t.replace(/\s/g, "").length >= 3);
+  }
+
+  return false;
 }
 
 function sanitizeTransportContext(raw) {
