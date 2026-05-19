@@ -189,6 +189,21 @@ class FaroStrings {
 
   static String get aboutVersion => _t('about.version');
 
+  // ─── Account / login Google ───────────────────────────────────────────
+  static String get accountSectionTitle => _t('account.section.title');
+  static String get accountAnonymousTitle => _t('account.anonymous.title');
+  static String get accountAnonymousBody => _t('account.anonymous.body');
+  static String get accountSignInWithGoogle => _t('account.sign_in_google');
+  static String get accountSignOut => _t('account.sign_out');
+  static String get accountSignedInAs => _t('account.signed_in_as');
+  static String get accountSignInFailed => _t('account.sign_in_failed');
+  static String get accountSignOutConfirmTitle =>
+      _t('account.sign_out.confirm.title');
+  static String get accountSignOutConfirmBody =>
+      _t('account.sign_out.confirm.body');
+  static String get accountSignOutConfirm => _t('account.sign_out.confirm');
+  static String get accountSignOutCancel => _t('account.sign_out.cancel');
+
   // ─── Enums localizados (TimeWindow, RiskLevel) ────────────────────────
   static String timeWindowLabel(TimeWindow w) {
     switch (w) {
@@ -633,6 +648,19 @@ const Map<String, Map<String, String>> _table = {
     'about.tech.density.body':
         'Quando exibimos "relatos por 10 mil habitantes" em um bairro, usamos população do Censo IBGE 2010 (via PMS/SEMOP), porque o Censo 2022 ainda não publicou agregação por bairro para Salvador. Bairros sem dado de população não mostram normalização — preferimos silêncio honesto a número inventado.',
     'about.version': 'Faro · v0.1.0 (alpha)',
+    'account.section.title': 'Sua conta',
+    'account.anonymous.title': 'Você está usando sem cadastro',
+    'account.anonymous.body':
+        'O Faro funciona inteiro sem login — é assim por princípio. Entrar com Google é opcional, só pra ter favoritos sincronizados e local de referência salvos entre celulares.',
+    'account.sign_in_google': 'Entrar com Google',
+    'account.sign_out': 'Sair',
+    'account.signed_in_as': 'Conectado como',
+    'account.sign_in_failed': 'Não foi possível entrar. Tente novamente.',
+    'account.sign_out.confirm.title': 'Sair da conta?',
+    'account.sign_out.confirm.body':
+        'Você volta a usar o app sem cadastro. Favoritos e local de referência neste celular ficam, mas param de sincronizar com outros dispositivos.',
+    'account.sign_out.confirm': 'Sair',
+    'account.sign_out.cancel': 'Cancelar',
     'window.today': 'Hoje',
     'window.week': '7 dias',
     'window.month': '30 dias',
@@ -958,6 +986,19 @@ const Map<String, Map<String, String>> _table = {
     'about.tech.density.body':
         'When we display "reports per 10k inhabitants" in a neighborhood, we use IBGE 2010 Census population (via PMS/SEMOP), because the 2022 Census has not yet published neighborhood-level aggregation for Salvador. Neighborhoods without population data show no normalization — we prefer honest silence over invented numbers.',
     'about.version': 'Faro · v0.1.0 (alpha)',
+    'account.section.title': 'Your account',
+    'account.anonymous.title': 'You are using it without an account',
+    'account.anonymous.body':
+        'Faro works fully without login — by design. Signing in with Google is optional, just to keep favorites and reference location synced across devices.',
+    'account.sign_in_google': 'Sign in with Google',
+    'account.sign_out': 'Sign out',
+    'account.signed_in_as': 'Signed in as',
+    'account.sign_in_failed': 'Could not sign in. Please try again.',
+    'account.sign_out.confirm.title': 'Sign out?',
+    'account.sign_out.confirm.body':
+        'You go back to using the app without an account. Favorites and reference location on this device stay, but stop syncing across devices.',
+    'account.sign_out.confirm': 'Sign out',
+    'account.sign_out.cancel': 'Cancel',
     'window.today': 'Today',
     'window.week': '7 days',
     'window.month': '30 days',
@@ -1285,6 +1326,19 @@ const Map<String, Map<String, String>> _table = {
     'about.tech.density.body':
         'Cuando mostramos "reportes por 10 mil habitantes" en un barrio, usamos población del Censo IBGE 2010 (vía PMS/SEMOP), porque el Censo 2022 aún no publica agregación por barrio para Salvador. Barrios sin dato de población no muestran normalización — preferimos silencio honesto a un número inventado.',
     'about.version': 'Faro · v0.1.0 (alpha)',
+    'account.section.title': 'Tu cuenta',
+    'account.anonymous.title': 'Estás usándola sin registro',
+    'account.anonymous.body':
+        'Faro funciona entero sin login — es así por principio. Entrar con Google es opcional, solo para tener favoritos sincronizados y ubicación de referencia entre dispositivos.',
+    'account.sign_in_google': 'Entrar con Google',
+    'account.sign_out': 'Salir',
+    'account.signed_in_as': 'Conectado como',
+    'account.sign_in_failed': 'No fue posible entrar. Intenta de nuevo.',
+    'account.sign_out.confirm.title': '¿Salir de la cuenta?',
+    'account.sign_out.confirm.body':
+        'Vuelves a usar la app sin registro. Favoritos y ubicación de referencia en este celular se quedan, pero dejan de sincronizar con otros dispositivos.',
+    'account.sign_out.confirm': 'Salir',
+    'account.sign_out.cancel': 'Cancelar',
     'window.today': 'Hoy',
     'window.week': '7 días',
     'window.month': '30 días',

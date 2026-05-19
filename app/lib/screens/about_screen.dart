@@ -7,6 +7,7 @@ import '../services/analytics_service.dart';
 import '../services/background_location_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/reference_location_service.dart';
+import '../widgets/account_card.dart';
 
 /// Tela /sobre/ — transparência editorial pública.
 ///
@@ -36,6 +37,8 @@ class _AboutScreenState extends State<AboutScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          const AccountCard(),
+          const SizedBox(height: 12),
           const _BackgroundAlertsToggle(),
           const SizedBox(height: 12),
           const _ReferenceLocationCard(),
