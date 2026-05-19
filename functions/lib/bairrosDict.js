@@ -76,24 +76,48 @@ function levenshtein(a, b) {
   return dp[a.length][b.length];
 }
 
-function matchInDict(query, dict) {
-  if (!query || dict.length === 0) return null;
+/**
+ * Comprimento mínimo de nome de bairro pra ser elegível a match via
+ * substring. Sem isso, nomes curtos como "Lapa" (4 chars), "Roma" (4),
+ * "Barra" (5) engolem qualquer query mais longa que os contenha
+ * ("Lapinha de Cima" → Lapa, "Barra do Pojuca" → Barra de Salvador).
+ */
+const SUBSTRING_MIN_LEN = 6;
 
-  // 1) Match exato
+/**
+ * @param {string} query nome de bairro normalizado (sem acento, lowercase)
+ * @param {Array} dict lista de bairros { name, nameNorm, lat, lng, city }
+ * @param {object} opts
+ * @param {boolean} opts.exactOnly se true, só aceita match exato (sem
+ *   substring nem fuzzy). Usado quando vamos buscar em dicts de cidades
+ *   diferentes daquela indicada pelo LLM — onde substring/fuzzy ficam
+ *   perigosos demais.
+ */
+function matchInDict(query, dict, opts = {}) {
+  if (!query || dict.length === 0) return null;
+  const exactOnly = opts.exactOnly === true;
+
+  // 1) Match exato — sempre primeiro, único caminho confiável.
   const exact = dict.find((b) => b.nameNorm === query);
   if (exact) {
     return { ...exact, method: "exact", score: 1.0 };
   }
 
-  // 2) Substring
-  const sub = dict.find(
-    (b) => b.nameNorm.includes(query) || query.includes(b.nameNorm)
-  );
+  if (exactOnly) return null;
+
+  // 2) Substring — só vale pra nameNorm >= SUBSTRING_MIN_LEN, evitando
+  //    falsos positivos com nomes curtos absorvendo queries longas.
+  const sub = dict.find((b) => {
+    if (b.nameNorm.length < SUBSTRING_MIN_LEN) return false;
+    return b.nameNorm.includes(query) || query.includes(b.nameNorm);
+  });
   if (sub) {
     return { ...sub, method: "substring", score: 0.9 };
   }
 
-  // 3) Fuzzy Levenshtein — threshold proporcional ao tamanho
+  // 3) Fuzzy Levenshtein — threshold proporcional ao tamanho.
+  //    Mantém restrição implícita: query curta (< 4) tem threshold 2,
+  //    o que ainda assim impede match grosseiro.
   let best = null;
   let bestDistance = Infinity;
   for (const b of dict) {
@@ -142,11 +166,14 @@ function resolveBairro(neighborhood, cityName) {
           };
         }
       }
-      // Fallback: tenta em todos os dicts (caso o LLM tenha extraído
-      // bairro certo mas cidade errada/ausente)
+      // Fallback inter-cidades: tenta nas outras cidades, mas **somente
+      // match exato**. Substring/fuzzy aqui enviesa pra Salvador (primeiro
+      // dict iterado) e vira fonte de erro sistemático. Se LLM extraiu
+      // bairro real porém cidade errada/ausente, o nome exato basta;
+      // qualquer ambiguidade é mais segura no centroide da cidade.
       for (const [key, dict] of Object.entries(dicts)) {
         if (key === cityKey) continue;
-        const m = matchInDict(query, dict);
+        const m = matchInDict(query, dict, { exactOnly: true });
         if (m) {
           return {
             lat: m.lat,
