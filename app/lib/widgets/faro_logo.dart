@@ -77,7 +77,7 @@ class _FaroLogoState extends State<FaroLogo>
           width: widget.size,
           height: widget.size,
           child: CustomPaint(
-            painter: _FaroLogoPainter(
+            painter: FaroLogoPainter(
               color: mainColor,
               accent: accent,
               outerScale: _pulse!.value,
@@ -93,7 +93,7 @@ class _FaroLogoState extends State<FaroLogo>
       width: widget.size,
       height: widget.size,
       child: CustomPaint(
-        painter: _FaroLogoPainter(color: mainColor, accent: accent),
+        painter: FaroLogoPainter(color: mainColor, accent: accent),
       ),
     );
   }
@@ -144,14 +144,18 @@ class FaroLogoLockup extends StatelessWidget {
   }
 }
 
-class _FaroLogoPainter extends CustomPainter {
+/// Painter exposto (não-private) pra que ferramentas externas possam
+/// renderizar o glifo Faro em outras superfícies — por exemplo, o script
+/// `test/tool/generate_icon_test.dart` que regenera o launcher icon
+/// (assets/icon/faro_icon.png) usando este mesmo desenho.
+class FaroLogoPainter extends CustomPainter {
   final Color color;
   final Color accent;
   /// Multiplicador do raio do anel externo (1.0 = neutro). Usado pelo
   /// modo animado pra criar pulso sutil (0.96 ↔ 1.04).
   final double outerScale;
 
-  _FaroLogoPainter({
+  FaroLogoPainter({
     required this.color,
     required this.accent,
     this.outerScale = 1.0,
@@ -215,7 +219,7 @@ class _FaroLogoPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_FaroLogoPainter old) =>
+  bool shouldRepaint(FaroLogoPainter old) =>
       old.color != color ||
       old.accent != accent ||
       old.outerScale != outerScale;
