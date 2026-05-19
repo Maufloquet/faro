@@ -5,8 +5,8 @@ import '../core/design/tokens.dart';
 import '../core/filters/time_window.dart';
 import '../core/i18n/faro_strings.dart';
 import '../core/stats/area_activity.dart';
-import '../core/stats/bus_line_activity.dart';
 import '../core/stats/temporal_activity.dart';
+import '../core/stats/transport_activity.dart';
 import '../core/text/string_format.dart';
 import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
@@ -30,6 +30,9 @@ class AreasScreen extends ConsumerStatefulWidget {
 
 class _AreasScreenState extends ConsumerState<AreasScreen> {
   TimeWindow _window = TimeWindow.semana;
+  /// Modal selecionado nos chips da aba "Em transporte".
+  /// `null` = todos; `'onibus'` ou `'metro'` filtra.
+  String? _transportModal;
 
   @override
   void initState() {
@@ -47,14 +50,13 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
       data: (list) => rankAreas(list),
       orElse: () => <AreaActivity>[],
     );
-    final busLines = filtered.maybeWhen(
-      data: rankBusLines,
-      orElse: () => <BusLineActivity>[],
-    );
     final filteredList = filtered.maybeWhen(
       data: (v) => v,
       orElse: () => const <Occurrence>[],
     );
+    final transportAreas =
+        rankTransportAreas(filteredList, modal: _transportModal);
+    final modalCounts = countByModal(filteredList);
     final hourBuckets = rankByHour(filteredList);
     final weekdayBuckets = rankByWeekday(filteredList);
     final peak = peakHour(hourBuckets);
@@ -75,7 +77,7 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
             labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             tabs: [
               Tab(text: FaroStrings.areasTabNeighborhoods),
-              Tab(text: FaroStrings.areasTabLines),
+              Tab(text: FaroStrings.areasTabTransport),
               Tab(text: FaroStrings.areasTabPatterns),
             ],
           ),
@@ -100,7 +102,14 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
               child: TabBarView(
                 children: [
                   _AreasTab(areas: areas, onFocus: widget.onFocus),
-                  _BusLinesTab(lines: busLines),
+                  _TransportTab(
+                    areas: transportAreas,
+                    modal: _transportModal,
+                    busCount: modalCounts.bus,
+                    metroCount: modalCounts.metro,
+                    onModalChange: (m) => setState(() => _transportModal = m),
+                    onFocus: widget.onFocus,
+                  ),
                   _PatternsTab(
                     hasData: filteredList.isNotEmpty,
                     hourEntries: TemporalEntries.fromHours(hourBuckets),
@@ -144,24 +153,42 @@ class _AreasTab extends StatelessWidget {
   }
 }
 
-class _BusLinesTab extends StatelessWidget {
-  final List<BusLineActivity> lines;
-  const _BusLinesTab({required this.lines});
+class _TransportTab extends StatelessWidget {
+  final List<TransportAreaActivity> areas;
+  final String? modal; // null=todos, 'onibus', 'metro'
+  final int busCount;
+  final int metroCount;
+  final ValueChanged<String?> onModalChange;
+  final void Function(double, double)? onFocus;
+
+  const _TransportTab({
+    required this.areas,
+    required this.modal,
+    required this.busCount,
+    required this.metroCount,
+    required this.onModalChange,
+    required this.onFocus,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (lines.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
-        child: _BusLinesEmptyState(),
-      );
-    }
+    final showEmpty = areas.isEmpty;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
       children: [
-        const _BusLinesHeader(),
+        const _TransportHeader(),
+        const SizedBox(height: 10),
+        _TransportFilterChips(
+          modal: modal,
+          busCount: busCount,
+          metroCount: metroCount,
+          onChange: onModalChange,
+        ),
         const SizedBox(height: 12),
-        ...lines.map((line) => _BusLineCard(activity: line)),
+        if (showEmpty)
+          const _TransportEmptyState()
+        else
+          ...areas.map((a) => _TransportAreaCard(activity: a, onFocus: onFocus)),
       ],
     );
   }
@@ -415,8 +442,8 @@ class _AreaCard extends StatelessWidget {
   }
 }
 
-class _BusLinesEmptyState extends StatelessWidget {
-  const _BusLinesEmptyState();
+class _TransportEmptyState extends StatelessWidget {
+  const _TransportEmptyState();
 
   @override
   Widget build(BuildContext context) {
@@ -437,7 +464,7 @@ class _BusLinesEmptyState extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  FaroStrings.areasNoLinesTitle,
+                  FaroStrings.areasTransportEmptyTitle,
                   style: const TextStyle(
                     fontFamily: FaroFonts.serifEditorial,
                     fontSize: 15,
@@ -450,7 +477,7 @@ class _BusLinesEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            FaroStrings.areasNoLinesBody,
+            FaroStrings.areasTransportEmptyBody,
             style: const TextStyle(
               fontSize: 13,
               height: 1.5,
@@ -463,8 +490,8 @@ class _BusLinesEmptyState extends StatelessWidget {
   }
 }
 
-class _BusLinesHeader extends StatelessWidget {
-  const _BusLinesHeader();
+class _TransportHeader extends StatelessWidget {
+  const _TransportHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -482,20 +509,22 @@ class _BusLinesHeader extends StatelessWidget {
             children: [
               const Icon(Icons.directions_bus_outlined, size: 18, color: FaroColors.primary),
               const SizedBox(width: 8),
-              Text(
-                FaroStrings.areasBusLinesHeaderTitle,
-                style: const TextStyle(
-                  fontFamily: 'Georgia',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: FaroColors.primary,
+              Expanded(
+                child: Text(
+                  FaroStrings.areasTransportHeaderTitle,
+                  style: const TextStyle(
+                    fontFamily: 'Georgia',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: FaroColors.primary,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            FaroStrings.areasBusLinesHeaderBody,
+            FaroStrings.areasTransportHeaderBody,
             style: const TextStyle(fontSize: 12.5, height: 1.5, color: FaroColors.textSecondary),
           ),
         ],
@@ -504,12 +533,93 @@ class _BusLinesHeader extends StatelessWidget {
   }
 }
 
-class _BusLineCard extends StatelessWidget {
-  final BusLineActivity activity;
-  const _BusLineCard({required this.activity});
+class _TransportFilterChips extends StatelessWidget {
+  final String? modal;
+  final int busCount;
+  final int metroCount;
+  final ValueChanged<String?> onChange;
+
+  const _TransportFilterChips({
+    required this.modal,
+    required this.busCount,
+    required this.metroCount,
+    required this.onChange,
+  });
 
   @override
   Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      children: [
+        _ModalChip(
+          label: '${FaroStrings.areasTransportFilterAll} · ${busCount + metroCount}',
+          selected: modal == null,
+          onTap: () => onChange(null),
+        ),
+        _ModalChip(
+          label: '🚌 ${FaroStrings.areasTransportFilterBus} · $busCount',
+          selected: modal == 'onibus',
+          onTap: () => onChange(modal == 'onibus' ? null : 'onibus'),
+        ),
+        if (metroCount > 0)
+          _ModalChip(
+            label: '🚇 ${FaroStrings.areasTransportFilterMetro} · $metroCount',
+            selected: modal == 'metro',
+            onTap: () => onChange(modal == 'metro' ? null : 'metro'),
+          ),
+      ],
+    );
+  }
+}
+
+class _ModalChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ModalChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? FaroColors.primary : FaroColors.sandChip,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: selected ? Colors.white : FaroColors.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TransportAreaCard extends StatelessWidget {
+  final TransportAreaActivity activity;
+  final void Function(double, double)? onFocus;
+  const _TransportAreaCard({required this.activity, required this.onFocus});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = titleCasePtBr(activity.neighborhood);
+    final city = titleCasePtBr(activity.city ?? '');
+    final where = city.isEmpty ? name : '$name · $city';
+    final modalSummary = FaroStrings.areasTransportModalCount(
+      activity.onibusCount,
+      activity.metroCount,
+    );
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -523,57 +633,74 @@ class _BusLineCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: FaroColors.primary,
-                  borderRadius: BorderRadius.circular(6),
-                ),
+              Expanded(
                 child: Text(
-                  activity.line,
+                  where,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    fontFamily: 'Georgia',
+                    fontSize: 16,
+                    color: FaroColors.textPrimary,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  FaroStrings.areasBusLineCited(activity.count),
-                  style: const TextStyle(fontSize: 13, color: FaroColors.textSecondary),
+              Text(
+                modalSummary,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: FaroColors.textSoft,
                 ),
               ),
             ],
           ),
-          if (activity.neighborhoodBreakdown.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              FaroStrings.areasBusLineNeighborhoods(
-                activity.neighborhoodBreakdown
-                    .take(3)
-                    .map((e) => titleCasePtBr(e.key))
-                    .join(' · '),
-              ),
-              style: const TextStyle(fontSize: 12.5, color: FaroColors.textMuted),
-            ),
-          ],
           if (activity.reasonBreakdown.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
-              FaroStrings.areasBusLineReasons(
-                activity.reasonBreakdown
-                    .take(3)
-                    .map((e) => FaroStrings.reasonLabel(e.key))
-                    .join(' · '),
-              ),
+              activity.reasonBreakdown
+                  .take(3)
+                  .map((e) => FaroStrings.reasonLabel(e.key))
+                  .join(' · '),
               style: const TextStyle(fontSize: 12.5, color: FaroColors.textMuted),
             ),
           ],
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                FaroStrings.areasLastReport(_relative(activity.mostRecent)),
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: FaroColors.textHint,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              if (onFocus != null)
+                TextButton.icon(
+                  onPressed: () {
+                    onFocus!(activity.centroidLat, activity.centroidLng);
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.map_outlined, size: 16),
+                  label: Text(FaroStrings.areasViewOnMap),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  String _relative(DateTime d) {
+    final diff = DateTime.now().difference(d);
+    if (diff.inMinutes < 60) return FaroStrings.occRelMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return FaroStrings.occRelHours(diff.inHours);
+    return FaroStrings.occRelDays(diff.inDays);
   }
 }
 

@@ -332,8 +332,29 @@ class FaroStrings {
   // ─── Areas screen ─────────────────────────────────────────────────────
   static String get areasTitle => _t('areas.title');
   static String get areasTabNeighborhoods => _t('areas.tab.neighborhoods');
-  static String get areasTabLines => _t('areas.tab.lines');
+  static String get areasTabTransport => _t('areas.tab.transport');
   static String get areasTabPatterns => _t('areas.tab.patterns');
+
+  // ─── Aba "Em transporte" (substitui "Linhas") ─────────────────────────
+  static String get areasTransportHeaderTitle =>
+      _t('areas.transport.header.title');
+  static String get areasTransportHeaderBody =>
+      _t('areas.transport.header.body');
+  static String get areasTransportFilterAll => _t('areas.transport.filter.all');
+  static String get areasTransportFilterBus => _t('areas.transport.filter.bus');
+  static String get areasTransportFilterMetro =>
+      _t('areas.transport.filter.metro');
+  static String get areasTransportEmptyTitle =>
+      _t('areas.transport.empty.title');
+  static String get areasTransportEmptyBody =>
+      _t('areas.transport.empty.body');
+  static String areasTransportModalCount(int bus, int metro) {
+    // "🚌 12 · 🚇 1" — composição neutra que serve aos 3 idiomas
+    final parts = <String>[];
+    if (bus > 0) parts.add('🚌 $bus');
+    if (metro > 0) parts.add('🚇 $metro');
+    return parts.join(' · ');
+  }
   static String get areasDisclaimerBody => _t('areas.disclaimer.body');
   static String areasReportCount(int count) {
     final key = count == 1 ? 'areas.report_count_one' : 'areas.report_count_many';
@@ -700,7 +721,16 @@ const Map<String, Map<String, String>> _table = {
         'Relato baseado em fonte pública. O Faro não garante segurança em nenhuma região — só comunica o que foi reportado. Erros acontecem.',
     'areas.title': 'Atividade por área',
     'areas.tab.neighborhoods': 'Bairros',
-    'areas.tab.lines': 'Linhas',
+    'areas.tab.transport': 'Em transporte',
+    'areas.transport.header.title': 'Eventos em transporte público',
+    'areas.transport.header.body':
+        'Ocorrências dentro de ônibus, em pontos/paradas ou em estações do metrô. Útil pra decidir entre modal (Uber ou ônibus, p. ex.) em vez de só trocar de trajeto.',
+    'areas.transport.filter.all': 'Todos',
+    'areas.transport.filter.bus': 'Ônibus',
+    'areas.transport.filter.metro': 'Metrô',
+    'areas.transport.empty.title': 'Sem eventos em transporte neste período',
+    'areas.transport.empty.body':
+        'Nenhuma matéria do período mencionou ocorrência dentro de ônibus, em ponto ou em estação. Tente "30 dias" pra ampliar a janela.',
     'areas.tab.patterns': 'Padrões',
     'areas.disclaimer.body':
         'Mais relatos numa área podem indicar mais policiamento ativo, mais cobertura de mídia ou mais pessoas reportando — não necessariamente mais crime real. Use como contexto, não como julgamento.',
@@ -1015,7 +1045,16 @@ const Map<String, Map<String, String>> _table = {
         'Report based on a public source. Faro does not guarantee safety in any area — it only communicates what has been reported. Mistakes happen.',
     'areas.title': 'Activity by area',
     'areas.tab.neighborhoods': 'Neighborhoods',
-    'areas.tab.lines': 'Lines',
+    'areas.tab.transport': 'In transit',
+    'areas.transport.header.title': 'Events in public transit',
+    'areas.transport.header.body':
+        'Incidents inside buses, at bus stops, or in metro stations. Useful for choosing a different mode (Uber instead of bus, e.g.) — not just a different route.',
+    'areas.transport.filter.all': 'All',
+    'areas.transport.filter.bus': 'Bus',
+    'areas.transport.filter.metro': 'Metro',
+    'areas.transport.empty.title': 'No transit events in this period',
+    'areas.transport.empty.body':
+        'No article in this period mentioned an incident inside a bus, at a stop, or in a station. Try "30 days" to widen the window.',
     'areas.tab.patterns': 'Patterns',
     'areas.disclaimer.body':
         'More reports in an area can mean more active policing, more media coverage, or more people reporting — not necessarily more actual crime. Use it as context, not as judgment.',
@@ -1332,7 +1371,16 @@ const Map<String, Map<String, String>> _table = {
         'Reporte basado en una fuente pública. Faro no garantiza la seguridad de ninguna zona — solo comunica lo que fue reportado. Los errores pasan.',
     'areas.title': 'Actividad por zona',
     'areas.tab.neighborhoods': 'Barrios',
-    'areas.tab.lines': 'Líneas',
+    'areas.tab.transport': 'En transporte',
+    'areas.transport.header.title': 'Eventos en transporte público',
+    'areas.transport.header.body':
+        'Incidentes dentro de autobuses, en paradas o en estaciones de metro. Útil para elegir un modal distinto (Uber en vez de autobús, p. ej.) — no solo cambiar de ruta.',
+    'areas.transport.filter.all': 'Todos',
+    'areas.transport.filter.bus': 'Autobús',
+    'areas.transport.filter.metro': 'Metro',
+    'areas.transport.empty.title': 'Sin eventos en transporte en este período',
+    'areas.transport.empty.body':
+        'Ninguna noticia del período mencionó incidente dentro de autobús, en parada o en estación. Prueba "30 días" para ampliar la ventana.',
     'areas.tab.patterns': 'Patrones',
     'areas.disclaimer.body':
         'Más reportes en una zona pueden indicar más vigilancia policial, más cobertura mediática o más personas reportando — no necesariamente más crimen real. Úsalo como contexto, no como juicio.',
