@@ -10,6 +10,7 @@ import 'faro_logo.dart';
 import '../screens/about_screen.dart';
 import '../screens/areas_screen.dart';
 import '../screens/driving_profile_screen.dart';
+import '../screens/favorites_screen.dart';
 import '../screens/help_screen.dart';
 import '../screens/language_screen.dart';
 import '../screens/trajectory_screen.dart';
@@ -68,6 +69,18 @@ class FaroDrawer extends ConsumerWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const TrajectoryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _Item(
+                    icon: Icons.favorite_outline,
+                    label: FaroStrings.menuFavorites,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => FavoritesScreen(onFocus: onFocusArea),
                         ),
                       );
                     },

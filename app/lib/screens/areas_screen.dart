@@ -11,6 +11,7 @@ import '../core/text/string_format.dart';
 import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
 import '../services/occurrences_service.dart';
+import '../widgets/favorite_button.dart';
 import '../widgets/temporal_chart.dart';
 
 /// Tela "Atividade recente por área".
@@ -371,6 +372,12 @@ class _AreaCard extends StatelessWidget {
                   color: FaroColors.textSoft,
                 ),
               ),
+              FavoriteButton(
+                name: area.name,
+                city: null,
+                lat: area.centroidLat,
+                lng: area.centroidLng,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -651,6 +658,12 @@ class _TransportAreaCard extends StatelessWidget {
                   fontSize: 12.5,
                   color: FaroColors.textSoft,
                 ),
+              ),
+              FavoriteButton(
+                name: activity.neighborhood,
+                city: activity.city,
+                lat: activity.centroidLat,
+                lng: activity.centroidLng,
               ),
             ],
           ),

@@ -457,8 +457,20 @@ class FaroStrings {
   static String get drivingCarHint => _t('driving.car.hint');
   static String get drivingBike => _t('driving.bike');
   static String get drivingBikeHint => _t('driving.bike.hint');
+  static String get menuFavorites => _t('menu.favorites');
   static String get menuHelp => _t('menu.help');
   static String get menuAbout => _t('menu.about');
+
+  // ─── Favoritos ────────────────────────────────────────────────────────
+  static String get favoritesTitle => _t('favorites.title');
+  static String get favoritesEmptyTitle => _t('favorites.empty.title');
+  static String get favoritesEmptyBody => _t('favorites.empty.body');
+  static String favoritesAdded(String name) =>
+      _t('favorites.added').replaceAll('{name}', name);
+  static String favoritesRemoved(String name) =>
+      _t('favorites.removed').replaceAll('{name}', name);
+  static String get favoritesActionAdd => _t('favorites.action.add');
+  static String get favoritesActionRemove => _t('favorites.action.remove');
 
   static String get languageTitle => _t('language.title');
   static String get languageAuto => _t('language.auto');
@@ -854,7 +866,16 @@ const Map<String, Map<String, String>> _table = {
     'driving.bike': 'Bicicleta',
     'driving.bike.hint': 'Zoom mais próximo, mapa fixo no norte. Sem rotação automática — leitura em parada curta.',
     'menu.help': 'Como o Faro funciona',
+    'menu.favorites': 'Favoritos',
     'menu.about': 'Sobre o Faro',
+    'favorites.title': 'Favoritos',
+    'favorites.empty.title': 'Você ainda não tem favoritos',
+    'favorites.empty.body':
+        'Marque bairros que você acompanha (hotel, trabalho, rota de família). Toque no coração ao lado de qualquer bairro em "Atividade por área" ou no detalhe de um relato.',
+    'favorites.added': 'Adicionado: {name}',
+    'favorites.removed': 'Removido: {name}',
+    'favorites.action.add': 'Adicionar aos favoritos',
+    'favorites.action.remove': 'Remover dos favoritos',
     'language.title': 'Idioma',
     'language.auto': 'Automático (do celular)',
     'language.auto.current': 'Atualmente: {name}',
@@ -1192,7 +1213,16 @@ const Map<String, Map<String, String>> _table = {
     'driving.bike': 'Bicycle',
     'driving.bike.hint': 'Closer zoom, map stays north-up. No auto-rotation — read at brief stops.',
     'menu.help': 'How Faro works',
+    'menu.favorites': 'Favorites',
     'menu.about': 'About Faro',
+    'favorites.title': 'Favorites',
+    'favorites.empty.title': 'No favorites yet',
+    'favorites.empty.body':
+        'Mark neighborhoods you follow (hotel, work, family route). Tap the heart next to any neighborhood in "Activity by area" or in a report detail.',
+    'favorites.added': 'Added: {name}',
+    'favorites.removed': 'Removed: {name}',
+    'favorites.action.add': 'Add to favorites',
+    'favorites.action.remove': 'Remove from favorites',
     'language.title': 'Language',
     'language.auto': 'Automatic (device default)',
     'language.auto.current': 'Currently: {name}',
@@ -1532,7 +1562,16 @@ const Map<String, Map<String, String>> _table = {
     'driving.bike': 'Bicicleta',
     'driving.bike.hint': 'Zoom más cercano, mapa fijo al norte. Sin rotación automática — lectura en parada corta.',
     'menu.help': 'Cómo funciona Faro',
+    'menu.favorites': 'Favoritos',
     'menu.about': 'Sobre Faro',
+    'favorites.title': 'Favoritos',
+    'favorites.empty.title': 'Aún no tienes favoritos',
+    'favorites.empty.body':
+        'Marca barrios que sigues (hotel, trabajo, ruta familiar). Toca el corazón al lado de cualquier barrio en "Actividad por zona" o en el detalle de un reporte.',
+    'favorites.added': 'Agregado: {name}',
+    'favorites.removed': 'Eliminado: {name}',
+    'favorites.action.add': 'Agregar a favoritos',
+    'favorites.action.remove': 'Quitar de favoritos',
     'language.title': 'Idioma',
     'language.auto': 'Automático (del celular)',
     'language.auto.current': 'Actualmente: {name}',
