@@ -93,16 +93,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Modo direção: stream contínuo de posição que move a câmera. Inicia
   /// quando o usuário ativa o toggle no drawer; cancela ao desativar.
   StreamSubscription<Position>? _drivingSub;
-  /// Configuração da câmera em modo direção — espelha Waze/Google Maps
-  /// Navigation: zoom de quarteirão, tilt 3D, bearing sincronizado com
-  /// o heading do GPS.
-  static const double _drivingFollowZoom = 17.5;
-  static const double _drivingTilt = 50.0;
+  /// Velocidade atual reportada pelo GPS (m/s). Usada pelo filtro "à
+  /// minha frente" pra decidir se está parado (mostra tudo) ou em
+  /// movimento (corta o que está atrás).
+  double _drivingSpeed = 0;
 
   bool _matchesFilters(Occurrence o) {
     if (!_window.includes(o.date)) return false;
-    if (_activeReasons.isEmpty) return true;
-    return _activeReasons.contains(o.mainReason);
+    if (_activeReasons.isNotEmpty && !_activeReasons.contains(o.mainReason)) {
+      return false;
+    }
+    if (!_passesAheadFilter(o)) return false;
+    return true;
+  }
+
+  /// Filtro "à minha frente" — só ativo em modo carro/bike E em
+  /// movimento (≥ 3 m/s). Corta ocorrências que ficam mais de 90° pra
+  /// trás do heading atual. Parado ou modo off, sempre passa.
+  bool _passesAheadFilter(Occurrence o) {
+    final mode = ref.read(drivingModeProvider);
+    if (mode == DrivingMode.off) return true;
+    if (_drivingSpeed < 3) return true; // parado: vê tudo ao redor
+    final pos = _userPos;
+    if (pos == null) return true;
+    final bearingToOcc = bearingDeg(
+        pos.latitude, pos.longitude, o.latitude, o.longitude);
+    final delta = _angleDelta(_drivingArrowRotation, bearingToOcc);
+    return delta <= 90; // hemisfério à frente
+  }
+
+  /// Menor diferença angular entre dois headings em graus (0–180).
+  double _angleDelta(double a, double b) {
+    final raw = ((b - a) % 360 + 360) % 360;
+    return raw > 180 ? 360 - raw : raw;
   }
 
   @override
@@ -114,7 +137,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _silentCenter();
       // Se o usuário voltou ao app com modo direção já ativo, retoma o follow.
-      if (ref.read(drivingModeProvider)) _startDrivingFollow();
+      if (ref.read(drivingModeProvider) != DrivingMode.off) {
+        _startDrivingFollow();
+      }
     });
   }
 
@@ -174,6 +199,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
       setState(() {
         _userPos = LatLng(pos.latitude, pos.longitude);
+        _drivingSpeed = pos.speed.isNaN ? 0 : pos.speed;
         // Heading parado é ruidoso (gira aleatório). Só atualizamos se
         // a velocidade reportada indica deslocamento real (≥ 3 m/s ≈ 11 km/h).
         if (newHeading != null) _drivingArrowRotation = newHeading;
@@ -186,19 +212,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
-  /// Anima a câmera em modo navegação: zoom de rua + tilt 3D + bearing
-  /// = heading (mapa gira pra deixar "pra frente sempre pra cima").
+  /// Anima a câmera de acordo com o perfil ativo. Carro/moto: zoom de
+  /// rua + tilt 3D + bearing sincronizado. Bike: zoom mais próximo,
+  /// vista plana, norte fixo (heading de bike é ruidoso).
   Future<void> _animateDriving(double lat, double lng,
       {required double bearing}) async {
     final controller = _map;
     if (controller == null) return;
+    final mode = ref.read(drivingModeProvider);
+    final isCar = mode == DrivingMode.car;
     await controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(lat, lng),
-          zoom: _drivingFollowZoom,
-          tilt: _drivingTilt,
-          bearing: bearing,
+          zoom: isCar ? 17.5 : 18.0,
+          tilt: isCar ? 50.0 : 0.0,
+          bearing: isCar ? bearing : 0.0,
         ),
       ),
     );
@@ -431,12 +460,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Reage ao toggle de modo direção: liga/desliga o stream de GPS.
-    ref.listen<bool>(drivingModeProvider, (prev, next) {
-      if (next) {
+    // Reage à troca de perfil de direção: liga/desliga o stream e
+    // anima a câmera pra o novo perfil quando vai car↔bike.
+    ref.listen<DrivingMode>(drivingModeProvider, (prev, next) {
+      if (next == DrivingMode.off) {
+        _stopDrivingFollow();
+      } else if (prev == DrivingMode.off) {
         _startDrivingFollow();
       } else {
-        _stopDrivingFollow();
+        // Estava car e virou bike (ou vice-versa): re-anima com a
+        // câmera do novo perfil. Não reinicia o stream.
+        final pos = _userPos;
+        if (pos != null) {
+          _animateDriving(pos.latitude, pos.longitude,
+              bearing: _drivingArrowRotation);
+        }
       }
     });
 
@@ -487,10 +525,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             clusterIcons: _clusterIcons,
             asHeatmap: _showHeatmap,
             busStops: busStops,
-            drivingActive: ref.watch(drivingModeProvider),
+            drivingActive: ref.watch(drivingModeProvider) != DrivingMode.off,
             drivingArrowIcon: _drivingArrowIcon,
             drivingPos: _userPos,
-            drivingRotation: _drivingArrowRotation,
+            drivingRotation: ref.watch(drivingModeProvider) == DrivingMode.car
+                ? _drivingArrowRotation
+                : 0,
             onCreated: (c) => _map = c,
             onTap: (o) => _openDetail(o, OccurrenceOpenEntry.marker),
             onTapCluster: _onTapCluster,
@@ -530,9 +570,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: Column(
               children: [
                 DrivingModeButton(
-                  active: ref.watch(drivingModeProvider),
+                  mode: ref.watch(drivingModeProvider),
                   onTap: () =>
-                      ref.read(drivingModeProvider.notifier).toggle(),
+                      ref.read(drivingModeProvider.notifier).toggleQuick(),
                 ),
                 const SizedBox(height: 12),
                 LayersButton(

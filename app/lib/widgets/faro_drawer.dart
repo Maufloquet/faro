@@ -7,6 +7,7 @@ import '../core/i18n/faro_strings.dart';
 import '../core/i18n/locale_notifier.dart';
 import '../screens/about_screen.dart';
 import '../screens/areas_screen.dart';
+import '../screens/driving_profile_screen.dart';
 import '../screens/help_screen.dart';
 import '../screens/language_screen.dart';
 import '../screens/trajectory_screen.dart';
@@ -84,10 +85,18 @@ class FaroDrawer extends ConsumerWidget {
                       );
                     },
                   ),
-                  _DrivingModeToggle(
-                    value: drivingMode,
-                    onChanged: (v) =>
-                        ref.read(drivingModeProvider.notifier).set(v),
+                  _Item(
+                    icon: Icons.directions_car_outlined,
+                    label: FaroStrings.menuDrivingMode,
+                    trailing: _drivingModeLabel(drivingMode),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DrivingProfileScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
                   _SectionLabel(FaroStrings.drawerSectionInfo),
@@ -121,6 +130,12 @@ class FaroDrawer extends ConsumerWidget {
     );
   }
 }
+
+String _drivingModeLabel(DrivingMode m) => switch (m) {
+      DrivingMode.car => FaroStrings.drivingCar,
+      DrivingMode.bike => FaroStrings.drivingBike,
+      DrivingMode.off => FaroStrings.drivingOff,
+    };
 
 class _Header extends StatelessWidget {
   const _Header();
@@ -240,42 +255,6 @@ class _Item extends StatelessWidget {
                     size: 18, color: FaroColors.textHint),
               ],
             ),
-    );
-  }
-}
-
-class _DrivingModeToggle extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  const _DrivingModeToggle({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile.adaptive(
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: FaroColors.primary,
-      secondary: const Icon(Icons.directions_car_outlined,
-          size: 22, color: FaroColors.editorialBrown),
-      title: Text(
-        FaroStrings.menuDrivingMode,
-        style: const TextStyle(
-          fontFamily: 'Georgia',
-          fontSize: 15,
-          color: FaroColors.textPrimary,
-        ),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Text(
-          FaroStrings.menuDrivingModeHint,
-          style: const TextStyle(
-            fontSize: 11.5,
-            color: FaroColors.textSoft,
-            height: 1.35,
-          ),
-        ),
-      ),
     );
   }
 }

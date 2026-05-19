@@ -411,6 +411,12 @@ class FaroStrings {
   static String get menuLanguage => _t('menu.language');
   static String get menuDrivingMode => _t('menu.driving_mode');
   static String get menuDrivingModeHint => _t('menu.driving_mode.hint');
+  static String get drivingProfileTitle => _t('driving.profile.title');
+  static String get drivingOff => _t('driving.off');
+  static String get drivingCar => _t('driving.car');
+  static String get drivingCarHint => _t('driving.car.hint');
+  static String get drivingBike => _t('driving.bike');
+  static String get drivingBikeHint => _t('driving.bike.hint');
   static String get menuHelp => _t('menu.help');
   static String get menuAbout => _t('menu.about');
 
@@ -741,6 +747,12 @@ const Map<String, Map<String, String>> _table = {
     'menu.language': 'Idioma',
     'menu.driving_mode': 'Modo direção',
     'menu.driving_mode.hint': 'Mapa segue o GPS · zoom de rua · sem voz',
+    'driving.profile.title': 'Modo direção',
+    'driving.off': 'Desligado',
+    'driving.car': 'Carro / moto',
+    'driving.car.hint': 'Zoom de rua, mapa em 3D, gira pra frente. Filtra relatos atrás de você.',
+    'driving.bike': 'Bicicleta',
+    'driving.bike.hint': 'Zoom mais próximo, mapa fixo no norte. Sem rotação automática — leitura em parada curta.',
     'menu.help': 'Como o Faro funciona',
     'menu.about': 'Sobre o Faro',
     'language.title': 'Idioma',
@@ -1042,6 +1054,12 @@ const Map<String, Map<String, String>> _table = {
     'menu.language': 'Language',
     'menu.driving_mode': 'Driving mode',
     'menu.driving_mode.hint': 'Map follows GPS · street zoom · no voice',
+    'driving.profile.title': 'Driving mode',
+    'driving.off': 'Off',
+    'driving.car': 'Car / motorcycle',
+    'driving.car.hint': 'Street-level zoom, 3D map, rotates ahead. Filters out reports behind you.',
+    'driving.bike': 'Bicycle',
+    'driving.bike.hint': 'Closer zoom, map stays north-up. No auto-rotation — read at brief stops.',
     'menu.help': 'How Faro works',
     'menu.about': 'About Faro',
     'language.title': 'Language',
@@ -1345,6 +1363,12 @@ const Map<String, Map<String, String>> _table = {
     'menu.language': 'Idioma',
     'menu.driving_mode': 'Modo conducción',
     'menu.driving_mode.hint': 'El mapa sigue el GPS · zoom de calle · sin voz',
+    'driving.profile.title': 'Modo conducción',
+    'driving.off': 'Desactivado',
+    'driving.car': 'Auto / moto',
+    'driving.car.hint': 'Zoom de calle, mapa en 3D, gira hacia adelante. Filtra reportes detrás de ti.',
+    'driving.bike': 'Bicicleta',
+    'driving.bike.hint': 'Zoom más cercano, mapa fijo al norte. Sin rotación automática — lectura en parada corta.',
     'menu.help': 'Cómo funciona Faro',
     'menu.about': 'Sobre Faro',
     'language.title': 'Idioma',

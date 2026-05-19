@@ -19,3 +19,17 @@ double haversineKm(double lat1, double lng1, double lat2, double lng2) {
 }
 
 double _toRad(double d) => d * math.pi / 180.0;
+double _toDeg(double r) => r * 180.0 / math.pi;
+
+/// Rumo (forward azimuth) em graus de (lat1,lng1) → (lat2,lng2).
+/// 0 = norte, 90 = leste, 180 = sul, 270 = oeste. Faixa [0, 360).
+double bearingDeg(double lat1, double lng1, double lat2, double lng2) {
+  final rLat1 = _toRad(lat1);
+  final rLat2 = _toRad(lat2);
+  final dLng = _toRad(lng2 - lng1);
+  final y = math.sin(dLng) * math.cos(rLat2);
+  final x = math.cos(rLat1) * math.sin(rLat2) -
+      math.sin(rLat1) * math.cos(rLat2) * math.cos(dLng);
+  final b = _toDeg(math.atan2(y, x));
+  return (b + 360) % 360;
+}
