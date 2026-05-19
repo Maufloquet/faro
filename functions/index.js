@@ -14,5 +14,9 @@ exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoC
 exports.backfillDedup = require("./lib/dedupBackfill").backfillDedup;
 exports.fetchOsmBusStops = require("./lib/osmFetch").fetchOsmBusStops;
 
+// HTTP público — API pra pesquisadores credenciados (auth via API key
+// gerenciada em /research_keys/{key}). Documentação: docs/parcerias/.
+exports.getOccurrences = require("./lib/researchApi").getOccurrences;
+
 // Firestore triggers
 exports.onOccurrenceCreated = require("./lib/proximityAlert").onOccurrenceCreated;

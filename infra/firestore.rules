@@ -95,6 +95,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Research keys — chaves de API pra pesquisadores credenciados
+    // (UFBA, USP etc.) consumirem o endpoint /api/v1/occurrences.
+    // Gerenciadas manualmente pelo admin via Console. Clientes nunca
+    // leem/escrevem direto — todo o auth-check é server-side na
+    // Cloud Function getOccurrences. Audit log (subcoleção usage) idem.
+    match /research_keys/{keyId} {
+      allow read, write: if false;
+      match /usage/{day} {
+        allow read, write: if false;
+      }
+    }
+
     // Tudo o que não estiver mapeado: fechado por default.
     match /{document=**} {
       allow read, write: if false;
