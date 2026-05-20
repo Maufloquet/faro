@@ -17,6 +17,30 @@ Caminho oficial:
 
 Resposta legal em até **20 dias úteis** (prorrogável por mais 10).
 
+## Tramitação em curso
+
+**Protocolo aberto em 2026-05-19.**
+
+| Campo | Valor |
+|---|---|
+| Protocolo | `3301246` |
+| Senha de acompanhamento | `epep3945` |
+| Canal de acompanhamento | https://www.tag.ouvidoriageral.ba.gov.br/tag/ |
+| Órgão destinatário inicial | Ouvidoria Geral do Estado da Bahia |
+| Encaminhado em 2026-05-19 14:54 para | Ouvidoria da SSP-BA → Superintendência de Gestão Integrada da Ação Policial |
+| Prazo legal limite | **2026-06-17** (20 dias úteis) |
+| Prorrogação eventual até | **2026-07-01** (10 dias úteis adicionais) |
+| Contato alternativo | 0800 075 1510 · ouvidoria@ssp.ba.gov.br |
+
+**Cronologia dos e-mails recebidos:**
+- `2026-05-19 09:44` — Ouvidoria Geral: protocolo emitido, login e senha enviados.
+- `2026-05-19 14:54` — Ouvidoria da SSP: confirmação de recebimento e encaminhamento à Superintendência de Gestão Integrada da Ação Policial.
+
+**Próximos passos:**
+- Aguardar resposta substantiva (até 2026-06-17, prorrogável a 2026-07-01).
+- Acompanhar o status pelo portal periodicamente (sugestão: semanalmente).
+- Caso vença o prazo sem manifestação, abrir recurso à autoridade superior (CGE-BA) conforme art. 15 da LAI.
+
 ## Template do pedido
 
 > **Assunto:** Pedido de acesso a dados agregados do Disque-Denúncia / SSP-BA
