@@ -157,8 +157,13 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 **Detalhes:** Entre zoom 14.5 e 17 (`_heatmapZoomThreshold` → `_clusterCeilingZoom`), agrupa por célula dimensionada pra ~80px na tela. Cluster vira badge com count + anel da cor do `RiskLevel` máximo. Tap zoom-in 2 níveis. Ícones pré-bakeados (45 = 9 strings × 5 risks) em `ClusterMarkerFactory`. Rebuild via `onCameraIdle` quando zoom muda > 0.3.
 
 ### Sistema de contestação real
-**Status:** Implementado em 2026-05-11 (commit be7e650)
-**Detalhes:** Tela `ContestationScreen` com 5 motivos pré-prontos + campo livre. `ContestationService` (Riverpod) escreve em Firestore via Anonymous Auth — usuário sem cadastro mas com UID estável. Workflow de moderação server-side (Cloud Function pra agregar contestações e marcar relato como contestado) ainda TODO.
+**Status:** Loop completo fechado em 2026-05-20
+**Detalhes:**
+- Cliente: `ContestationScreen` com 5 motivos pré-prontos + campo livre. `ContestationService` (Riverpod) escreve em Firestore via Anonymous Auth — usuário sem cadastro mas com UID estável.
+- Server: Cloud Function `onContestationCreated` (`functions/lib/contestationAggregator.js`) é disparada por criação de doc em `/contestations`, agrega todas as contestações da ocorrência e grava no doc da ocorrência: `contestationCount`, `contestationDistinctUsers`, `contestationReasonBreakdown`, `contestationsLastUpdated`. Quando `distinctUsers >= 3` (threshold conservador anti-abuso, conta UIDs distintos), marca também `contested: true` e `contestedAt`.
+- Cliente lê esses campos via `Occurrence.fromFirestore` (`contestationDistinctUsers`, `contested`) e a `OccurrenceDetailSheet` mostra um banner discreto: tom neutro abaixo do threshold, atenção visível quando contestado.
+- 6 testes unitários na lógica pura de agregação (`functions/test/contestationAggregator.test.js`).
+- **TODO V2**: virar `onWrite` pra suportar deleção de contestações (moderação reversa), expor `contestationReasonBreakdown` em uma view de moderação interna.
 
 ### Onboarding de 1 tela com aceite de termos
 **Status:** Implementado em 2026-05-11 (commit 3d9950c)
