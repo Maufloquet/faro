@@ -7,6 +7,7 @@ import '../core/text/string_format.dart';
 import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import '../screens/contestation_screen.dart';
+import '../services/density_service.dart';
 import 'risk_dot.dart';
 
 /// Sheet modal mostrado quando o usuário toca em um marker ou item da lista.
@@ -40,6 +41,12 @@ class OccurrenceDetailSheet extends StatelessWidget {
         : FaroStrings.reasonLabel(occurrence.mainReason!);
     final when = _absoluteTime(occurrence.date);
     final relative = _relativeTime(occurrence.date);
+    final population = DensityService.instance.populationFor(
+      occurrence.neighborhood,
+    );
+    final isEstimatedPop =
+        DensityService.instance.isEstimated(occurrence.neighborhood) ?? false;
+    final populationLine = _populationLine(population, isEstimatedPop);
 
     return SafeArea(
       child: Padding(
@@ -87,6 +94,23 @@ class OccurrenceDetailSheet extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 13.5,
                               color: FaroColors.textSoft,
+                            ),
+                          ),
+                        ),
+                      if (populationLine != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Tooltip(
+                            message: isEstimatedPop
+                                ? 'População estimada: pop da Prefeitura-Bairro (Censo 2010) dividida entre os bairros listados.'
+                                : 'População do Censo IBGE 2022 (dado publicado para este bairro).',
+                            child: Text(
+                              populationLine,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: FaroColors.textHint,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
                           ),
                         ),
@@ -199,6 +223,16 @@ class OccurrenceDetailSheet extends StatelessWidget {
     final local = date.toLocal();
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(local.day)}/${two(local.month)} ${FaroStrings.occAbsoluteAt} ${two(local.hour)}:${two(local.minute)}';
+  }
+
+  String? _populationLine(int? population, bool isEstimated) {
+    if (population == null || population <= 0) return null;
+    final prefix = isEstimated ? '~' : '';
+    if (population >= 1000) {
+      final thousands = (population / 1000).toStringAsFixed(0);
+      return '$prefix$thousands mil habitantes';
+    }
+    return '$prefix$population habitantes';
   }
 
   Future<void> _openExternal(BuildContext context, String url) async {

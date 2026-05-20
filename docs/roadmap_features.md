@@ -47,8 +47,8 @@ Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado
   - `estimated` — população da Prefeitura-Bairro do PDDU (Censo 2010, fonte cms.ba.gov.br/uploads/pddu/pdduquadro09.pdf) dividida igualmente entre os bairros listados na Wikipedia (Subdivisões de Salvador).
 - 30 bairros do dict não constam em nenhuma PB da Wikipedia e ficam sem dado — UI esconde a normalização nesse caso.
 - `DensityService` mantém a mesma API (`populationFor`, `per10kInhabitants`) e ganha `isEstimated(bairro)` pra que a UI possa diferenciar visualmente (ex: "~" antes do número, ou tooltip explicando a metodologia).
-- Exposição na UI: `AreasScreen` exibe `~X.X relatos por 10 mil habitantes` em cada card de bairro (linha em itálico, com `~` para estimativas e tooltip distinguindo as fontes). Implementado em 2026-05-20.
-- **TODO**: expor também no detalhe do relato (sheet de ocorrência); adicionar Camaçari/Lauro/Simões; quando Censo 2022 sair com agregação bairro-granular, substituir as estimativas por valores `verified`; pedir o dataset oficial CONDER por ofício pra refinar a distribuição dentro das PBs.
+- Exposição na UI: `AreasScreen` exibe `~X.X relatos por 10 mil habitantes` em cada card de bairro. `OccurrenceDetailSheet` mostra a população do bairro como contexto editorial (`~X mil habitantes`). Ambas em linha discreta com `~` para estimativas e tooltip distinguindo as fontes. Implementado em 2026-05-20.
+- **TODO**: adicionar Camaçari/Lauro/Simões; quando Censo 2022 sair com agregação bairro-granular, substituir as estimativas por valores `verified`; pedir o dataset oficial CONDER por ofício pra refinar a distribuição dentro das PBs.
 
 ---
 
