@@ -20,3 +20,5 @@ exports.getOccurrences = require("./lib/researchApi").getOccurrences;
 
 // Firestore triggers
 exports.onOccurrenceCreated = require("./lib/proximityAlert").onOccurrenceCreated;
+exports.onContestationCreated =
+  require("./lib/contestationAggregator").onContestationCreated;
