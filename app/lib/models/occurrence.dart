@@ -55,10 +55,14 @@ class Occurrence {
   // Transporte público (extração via LLM no newsIngest):
   final List<String> busLines;
   final String? transportContext; // 'onibus' | 'metro' | null
+  // Contestações agregadas pelo backend (contestationAggregator):
+  final int contestationDistinctUsers;
+  final bool contested;
 
   bool get isCityCentroid => geocodeMethod == 'city-centroid';
   bool get hasBusLines => busLines.isNotEmpty;
   bool get isPublicTransport => transportContext != null;
+  bool get hasContestations => contestationDistinctUsers > 0;
 
   Occurrence({
     required this.id,
@@ -80,6 +84,8 @@ class Occurrence {
     this.geocodeMethod,
     this.busLines = const [],
     this.transportContext,
+    this.contestationDistinctUsers = 0,
+    this.contested = false,
   });
 
   factory Occurrence.fromFirestore(DocumentSnapshot doc) {
@@ -108,6 +114,9 @@ class Occurrence {
       geocodeMethod: d['geocodeMethod'] as String?,
       busLines: busLines,
       transportContext: d['transportContext'] as String?,
+      contestationDistinctUsers:
+          (d['contestationDistinctUsers'] as num?)?.toInt() ?? 0,
+      contested: d['contested'] == true,
     );
   }
 }

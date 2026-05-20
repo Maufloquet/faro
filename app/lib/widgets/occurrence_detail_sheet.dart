@@ -163,6 +163,10 @@ class OccurrenceDetailSheet extends StatelessWidget {
                 valueColor: FaroColors.editorialOcher,
               ),
             ],
+            if (occurrence.hasContestations) ...[
+              const SizedBox(height: 18),
+              _ContestationNotice(occurrence: occurrence),
+            ],
             const SizedBox(height: 24),
             const _DisclaimerBox(),
             const SizedBox(height: 14),
@@ -377,6 +381,55 @@ class _DisclaimerBox extends StatelessWidget {
       child: Text(
         FaroStrings.occDisclaimer,
         style: const TextStyle(fontSize: 12.5, height: 1.5, color: FaroColors.textMuted),
+      ),
+    );
+  }
+}
+
+class _ContestationNotice extends StatelessWidget {
+  final Occurrence occurrence;
+  const _ContestationNotice({required this.occurrence});
+
+  @override
+  Widget build(BuildContext context) {
+    final n = occurrence.contestationDistinctUsers;
+    final contested = occurrence.contested;
+
+    // Tom calibrado por nível: poucas contestações = nota neutra,
+    // acima do threshold (contested=true) = atenção visível.
+    final message = contested
+        ? 'Este relato foi questionado por $n usuários distintos.'
+        : (n == 1
+            ? 'Um usuário questionou este relato.'
+            : '$n usuários questionaram este relato.');
+    final bg = contested ? const Color(0xFFFCEDE3) : FaroColors.sand;
+    final border = contested ? FaroColors.editorialOcher : FaroColors.sandBorder;
+    final icon = contested ? Icons.flag_outlined : Icons.info_outline;
+    final iconColor = contested ? FaroColors.editorialOcher : FaroColors.textMuted;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: iconColor),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 12.5,
+                height: 1.4,
+                color: FaroColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
