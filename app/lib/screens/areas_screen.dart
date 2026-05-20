@@ -12,6 +12,7 @@ import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
 import '../services/occurrences_service.dart';
 import '../widgets/favorite_button.dart';
+import '../services/density_service.dart';
 import '../widgets/safe_arrival_counter.dart';
 import '../widgets/temporal_chart.dart';
 
@@ -324,6 +325,11 @@ class _AreaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = titleCasePtBr(area.name);
+    final per10k = DensityService.instance.per10kInhabitants(
+      bairro: area.name,
+      count: area.count,
+    );
+    final isEstimated = DensityService.instance.isEstimated(area.name) ?? false;
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
@@ -381,6 +387,23 @@ class _AreaCard extends StatelessWidget {
               ),
             ],
           ),
+          if (per10k != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 40),
+              child: Tooltip(
+                message: isEstimated
+                    ? 'Estimativa: população da Prefeitura-Bairro dividida entre os bairros. Quando o Censo 2022 publicar agregação bairro-granular, esse valor será substituído pelo dado oficial.'
+                    : 'Censo IBGE 2022, dado publicado para este bairro.',
+                child: Text(
+                  '${isEstimated ? '~' : ''}${per10k.toStringAsFixed(1)} relatos por 10 mil habitantes',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: FaroColors.textHint,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           ...area.reasonBreakdown.take(3).map((entry) {
             return Padding(
