@@ -8,43 +8,53 @@ import 'package:flutter/services.dart' show rootBundle;
 /// tem mais relato porque tem mais gente" é viés. Normalizar relatos por
 /// 10k habitantes mostra **intensidade** e não **volume bruto**.
 ///
-/// Fonte atual: Censo IBGE 2010 via PMS/SEMOP (consolidado por bairro).
-/// Censo 2022 ainda não publicou agregação bairro-granular para Salvador.
+/// Fontes:
+/// - PDDU Salvador (Censo IBGE 2010), distribuído por Prefeitura-Bairro.
+///   Estimativa por divisão simples entre bairros da PB.
+/// - Bahia Notícias (Censo IBGE 2022) para bairros com dado publicado
+///   diretamente — sobrescreve a estimativa.
+///
 /// Bairros sem dado retornam null — UI deve esconder a normalização nesse
 /// caso (preferimos silêncio honesto a número inventado).
 class DensityService {
   DensityService._();
   static final DensityService instance = DensityService._();
 
-  Map<String, int>? _populationByBairro;
+  Map<String, _Entry>? _byBairro;
 
   Future<void> initialize() async {
-    if (_populationByBairro != null) return;
+    if (_byBairro != null) return;
     final raw = await rootBundle.loadString('assets/bairros_pop_salvador.json');
     final parsed = json.decode(raw) as Map<String, dynamic>;
-    final map = <String, int>{};
+    final map = <String, _Entry>{};
     parsed.forEach((key, value) {
       if (key.startsWith('_')) return; // _meta
-      if (value is int) {
-        map[_normalize(key)] = value;
-      } else if (value is num) {
-        map[_normalize(key)] = value.toInt();
+      final entry = _parse(value);
+      if (entry != null) {
+        map[_normalize(key)] = entry;
       }
     });
-    _populationByBairro = map;
+    _byBairro = map;
   }
 
-  /// População estimada do bairro. Null se não temos o dado.
+  /// População do bairro. Null se não temos o dado.
   int? populationFor(String? bairro) {
     if (bairro == null || bairro.isEmpty) return null;
-    final pop = _populationByBairro?[_normalize(bairro)];
-    return pop;
+    return _byBairro?[_normalize(bairro)]?.population;
+  }
+
+  /// Indica se o dado é estimativa (true) ou valor verificado (false).
+  /// Retorna null quando não há dado pro bairro.
+  bool? isEstimated(String? bairro) {
+    if (bairro == null || bairro.isEmpty) return null;
+    final entry = _byBairro?[_normalize(bairro)];
+    if (entry == null) return null;
+    return entry.confidence == 'estimated';
   }
 
   /// Relatos por 10k habitantes. Null se bairro desconhecido ou pop=0.
   ///
-  /// Arredonda para 1 casa decimal pra evitar falsa precisão (a fonte de
-  /// população já é estimativa de 2010, qualquer precisão maior é teatro).
+  /// Arredonda para 1 casa decimal pra evitar falsa precisão.
   double? per10kInhabitants({
     required String? bairro,
     required int count,
@@ -56,12 +66,38 @@ class DensityService {
   }
 
   /// Versão para teste — injeta população direto sem carregar asset.
+  /// Todos os bairros injetados são marcados como `verified`.
   static DensityService testWith(Map<String, int> populations) {
     final s = DensityService._();
-    s._populationByBairro = {
-      for (final e in populations.entries) _normalize(e.key): e.value,
+    s._byBairro = {
+      for (final e in populations.entries)
+        _normalize(e.key): _Entry(
+          population: e.value,
+          confidence: 'verified',
+        ),
     };
     return s;
+  }
+
+  static _Entry? _parse(dynamic value) {
+    // Schema antigo: valor numérico direto (mantido pra backward compat)
+    if (value is int) {
+      return _Entry(population: value, confidence: 'verified');
+    }
+    if (value is num) {
+      return _Entry(population: value.toInt(), confidence: 'verified');
+    }
+    // Schema novo: objeto {population, source, confidence}
+    if (value is Map<String, dynamic>) {
+      final pop = value['population'];
+      if (pop is num) {
+        return _Entry(
+          population: pop.toInt(),
+          confidence: (value['confidence'] as String?) ?? 'verified',
+        );
+      }
+    }
+    return null;
   }
 
   static String _normalize(String s) {
@@ -75,4 +111,10 @@ class DensityService {
         .replaceAll(RegExp(r'[ç]'), 'c')
         .trim();
   }
+}
+
+class _Entry {
+  _Entry({required this.population, required this.confidence});
+  final int population;
+  final String confidence;
 }

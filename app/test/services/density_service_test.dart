@@ -48,5 +48,17 @@ void main() {
       final result = svc.per10kInhabitants(bairro: 'Centro', count: 0);
       expect(result, 0.0);
     });
+
+    test('isEstimated retorna false para dados injetados via testWith', () {
+      // testWith marca tudo como verified
+      expect(svc.isEstimated('Itapuã'), isFalse);
+      expect(svc.isEstimated('itapua'), isFalse);
+    });
+
+    test('isEstimated retorna null para bairro desconhecido', () {
+      expect(svc.isEstimated('Bairro Inventado'), isNull);
+      expect(svc.isEstimated(''), isNull);
+      expect(svc.isEstimated(null), isNull);
+    });
   });
 }

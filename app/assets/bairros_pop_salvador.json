@@ -1,27 +1,655 @@
 {
   "_meta": {
-    "source": "IBGE Censo Demográfico 2010 (consolidado por bairro via PMS/SEMOP)",
-    "note": "Camada 7 — em construção. Censo 2022 ainda não publicou agregação bairro-granular para Salvador. Estimativas usadas para normalização editorial 'relatos por 10k habitantes'. Bairros não listados retornam null e a UI esconde a normalização (preferimos silêncio honesto a número inventado).",
-    "updated": "2026-05-16"
+    "source_pb": "PDDU Salvador - Quadro 09 (Anexo 2). População por Prefeitura-Bairro, Censo IBGE 2010. Fonte: cms.ba.gov.br/uploads/pddu/pdduquadro09.pdf",
+    "source_verified": "Bahia Notícias (Censo IBGE 2022, bairros estritos)",
+    "methodology": "Bairros com dado verificado (Censo 2022 publicado) usam o valor exato. Demais recebem estimativa = população da Prefeitura-Bairro (Censo 2010) dividida igualmente entre os bairros listados na Wikipedia (Subdivisões de Salvador). Bairros do dict do Faro que não constam em nenhuma PB ficam sem dado — a UI esconde a normalização nesse caso.",
+    "caveat": "Estimativas por divisão simples não respeitam diferenças de área/densidade entre bairros da mesma PB. Use 'per10kInhabitants' como aproximação editorial, não medida estatística. Bairros com confidence='verified' têm precisão maior.",
+    "limitations": "Censo 2022 ainda não publicou agregação bairro-granular completa para Salvador. Dataset oficial da CONDER (Geodatabase v10) requer ofício formal para acesso. Reabrir esta camada quando o IBGE publicar a agregação bairro do Censo 2022.",
+    "updated": "2026-05-20"
   },
-  "Itapuã": 123000,
-  "Periperi": 88000,
-  "São Cristóvão": 85000,
-  "Brotas": 80000,
-  "Pirajá": 75000,
-  "Tancredo Neves": 75000,
-  "Pituba": 73000,
-  "Mussurunga": 70000,
-  "Federação": 64000,
-  "Cabula": 55000,
-  "Liberdade": 52000,
-  "Boca do Rio": 48000,
-  "Sussuarana": 38000,
-  "Centro": 30000,
-  "Rio Vermelho": 30000,
-  "Plataforma": 40000,
-  "Paripe": 50000,
-  "Castelo Branco": 20000,
-  "Ribeira": 25000,
-  "Barra": 25000
+  "Pirajá": {
+    "population": 21553,
+    "source": "PB X (média de 4 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Valéria": {
+    "population": 21553,
+    "source": "PB X (média de 4 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Itapuã": {
+    "population": 60968,
+    "source": "Censo 2022 (Bahia Notícias)",
+    "confidence": "verified"
+  },
+  "São Cristóvão": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Barra": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Ondina": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Ribeira": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Comércio": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Monte Serrat": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Cabula": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Itaigara": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Stella Maris": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Boa Viagem": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Plataforma": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Lobato": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "São Caetano": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Centro": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Pernambués": {
+    "population": 52564,
+    "source": "Censo 2022 (Bahia Notícias)",
+    "confidence": "verified"
+  },
+  "Brotas": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Boca do Rio": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Caminho das Árvores": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "São Tomé de Paripe": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Itacaranha": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Praia Grande": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Periperi": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Coutos": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Pituaçu": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Imbuí": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Patamares": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Costa Azul": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Vitória": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Mares": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Garcia": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Centro Histórico": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Jardim Cajazeiras": {
+    "population": 14228,
+    "source": "PB IX (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "São Rafael": {
+    "population": 14228,
+    "source": "PB IX (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Mussurunga": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Nazaré": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Saúde": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Santa Cruz": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Amaralina": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Barris": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Capelinha": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Sussuarana": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Novo Horizonte": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Canela": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Nova Esperança": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Areia Branca": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Cassange": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Bairro da Paz": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Alto do Coqueirinho": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Pituba": {
+    "population": 57894,
+    "source": "Censo 2022 (Bahia Notícias)",
+    "confidence": "verified"
+  },
+  "STIEP": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Jardim Armação": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Porto Seco Pirajá": {
+    "population": 14228,
+    "source": "PB IX (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Dom Avelar": {
+    "population": 14910,
+    "source": "PB III (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Retiro": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "IAPI": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Lapinha": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Cidade Nova": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Pau Miúdo": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Santa Mônica": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Curuzu": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Liberdade": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Pero Vaz": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Caixa D'Água": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Baixa de Quintas": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Palestina": {
+    "population": 21553,
+    "source": "PB X (média de 4 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Itinga": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Piatã": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Centro Administrativo da Bahia": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Cajazeiras": {
+    "population": 14910,
+    "source": "PB III (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Graça": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Uruguai": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Vila Ruy Barbosa / Jardim Cruzeiro": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Boa Vista de São Caetano": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Massaranduba": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Rio Sena": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Alto da Terezinha": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Paripe": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Bonfim": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Nordeste de Amaralina": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Rio Vermelho": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Engenho Velho da Federação": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Fazenda Grande do Retiro": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Matatu": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Macaúbas": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Barbalho": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Santo Antônio": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Marechal Rondon": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Jardim Santo Inácio": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Mata Escura": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "São Gonçalo do Retiro": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Federação": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Vale das Pedrinhas": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Chapada do Rio Vermelho": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Tororó": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Resgate": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Barreiras": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Calabetão": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Candeal": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Vila Laura": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Luiz Anselmo": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Santo Agostinho": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Alto do Cabrito": {
+    "population": 20196,
+    "source": "PB VII (média de 19 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Jardim das Margaridas": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Aeroporto": {
+    "population": 19970,
+    "source": "PB IV (média de 17 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Calabar": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Alto das Pombas": {
+    "population": 17186,
+    "source": "PB VI (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Ilha de Maré": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Cajazeiras X": {
+    "population": 14910,
+    "source": "PB III (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Cajazeiras XI": {
+    "population": 14910,
+    "source": "PB III (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Fazenda Grande II": {
+    "population": 14910,
+    "source": "PB III (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Boca da Mata": {
+    "population": 14910,
+    "source": "PB III (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Ilha dos Frades / Ilha de Santo Antônio": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Ilha de Bom Jesus dos Passos": {
+    "population": 18617,
+    "source": "PB II (média de 15 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Acupe": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Boa Vista de Brotas": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Engenho Velho de Brotas": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Saramandaia": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Cosme de Farias": {
+    "population": 13585,
+    "source": "PB I (média de 21 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Caminho de Areia": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Roma": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Calçada": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Mangueira": {
+    "population": 12773,
+    "source": "PB V (média de 14 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Novo Marotinho": {
+    "population": 14228,
+    "source": "PB IX (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Trobogy": {
+    "population": 14228,
+    "source": "PB IX (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Narandiba": {
+    "population": 16877,
+    "source": "PB VIII (média de 22 bairros, Censo 2010)",
+    "confidence": "estimated"
+  },
+  "Canabrava": {
+    "population": 14228,
+    "source": "PB IX (média de 13 bairros, Censo 2010)",
+    "confidence": "estimated"
+  }
 }

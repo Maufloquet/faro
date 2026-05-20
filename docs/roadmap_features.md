@@ -38,14 +38,16 @@ Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado
 **Detalhes:** Pontos de ônibus, iluminação pública (`highway:lit`), delegacias, hospitais, comércio 24h via Overpass API. Sem API key, grátis. Visualização opcional como toggle no mapa. Combina com features V2 de passageiros de ônibus.
 
 ### Camada 7 — IBGE: densidade populacional por bairro
-**Status:** Implementado parcial em 2026-05-16 (top-20 bairros de Salvador)
+**Status:** Cobertura expandida em 2026-05-20 (129/159 bairros de Salvador, com sinalização de incerteza)
 **Peso editorial:** crítico — blinda Faro de viés territorial
 **Detalhes:**
-- Asset estático `app/assets/bairros_pop_salvador.json` com 20 bairros do Censo IBGE 2010 (PMS/SEMOP). Censo 2022 ainda não publicou agregação bairro-granular pra Salvador.
-- `DensityService` (singleton, asset-based) carrega no boot e expõe `populationFor(bairro)` + `per10kInhabitants(bairro, count)`.
-- Normalização "relatos por 10k habitantes" disponível pra UI usar onde fizer sentido. Bairros sem dado retornam null — UI esconde a normalização (preferimos silêncio honesto a número inventado).
-- Seção "Densidade populacional (em construção)" no `/sobre/` documenta limitação.
-- **TODO**: expandir pra 157 bairros de Salvador (parsing manual ou scraping SEMOP); adicionar Camaçari/Lauro/Simões; quando Censo 2022 sair com agregação bairro, atualizar fonte; expor o `per10kInhabitants` em `AreasScreen` e no detalhe do relato.
+- Asset `app/assets/bairros_pop_salvador.json` agora cobre 129 dos 159 bairros do dict do Faro. Schema enriquecido por entrada: `{population, source, confidence}`.
+- Dois níveis de confiança:
+  - `verified` — valor publicado pelo Censo 2022 via imprensa (Itapuã, Pituba, Pernambués por ora).
+  - `estimated` — população da Prefeitura-Bairro do PDDU (Censo 2010, fonte cms.ba.gov.br/uploads/pddu/pdduquadro09.pdf) dividida igualmente entre os bairros listados na Wikipedia (Subdivisões de Salvador).
+- 30 bairros do dict não constam em nenhuma PB da Wikipedia e ficam sem dado — UI esconde a normalização nesse caso.
+- `DensityService` mantém a mesma API (`populationFor`, `per10kInhabitants`) e ganha `isEstimated(bairro)` pra que a UI possa diferenciar visualmente (ex: "~" antes do número, ou tooltip explicando a metodologia).
+- **TODO**: expor `per10kInhabitants` em `AreasScreen` e no detalhe do relato; adicionar Camaçari/Lauro/Simões; quando Censo 2022 sair com agregação bairro-granular, substituir as estimativas por valores `verified`; pedir o dataset oficial CONDER por ofício pra refinar a distribuição dentro das PBs.
 
 ---
 
