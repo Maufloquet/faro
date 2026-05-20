@@ -37,7 +37,7 @@ jobs:
       # Codecov é opcional — sem o secret CODECOV_TOKEN configurado, o
       # upload falha silenciosamente. Não bloqueia o CI.
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: app/coverage/lcov.info
           flags: flutter
