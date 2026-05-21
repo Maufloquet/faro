@@ -8,6 +8,8 @@ exports.syncFogoCruzado = require("./lib/fogoCruzadoSync").syncFogoCruzado;
 exports.ingestNewsBahia = require("./lib/newsIngest").ingestNewsBahia;
 exports.ingestOsmNotes = require("./lib/osmNotesIngest").ingestOsmNotes;
 exports.cleanupOccurrences = require("./lib/cleanupOccurrences").cleanupOccurrences;
+exports.aggregateHistoricalBaseline =
+  require("./lib/historicalBaseline").aggregateHistoricalBaseline;
 
 // HTTP (manual one-shot)
 exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoCruzado;
