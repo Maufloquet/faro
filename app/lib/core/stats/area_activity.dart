@@ -12,6 +12,11 @@ class AreaActivity {
   /// Breakdown por tipo de relato, ordenado desc por contagem.
   final List<MapEntry<String, int>> reasonBreakdown;
   final DateTime mostRecent;
+  /// Cidade e estado representativos do bairro — extraídos das ocorrências
+  /// (modo). Usados pra montar a chave de baseline histórico, que precisa
+  /// dos 3 níveis pra distinguir bairros homônimos em cidades diferentes.
+  final String? city;
+  final String? state;
 
   AreaActivity({
     required this.name,
@@ -20,6 +25,8 @@ class AreaActivity {
     required this.centroidLng,
     required this.reasonBreakdown,
     required this.mostRecent,
+    this.city,
+    this.state,
   });
 }
 
@@ -64,9 +71,21 @@ List<AreaActivity> rankAreas(
       centroidLng: lng,
       reasonBreakdown: breakdown,
       mostRecent: mostRecent,
+      city: _modeOrNull(list.map((o) => o.city)),
+      state: _modeOrNull(list.map((o) => o.state)),
     ));
   }
 
   activities.sort((a, b) => b.count.compareTo(a.count));
   return activities.take(topN).toList();
+}
+
+String? _modeOrNull(Iterable<String?> values) {
+  final counts = <String, int>{};
+  for (final v in values) {
+    if (v == null || v.isEmpty) continue;
+    counts[v] = (counts[v] ?? 0) + 1;
+  }
+  if (counts.isEmpty) return null;
+  return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
 }

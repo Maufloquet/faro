@@ -242,6 +242,11 @@ class FaroStrings {
   static String get mapBusStopBench => _t('map.bus_stop.bench');
   static String get mapBusStopLit => _t('map.bus_stop.lit');
   static String get mapBusStopNoInfra => _t('map.bus_stop.no_infra');
+  static String get baselineTrendUp => _t('baseline.trend.up');
+  static String get baselineTrendDown => _t('baseline.trend.down');
+  static String get baselineTrendStable => _t('baseline.trend.stable');
+  static String baselineWeeklyAverage(String value) =>
+      _t('baseline.weekly_average').replaceAll('{v}', value);
   static String get mapPolice => _t('map.police');
   static String get mapHospital => _t('map.hospital');
   static String get mapHospitalEmergency => _t('map.hospital.emergency');
@@ -718,6 +723,10 @@ const Map<String, Map<String, String>> _table = {
     'map.bus_stop.bench': 'banco',
     'map.bus_stop.lit': 'iluminação',
     'map.bus_stop.no_infra': 'sem dados de infraestrutura',
+    'baseline.trend.up': 'acima da média histórica do bairro',
+    'baseline.trend.down': 'abaixo da média histórica do bairro',
+    'baseline.trend.stable': 'em linha com a média histórica do bairro',
+    'baseline.weekly_average': 'média histórica: {v} por semana',
     'map.police': 'Delegacia',
     'map.hospital': 'Hospital',
     'map.hospital.emergency': 'pronto-socorro',
@@ -1086,6 +1095,10 @@ const Map<String, Map<String, String>> _table = {
     'map.bus_stop.bench': 'bench',
     'map.bus_stop.lit': 'lit',
     'map.bus_stop.no_infra': 'no infrastructure data',
+    'baseline.trend.up': 'above the neighborhood historical average',
+    'baseline.trend.down': 'below the neighborhood historical average',
+    'baseline.trend.stable': 'in line with the neighborhood historical average',
+    'baseline.weekly_average': 'historical average: {v} per week',
     'map.police': 'Police station',
     'map.hospital': 'Hospital',
     'map.hospital.emergency': 'emergency room',
@@ -1456,6 +1469,10 @@ const Map<String, Map<String, String>> _table = {
     'map.bus_stop.bench': 'banco',
     'map.bus_stop.lit': 'iluminación',
     'map.bus_stop.no_infra': 'sin datos de infraestructura',
+    'baseline.trend.up': 'por encima del promedio histórico del barrio',
+    'baseline.trend.down': 'por debajo del promedio histórico del barrio',
+    'baseline.trend.stable': 'en línea con el promedio histórico del barrio',
+    'baseline.weekly_average': 'promedio histórico: {v} por semana',
     'map.police': 'Comisaría',
     'map.hospital': 'Hospital',
     'map.hospital.emergency': 'urgencias',

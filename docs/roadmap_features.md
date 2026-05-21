@@ -190,8 +190,13 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 **Detalhes:** Scheduler `cleanupOccurrences` em `functions/lib/` roda diariamente, deleta docs com `expiresAt < now`. Inclui também cleanup de `news_seen` antigo.
 
 ### Backfill histórico
-**Status:** Implementado em 2026-05-11 (commit 9240153, one-shot manual)
-**Detalhes:** `backfillFogoCruzado` (HTTP function manual) puxa histórico do Fogo Cruzado e popula `occurrences`. `historicalBaseline` agregado por região (pra cálculo de "tendência") ainda TODO — só a ingestão crua foi feita.
+**Status:** Implementado em 2026-05-11 (commit 9240153) + agregação por bairro em 2026-05-21
+**Detalhes:**
+- `backfillFogoCruzado` (HTTP function manual) puxa histórico do Fogo Cruzado e popula `occurrences`.
+- `aggregateHistoricalBaseline` (scheduler diário, `functions/lib/historicalBaseline.js`) agrupa as ocorrências dos últimos 90d por (state, city, neighborhood) e grava em `/historical_baseline/{regionKey}` com `totalOccurrences`, `weeklyAverage`, `recentWeekCount`, `trend` (up/down/stable/insufficient_data) e `topReasons`.
+- Cliente: `HistoricalBaselineService` + `baselineProvider(BaselineLookup)` (Riverpod família) leem por bairro sob demanda. `AreasScreen` mostra uma linha discreta no card de cada bairro com ícone + texto editorial ("acima/abaixo/em linha com a média histórica do bairro"). Bairros com dados insuficientes ficam em silêncio.
+- Trend thresholds: up se `recentWeek ≥ avg × 1.4`, down se `≤ 0.6 × avg`, stable no meio. Mínimo de 5 relatos na janela pra evitar tendência com base em ruído.
+- 15 testes unitários cobrem a função pura em `functions/test/historicalBaseline.test.js`.
 
 ### Geo-hash queries no Firestore (V2)
 **Status:** Server-side pronto, client-side prematuro

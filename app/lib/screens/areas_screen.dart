@@ -8,8 +8,10 @@ import '../core/stats/area_activity.dart';
 import '../core/stats/temporal_activity.dart';
 import '../core/stats/transport_activity.dart';
 import '../core/text/string_format.dart';
+import '../models/historical_baseline.dart';
 import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
+import '../services/historical_baseline_service.dart';
 import '../services/occurrences_service.dart';
 import '../widgets/favorite_button.dart';
 import '../services/density_service.dart';
@@ -316,20 +318,26 @@ class _WindowSelector extends StatelessWidget {
   }
 }
 
-class _AreaCard extends StatelessWidget {
+class _AreaCard extends ConsumerWidget {
   final int rank;
   final AreaActivity area;
   final void Function(double, double)? onFocus;
   const _AreaCard({required this.rank, required this.area, this.onFocus});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final name = titleCasePtBr(area.name);
     final per10k = DensityService.instance.per10kInhabitants(
       bairro: area.name,
       count: area.count,
     );
     final isEstimated = DensityService.instance.isEstimated(area.name) ?? false;
+    final baselineLookup = BaselineLookup(
+      state: area.state,
+      city: area.city,
+      neighborhood: area.name,
+    );
+    final baseline = ref.watch(baselineProvider(baselineLookup));
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
@@ -404,6 +412,10 @@ class _AreaCard extends StatelessWidget {
                 ),
               ),
             ),
+          baseline.maybeWhen(
+            data: (b) => _BaselineLine(baseline: b),
+            orElse: () => const SizedBox.shrink(),
+          ),
           const SizedBox(height: 12),
           ...area.reasonBreakdown.take(3).map((entry) {
             return Padding(
@@ -836,5 +848,85 @@ class _EmptyState extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Linha discreta de tendência. Esconde quando não há baseline ou quando
+/// os dados são insuficientes — preferimos silêncio honesto a chute.
+class _BaselineLine extends StatelessWidget {
+  final HistoricalBaseline? baseline;
+  const _BaselineLine({required this.baseline});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = baseline;
+    if (b == null || b.trend == BaselineTrend.insufficientData) {
+      return const SizedBox.shrink();
+    }
+    final trendText = _trendText(b.trend);
+    final avg = b.weeklyAverage.toStringAsFixed(1);
+    final color = _trendColor(b.trend);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, left: 40),
+      child: Tooltip(
+        message: FaroStrings.baselineWeeklyAverage(avg),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_trendIcon(b.trend), size: 12, color: color),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                trendText,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: color,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _trendText(BaselineTrend t) {
+    switch (t) {
+      case BaselineTrend.up:
+        return FaroStrings.baselineTrendUp;
+      case BaselineTrend.down:
+        return FaroStrings.baselineTrendDown;
+      case BaselineTrend.stable:
+        return FaroStrings.baselineTrendStable;
+      case BaselineTrend.insufficientData:
+        return '';
+    }
+  }
+
+  IconData _trendIcon(BaselineTrend t) {
+    switch (t) {
+      case BaselineTrend.up:
+        return Icons.trending_up;
+      case BaselineTrend.down:
+        return Icons.trending_down;
+      case BaselineTrend.stable:
+        return Icons.trending_flat;
+      case BaselineTrend.insufficientData:
+        return Icons.help_outline;
+    }
+  }
+
+  Color _trendColor(BaselineTrend t) {
+    switch (t) {
+      case BaselineTrend.up:
+        return FaroColors.editorialBrown;
+      case BaselineTrend.down:
+        return FaroColors.textSoft;
+      case BaselineTrend.stable:
+        return FaroColors.textHint;
+      case BaselineTrend.insufficientData:
+        return FaroColors.textHint;
+    }
   }
 }
