@@ -13,9 +13,14 @@ Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado
 ## Camadas de dados (estende a fundação)
 
 ### Camada 2 — Scraping de portais de notícia
-**Status:** em implementação
+**Status:** em produção · cobertura BA + RJ + PE + SP (2026-05-21)
 **Peso no score:** 0.3
-**Detalhes:** Cloud Function periódica + Google News RSS + Groq pra extrair localização + Geocoding API. Implementação atual cobre Bahia. Expansão pra outros estados depois.
+**Detalhes:**
+- Cloud Function `ingestNewsBahia` (nome legado, scheduler 30min) + Google News RSS + Groq pra extrair localização + dicionário local de bairros (RMS) ou centroide de cidade.
+- Bahia tem cobertura plena com dict de bairros (`bairros_*.json` na RMS).
+- RJ/PE/SP entram via Google News + G1 estadual, com geocoding caindo no centroide da cidade (dict de bairros pra essas regiões é TODO). UI já trata centroide de cidade com círculo de incerteza.
+- `state` da ocorrência inferido dinamicamente via `stateForCity(geo.cityKey)` (`cityCentroids.js`), sem hardcode.
+- **TODO**: dict de bairros pra Rio/Recife/SP, fontes locais por capital (O Dia, Diário de Pernambuco, Folha de S.Paulo).
 
 ### Camada 3 — Monitoramento de Telegram público
 **Status:** bloqueado por parecer jurídico (Validação 4 pulada)

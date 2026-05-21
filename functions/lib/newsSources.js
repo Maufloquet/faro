@@ -282,6 +282,120 @@ const SOURCES = [
     weight: 0.25,
     scope: "nacional",
   },
+
+  // ─── Rio de Janeiro (RJ) — expansão pra 2026-05-21 ───
+  //
+  // RJ tem ISP-RJ com dados abertos maduros (sem API estruturada usável
+  // direta, mas releases via portal). Por ora, cobertura via Google News
+  // por tipo de ocorrência. Bairros: dict ainda não cobre, então tudo
+  // cai como centroide de cidade (RJ/Niterói/etc).
+  {
+    id: "gnews-tiroteio-rio",
+    name: "Google News · tiroteio Rio de Janeiro",
+    url: GOOGLE_NEWS_RSS("tiroteio \"Rio de Janeiro\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "rio_de_janeiro",
+  },
+  {
+    id: "gnews-operacao-rio",
+    name: "Google News · operação policial Rio",
+    url: GOOGLE_NEWS_RSS("operação policial \"Rio de Janeiro\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "rio_de_janeiro",
+  },
+  {
+    id: "gnews-assalto-rio",
+    name: "Google News · assalto Rio",
+    url: GOOGLE_NEWS_RSS("assalto OR roubo \"Rio de Janeiro\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "rio_de_janeiro",
+  },
+  {
+    id: "g1-rio",
+    name: "G1 Rio",
+    url: "https://g1.globo.com/rss/g1/rio-de-janeiro/",
+    enabled: true,
+    weight: 0.35,
+    scope: "rio_de_janeiro",
+  },
+
+  // ─── Pernambuco (PE) — Recife e RM ───
+  //
+  // SDS-PE tem Fogo Cruzado como integração pública (já cobrimos por lá
+  // via API). Aqui, cobertura de notícias complementa o Fogo Cruzado.
+  {
+    id: "gnews-tiroteio-recife",
+    name: "Google News · tiroteio Recife",
+    url: GOOGLE_NEWS_RSS("tiroteio Recife OR Pernambuco"),
+    enabled: true,
+    weight: 0.30,
+    scope: "recife",
+  },
+  {
+    id: "gnews-operacao-recife",
+    name: "Google News · operação policial Recife",
+    url: GOOGLE_NEWS_RSS("operação policial Recife OR Pernambuco"),
+    enabled: true,
+    weight: 0.30,
+    scope: "recife",
+  },
+  {
+    id: "gnews-assalto-recife",
+    name: "Google News · assalto Recife",
+    url: GOOGLE_NEWS_RSS("assalto OR roubo Recife OR \"Jaboatão\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "recife",
+  },
+  {
+    id: "g1-pe",
+    name: "G1 Pernambuco",
+    url: "https://g1.globo.com/rss/g1/pe/pernambuco/",
+    enabled: true,
+    weight: 0.35,
+    scope: "recife",
+  },
+
+  // ─── São Paulo (SP) — capital e RM ───
+  //
+  // SP é a maior cobertura midiática do país; o trade-off é viés de
+  // amostra (qualquer ruído gera dezenas de matérias). Mantemos pesos
+  // padrão; classifier filtra ruído. Bairros: dict ainda não cobre.
+  {
+    id: "gnews-tiroteio-sp",
+    name: "Google News · tiroteio São Paulo",
+    url: GOOGLE_NEWS_RSS("tiroteio \"São Paulo\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "sao_paulo",
+  },
+  {
+    id: "gnews-operacao-sp",
+    name: "Google News · operação policial SP",
+    url: GOOGLE_NEWS_RSS("operação policial \"São Paulo\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "sao_paulo",
+  },
+  {
+    id: "gnews-assalto-sp",
+    name: "Google News · assalto SP",
+    url: GOOGLE_NEWS_RSS("assalto OR roubo \"São Paulo\""),
+    enabled: true,
+    weight: 0.30,
+    scope: "sao_paulo",
+  },
+  {
+    id: "g1-sp",
+    name: "G1 São Paulo",
+    url: "https://g1.globo.com/rss/g1/sao-paulo/",
+    enabled: true,
+    weight: 0.35,
+    scope: "sao_paulo",
+  },
 ];
 
 module.exports = {

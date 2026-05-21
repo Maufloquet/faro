@@ -33,7 +33,15 @@ const Parser = require("rss-parser");
 const { enabledSources } = require("./newsSources");
 const { classify } = require("./groqClient");
 const { resolveBairro } = require("./bairrosDict");
+const { stateForCity } = require("./cityCentroids");
 const { buildEventKey } = require("./eventKey");
+
+const STATE_NAME_BY_UF = {
+  BA: "Bahia",
+  RJ: "Rio de Janeiro",
+  PE: "Pernambuco",
+  SP: "São Paulo",
+};
 
 const SOURCE = "media";
 const PARSE_TIMEOUT_MS = 15000;
@@ -214,6 +222,9 @@ async function ingestFromSource(db, source) {
     // ID determinístico do doc: hash do URL — idempotente.
     const docId = `media-${hash.slice(0, 16)}`;
 
+    const uf = stateForCity(geo.cityKey);
+    const stateLabel = STATE_NAME_BY_UF[uf] || uf || "Bahia";
+
     await db.collection("occurrences").doc(docId).set(
       {
         latitude: geo.lat,
@@ -221,7 +232,7 @@ async function ingestFromSource(db, source) {
         geohash: ngeohash.encode(geo.lat, geo.lng, 8),
         date: admin.firestore.Timestamp.fromDate(pubDate),
         expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
-        state: "Bahia",
+        state: stateLabel,
         city: classification.city,
         neighborhood,
         geocodeMethod: geo.method,
