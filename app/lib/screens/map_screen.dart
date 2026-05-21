@@ -13,6 +13,7 @@ import '../core/i18n/faro_strings.dart';
 import '../core/theme/app_theme.dart';
 import '../models/bus_stop.dart';
 import '../models/occurrence.dart';
+import '../models/osm_infra.dart';
 import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
 import '../services/cluster_engine.dart';
@@ -90,6 +91,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// pra não poluir vista panorâmica.
   bool _showBusStops = false;
   static const double _busStopMinZoom = 15.0;
+
+  /// Camadas de infraestrutura urbana (Camada 6 — OSM). Cada categoria
+  /// tem zoom mínimo próprio: postes só fazem sentido bem aproximado.
+  Set<OsmInfraKind> _activeInfra = const {};
+  static const Map<OsmInfraKind, double> _infraMinZoom = {
+    OsmInfraKind.police: 13.0,
+    OsmInfraKind.hospitals: 13.0,
+    OsmInfraKind.commerce24h: 14.0,
+    OsmInfraKind.streetLamps: 16.5,
+  };
 
   /// Modo direção: stream contínuo de posição que move a câmera. Inicia
   /// quando o usuário ativa o toggle no drawer; cancela ao desativar.
@@ -361,15 +372,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       context,
       mapType: _mapType,
       showBusStops: _showBusStops,
+      activeInfra: _activeInfra,
     );
     if (result == null || !mounted) return;
     setState(() {
       _mapType = result.mapType;
       _showBusStops = result.showBusStops;
+      _activeInfra = result.activeInfra;
     });
+    final infraTag = result.activeInfra.isEmpty
+        ? 'none'
+        : (result.activeInfra.map((k) => k.firestoreId).toList()..sort())
+            .join('+');
     unawaited(AnalyticsService.instance.filterApplied(
       kind: 'layers',
-      value: '${result.mapType.name}|busStops=${result.showBusStops}',
+      value:
+          '${result.mapType.name}|busStops=${result.showBusStops}|infra=$infraTag',
     ));
   }
 
@@ -498,6 +516,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             )
         : const <BusStop>[];
 
+    // Camadas de infraestrutura — cada uma respeita seu próprio zoom mínimo.
+    final infraByKind = <OsmInfraKind, List<OsmInfra>>{};
+    for (final kind in _activeInfra) {
+      final minZoom = _infraMinZoom[kind] ?? 13.0;
+      if (_zoom < minZoom) continue;
+      final list = ref.watch(osmInfraProvider(kind)).maybeWhen(
+            data: (v) => v,
+            orElse: () => const <OsmInfra>[],
+          );
+      if (list.isNotEmpty) infraByKind[kind] = list;
+    }
+
     // Loga o banner apenas na transição 0→N (mesma sessão, mesmo conjunto
     // não loga de novo). Evita poluir Analytics com cada rebuild.
     if (alerts.length != _lastAlertCountLogged) {
@@ -526,6 +556,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             clusterIcons: _clusterIcons,
             asHeatmap: _showHeatmap,
             busStops: busStops,
+            infraByKind: infraByKind,
             drivingActive: ref.watch(drivingModeProvider) != DrivingMode.off,
             drivingArrowIcon: _drivingArrowIcon,
             drivingPos: _userPos,
@@ -577,7 +608,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ),
                 const SizedBox(height: 12),
                 LayersButton(
-                  hasActiveLayers: _mapType == MapType.hybrid || _showBusStops,
+                  hasActiveLayers: _mapType == MapType.hybrid ||
+                      _showBusStops ||
+                      _activeInfra.isNotEmpty,
                   onTap: _openLayersSheet,
                 ),
                 const SizedBox(height: 10),
@@ -643,6 +676,7 @@ class _Map extends StatelessWidget {
   final Map<String, BitmapDescriptor>? clusterIcons;
   final bool asHeatmap;
   final List<BusStop> busStops;
+  final Map<OsmInfraKind, List<OsmInfra>> infraByKind;
   final bool drivingActive;
   final BitmapDescriptor? drivingArrowIcon;
   final LatLng? drivingPos;
@@ -662,6 +696,7 @@ class _Map extends StatelessWidget {
     required this.clusterIcons,
     required this.asHeatmap,
     required this.busStops,
+    required this.infraByKind,
     required this.drivingActive,
     required this.drivingArrowIcon,
     required this.drivingPos,
@@ -687,7 +722,12 @@ class _Map extends StatelessWidget {
       compassEnabled: false,
       markers: asHeatmap
           ? const {}
-          : {..._markers(), ..._busStopMarkers(), ..._drivingMarker()},
+          : {
+              ..._markers(),
+              ..._busStopMarkers(),
+              ..._infraMarkers(),
+              ..._drivingMarker(),
+            },
       // Heatmap nativo funciona bem no iOS. No Android o suporte é
       // inconsistente — usamos cluster circles como fallback. Em zoom-in
       // (asHeatmap=false), só os círculos de incerteza dos centroides.
@@ -846,6 +886,75 @@ class _Map extends StatelessWidget {
     if (s.bench) tags.add(FaroStrings.mapBusStopBench);
     if (s.lit) tags.add(FaroStrings.mapBusStopLit);
     return tags.isEmpty ? FaroStrings.mapBusStopNoInfra : tags.join(' · ');
+  }
+
+  Set<Marker> _infraMarkers() {
+    if (infraByKind.isEmpty) return const {};
+    final result = <Marker>{};
+    for (final entry in infraByKind.entries) {
+      final kind = entry.key;
+      final list = entry.value;
+      if (list.isEmpty) continue;
+      final icon = _iconForInfraKind(kind);
+      final alpha = kind == OsmInfraKind.streetLamps ? 0.55 : 0.85;
+      for (final item in list) {
+        result.add(Marker(
+          markerId: MarkerId('${kind.firestoreId}-${item.id}'),
+          position: LatLng(item.lat, item.lng),
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          alpha: alpha,
+          flat: true,
+          infoWindow: InfoWindow(
+            title: item.name ?? _defaultTitleForKind(kind),
+            snippet: _infoSnippetForInfra(kind, item),
+          ),
+        ));
+      }
+    }
+    return result;
+  }
+
+  BitmapDescriptor _iconForInfraKind(OsmInfraKind kind) {
+    switch (kind) {
+      case OsmInfraKind.police:
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
+      case OsmInfraKind.hospitals:
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose);
+      case OsmInfraKind.commerce24h:
+        return BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueGreen);
+      case OsmInfraKind.streetLamps:
+        return BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueYellow);
+    }
+  }
+
+  String _defaultTitleForKind(OsmInfraKind kind) {
+    switch (kind) {
+      case OsmInfraKind.police:
+        return FaroStrings.mapPolice;
+      case OsmInfraKind.hospitals:
+        return FaroStrings.mapHospital;
+      case OsmInfraKind.commerce24h:
+        return FaroStrings.mapCommerce24h;
+      case OsmInfraKind.streetLamps:
+        return FaroStrings.mapStreetLamp;
+    }
+  }
+
+  String? _infoSnippetForInfra(OsmInfraKind kind, OsmInfra item) {
+    switch (kind) {
+      case OsmInfraKind.police:
+        return item.operator ?? item.phone;
+      case OsmInfraKind.hospitals:
+        if (item.emergency == true) return FaroStrings.mapHospitalEmergency;
+        return item.operator;
+      case OsmInfraKind.commerce24h:
+        return item.brand ?? item.shop ?? item.amenity;
+      case OsmInfraKind.streetLamps:
+        return null;
+    }
   }
 
   Set<Heatmap> _heatmaps() {

@@ -2,13 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/bus_stop.dart';
+import '../models/osm_infra.dart';
 import 'occurrences_service.dart' show firestoreProvider;
 
-/// Lê o snapshot de pontos de ônibus gravado pela Cloud Function
-/// `fetchOsmBusStops`. Doc único `/osm/bus_stops` com array `stops`.
+/// Lê os snapshots de infraestrutura urbana gravados pelas Cloud Functions
+/// `fetchOsmBusStops` (legado) e `fetchOsmInfra` (delegacias, hospitais,
+/// postes, comércio 24h). Cada categoria vive em `/osm/{id}`.
 ///
-/// Carregamento lazy: só é disparado quando o usuário ativa o toggle
-/// no mapa. Resultado fica em cache na vida do provider (autoDispose=false).
+/// Carregamento lazy: o provider só dispara quando alguém o assiste — o
+/// usuário precisa ligar o toggle correspondente no sheet de camadas.
 class OsmService {
   final FirebaseFirestore _db;
   OsmService(this._db);
@@ -18,13 +20,25 @@ class OsmService {
     if (!snap.exists) return const [];
     return BusStop.listFromDoc(snap);
   }
+
+  Future<List<OsmInfra>> loadInfra(OsmInfraKind kind) async {
+    final snap = await _db.collection('osm').doc(kind.firestoreId).get();
+    if (!snap.exists) return const [];
+    return OsmInfra.listFromDoc(snap);
+  }
 }
 
 final osmServiceProvider = Provider<OsmService>(
   (ref) => OsmService(ref.watch(firestoreProvider)),
 );
 
-/// Lazy: só carrega quando alguém assiste.
 final busStopsProvider = FutureProvider<List<BusStop>>(
   (ref) => ref.watch(osmServiceProvider).loadBusStops(),
+);
+
+/// Provider família, indexado por categoria — cada toggle no UI assiste
+/// só o provider da sua camada e o cache fica isolado.
+final osmInfraProvider =
+    FutureProvider.family<List<OsmInfra>, OsmInfraKind>(
+  (ref, kind) => ref.watch(osmServiceProvider).loadInfra(kind),
 );

@@ -33,9 +33,17 @@ Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado
 **Detalhes:** Auditoria caso a caso. SSP-BA via Transparência Bahia (painel, sem API estruturada). ISP-RJ tem dados abertos maduros. SDS-PE via Fogo Cruzado.
 
 ### Camada 6 — OSM Overpass (contexto urbano)
-**Status:** planejada, não implementada
+**Status:** Implementada em 2026-05-21 — pontos de ônibus, delegacias, hospitais, postes de iluminação, comércio 24h
 **Peso editorial:** alto — destrava o discurso "Faro mostra infraestrutura, não veredito"
-**Detalhes:** Pontos de ônibus, iluminação pública (`highway:lit`), delegacias, hospitais, comércio 24h via Overpass API. Sem API key, grátis. Visualização opcional como toggle no mapa. Combina com features V2 de passageiros de ônibus.
+**Detalhes:**
+- Pontos de ônibus já estavam (`fetchOsmBusStops`, doc `/osm/bus_stops`).
+- 4 novas categorias via `fetchOsmInfra` (`functions/lib/osmInfraIngest.js`), invocação manual one-shot (`curl -X POST` ou `?kinds=police,hospitals,…`). Cada uma vira doc em `/osm/{kind}`: `police`, `hospitals`, `street_lamps`, `commerce_24h`.
+- Bbox da RMS (Salvador + Camaçari + Lauro + Simões) pra delegacias/hospitais/comércio; bbox menor (Salvador urbano) pra postes — `highway=street_lamp` tem milhares de nós e a RMS inteira poluiria sem ganho.
+- Cliente Flutter: `OsmInfra` (modelo único com factory), `osmInfraProvider(kind)` (Riverpod família, lazy). Toggle individual por camada no `LayersSheet`, com nota editorial explicando que cobertura OSM é desigual.
+- Cada categoria tem zoom mínimo próprio (`_infraMinZoom` em `map_screen.dart`): delegacias/hospitais a partir de 13, comércio 14, postes 16.5 — evita poluir vista panorâmica.
+- Markers em cores neutras (azul polícia, rosa hospitais, verde comércio, amarelo postes) com `InfoWindow` mostrando nome + tag relevante (operator, emergency, brand). Postes não têm InfoWindow (só posição importa).
+- 10 testes unitários cobrem o parser em `functions/test/osmInfraIngest.test.js`.
+- **TODO**: cron periódico (atualmente é manual). Combina com features V2 de passageiros de ônibus.
 
 ### Camada 7 — IBGE: densidade populacional por bairro
 **Status:** Cobertura expandida em 2026-05-20 (129/159 bairros de Salvador, com sinalização de incerteza)

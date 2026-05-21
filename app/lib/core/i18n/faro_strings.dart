@@ -242,6 +242,11 @@ class FaroStrings {
   static String get mapBusStopBench => _t('map.bus_stop.bench');
   static String get mapBusStopLit => _t('map.bus_stop.lit');
   static String get mapBusStopNoInfra => _t('map.bus_stop.no_infra');
+  static String get mapPolice => _t('map.police');
+  static String get mapHospital => _t('map.hospital');
+  static String get mapHospitalEmergency => _t('map.hospital.emergency');
+  static String get mapStreetLamp => _t('map.street_lamp');
+  static String get mapCommerce24h => _t('map.commerce_24h');
 
   // ─── Bottom sheet do mapa ─────────────────────────────────────────────
   static String get sheetLoading => _t('sheet.loading');
@@ -290,6 +295,15 @@ class FaroStrings {
   static String get layersLayers => _t('layers.layers');
   static String get layersBusStops => _t('layers.bus_stops');
   static String get layersBusStopsHint => _t('layers.bus_stops.hint');
+  static String get layersPolice => _t('layers.police');
+  static String get layersPoliceHint => _t('layers.police.hint');
+  static String get layersHospitals => _t('layers.hospitals');
+  static String get layersHospitalsHint => _t('layers.hospitals.hint');
+  static String get layersStreetLamps => _t('layers.street_lamps');
+  static String get layersStreetLampsHint => _t('layers.street_lamps.hint');
+  static String get layersCommerce24h => _t('layers.commerce_24h');
+  static String get layersCommerce24hHint => _t('layers.commerce_24h.hint');
+  static String get layersInfraSourceNote => _t('layers.infra.source_note');
   static String get layersView => _t('layers.view');
   static String get layersTrajectoryTitle => _t('layers.trajectory.title');
   static String get layersTrajectoryHint => _t('layers.trajectory.hint');
@@ -704,6 +718,11 @@ const Map<String, Map<String, String>> _table = {
     'map.bus_stop.bench': 'banco',
     'map.bus_stop.lit': 'iluminação',
     'map.bus_stop.no_infra': 'sem dados de infraestrutura',
+    'map.police': 'Delegacia',
+    'map.hospital': 'Hospital',
+    'map.hospital.emergency': 'pronto-socorro',
+    'map.street_lamp': 'Poste de iluminação',
+    'map.commerce_24h': 'Aberto 24h',
     'sheet.loading': 'Carregando relatos…',
     'sheet.error': 'Erro ao carregar: {e}',
     'sheet.scope.all': 'no histórico carregado',
@@ -733,6 +752,15 @@ const Map<String, Map<String, String>> _table = {
     'layers.layers': 'Camadas',
     'layers.bus_stops': 'Pontos de ônibus',
     'layers.bus_stops.hint': 'Visíveis ao aproximar o mapa (zoom de rua)',
+    'layers.police': 'Delegacias',
+    'layers.police.hint': 'Postos da polícia mapeados na cidade',
+    'layers.hospitals': 'Hospitais',
+    'layers.hospitals.hint': 'Hospitais e prontos-socorros próximos',
+    'layers.street_lamps': 'Iluminação pública',
+    'layers.street_lamps.hint': 'Postes mapeados na área central (zoom de rua)',
+    'layers.commerce_24h': 'Aberto 24h',
+    'layers.commerce_24h.hint': 'Postos, farmácias e conveniências sempre abertos',
+    'layers.infra.source_note': 'Pontos mapeados por moradores no OpenStreetMap — cobertura desigual.',
     'layers.view': 'Ver',
     'layers.trajectory.title': 'Seu trajeto',
     'layers.trajectory.hint':
@@ -1058,6 +1086,11 @@ const Map<String, Map<String, String>> _table = {
     'map.bus_stop.bench': 'bench',
     'map.bus_stop.lit': 'lit',
     'map.bus_stop.no_infra': 'no infrastructure data',
+    'map.police': 'Police station',
+    'map.hospital': 'Hospital',
+    'map.hospital.emergency': 'emergency room',
+    'map.street_lamp': 'Street lamp',
+    'map.commerce_24h': 'Open 24h',
     'sheet.loading': 'Loading reports…',
     'sheet.error': 'Loading error: {e}',
     'sheet.scope.all': 'in the loaded history',
@@ -1087,6 +1120,15 @@ const Map<String, Map<String, String>> _table = {
     'layers.layers': 'Layers',
     'layers.bus_stops': 'Bus stops',
     'layers.bus_stops.hint': 'Visible when zoomed in (street level)',
+    'layers.police': 'Police stations',
+    'layers.police.hint': 'Police posts mapped in the city',
+    'layers.hospitals': 'Hospitals',
+    'layers.hospitals.hint': 'Hospitals and emergency rooms nearby',
+    'layers.street_lamps': 'Street lighting',
+    'layers.street_lamps.hint': 'Lamps mapped in the central area (street zoom)',
+    'layers.commerce_24h': 'Open 24h',
+    'layers.commerce_24h.hint': 'Gas stations, pharmacies and shops always open',
+    'layers.infra.source_note': 'Points mapped by residents on OpenStreetMap — coverage is uneven.',
     'layers.view': 'View',
     'layers.trajectory.title': 'Your trajectory',
     'layers.trajectory.hint':
@@ -1414,6 +1456,11 @@ const Map<String, Map<String, String>> _table = {
     'map.bus_stop.bench': 'banco',
     'map.bus_stop.lit': 'iluminación',
     'map.bus_stop.no_infra': 'sin datos de infraestructura',
+    'map.police': 'Comisaría',
+    'map.hospital': 'Hospital',
+    'map.hospital.emergency': 'urgencias',
+    'map.street_lamp': 'Farola',
+    'map.commerce_24h': 'Abierto 24h',
     'sheet.loading': 'Cargando reportes…',
     'sheet.error': 'Error al cargar: {e}',
     'sheet.scope.all': 'en el historial cargado',
@@ -1443,6 +1490,15 @@ const Map<String, Map<String, String>> _table = {
     'layers.layers': 'Capas',
     'layers.bus_stops': 'Paradas de autobús',
     'layers.bus_stops.hint': 'Visibles al acercar el mapa (nivel calle)',
+    'layers.police': 'Comisarías',
+    'layers.police.hint': 'Puestos policiales mapeados en la ciudad',
+    'layers.hospitals': 'Hospitales',
+    'layers.hospitals.hint': 'Hospitales y urgencias cercanos',
+    'layers.street_lamps': 'Iluminación pública',
+    'layers.street_lamps.hint': 'Farolas mapeadas en la zona central (zoom de calle)',
+    'layers.commerce_24h': 'Abierto 24h',
+    'layers.commerce_24h.hint': 'Estaciones, farmacias y tiendas siempre abiertas',
+    'layers.infra.source_note': 'Puntos mapeados por vecinos en OpenStreetMap — cobertura desigual.',
     'layers.view': 'Ver',
     'layers.trajectory.title': 'Tu recorrido',
     'layers.trajectory.hint':
