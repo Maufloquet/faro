@@ -13,6 +13,7 @@ exports.cleanupOccurrences = require("./lib/cleanupOccurrences").cleanupOccurren
 exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoCruzado;
 exports.backfillDedup = require("./lib/dedupBackfill").backfillDedup;
 exports.fetchOsmBusStops = require("./lib/osmFetch").fetchOsmBusStops;
+exports.fetchOsmInfra = require("./lib/osmInfraIngest").fetchOsmInfra;
 
 // HTTP público — API pra pesquisadores credenciados (auth via API key
 // gerenciada em /research_keys/{key}). Documentação: docs/parcerias/.
