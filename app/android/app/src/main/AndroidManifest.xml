@@ -20,6 +20,13 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${mapsApiKey}" />
+        <!-- FCM: canal default de notificação. Quando o payload do servidor
+             não especifica channel_id, o Android usa esse. Garante que push
+             em background não cai em canal "Sem categoria" e pode ser
+             silenciado pelo usuário sem querer. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="faro_proximity" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

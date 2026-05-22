@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +23,9 @@ import 'services/density_service.dart';
 import 'services/dev_data_source.dart';
 import 'services/favorites_service.dart';
 import 'services/local_notification_service.dart';
+import 'services/messaging_service.dart';
 import 'services/occurrences_service.dart';
+import 'services/push_handlers.dart';
 import 'services/reference_location_service.dart';
 
 /// Modo dev: lê ocorrências do asset local, sem precisar de Firebase.
@@ -50,6 +53,13 @@ Future<void> main() async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+
+      // Handler de push em background isolate. PRECISA ser registrado
+      // antes de qualquer outro setup FCM — quando o app está killed,
+      // o isolate de background usa essa referência pra invocar o
+      // handler top-level em `push_handlers.dart`. Sem isso, notifs
+      // de proximidade não geram analytics nem registro local.
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       if (!kDebugMode) {
         await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
@@ -91,6 +101,17 @@ Future<void> main() async {
       // Notificações locais (canal + permissão pré-checada). O prompt de
       // permissão só é disparado no toggle do /sobre/.
       await LocalNotificationService.instance.initialize();
+
+      // Handlers de tap em notif que abriu o app (killed → open ou
+      // background → foreground). Por enquanto só loga; quando tivermos
+      // deep link pra detail da ocorrência, este callback navega.
+      unawaited(bindPushOpenHandlers(onOpen: (_) {}));
+
+      // Foreground handler: quando o app está aberto e chega push, o
+      // sistema não desenha a notif sozinho. Materializamos como notif
+      // local com o mesmo copy. Só registra se permissão já foi dada
+      // antes — não dispara prompt no boot.
+      unawaited(MessagingService().ensureForegroundHandlerIfAuthorized());
 
       // Camada 7 — densidade populacional por bairro. Carrega asset JSON
       // pra normalizar "relatos por 10k habitantes". Falha silenciosa: se

@@ -102,6 +102,16 @@ class MessagingService {
     return true;
   }
 
+  /// Variante silenciosa do `initialize`: não pede permissão se ainda
+  /// não foi autorizado. Só registra o foreground handler quando já
+  /// existe permissão. Usado no boot do app pra garantir que pushes
+  /// chegando com o app aberto sejam materializados como notif local
+  /// — sem disparar prompt de permissão no primeiro launch.
+  Future<void> ensureForegroundHandlerIfAuthorized() async {
+    if (!await isAuthorized()) return;
+    _registerForegroundHandler();
+  }
+
   bool _foregroundHandlerRegistered = false;
 
   void _registerForegroundHandler() {
