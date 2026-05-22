@@ -126,8 +126,20 @@ class ReferenceLocationService {
   // Persistência fica em `/users/{uid}.referenceLocation`. Anonymous user
   // continua usando só SharedPreferences (princípio "sem cadastro").
 
+  /// Retorna o usuário autenticado ou `null` quando Firebase não está
+  /// inicializado (modo dev/test). `FirebaseAuth.instance` lança nesse
+  /// caso, então isolamos pra cloud sync degradar gracioso em vez de
+  /// estourar exceção pro caller que só queria salvar localmente.
+  User? _safeCurrentUser() {
+    try {
+      return FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _syncToCloud(ReferenceLocation loc) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _safeCurrentUser();
     if (user == null || user.isAnonymous) return;
     try {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
@@ -145,7 +157,7 @@ class ReferenceLocationService {
   }
 
   Future<void> _clearCloud() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _safeCurrentUser();
     if (user == null || user.isAnonymous) return;
     try {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
@@ -160,7 +172,7 @@ class ReferenceLocationService {
   /// referência salva em outro device e popula o prefs local.
   /// No-op pra anonymous user. Chamado pelo listener de auth no boot.
   Future<void> pullFromCloud() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _safeCurrentUser();
     if (user == null || user.isAnonymous) return;
     try {
       final doc = await FirebaseFirestore.instance

@@ -26,6 +26,10 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
+    // setMockInitialValues não invalida o singleton já cacheado em testes
+    // anteriores — clear() garante que a chave do crossing history começa
+    // vazia em cada caso.
+    await prefs.clear();
     svc = CrossingHistoryService.test(prefs);
   });
 
