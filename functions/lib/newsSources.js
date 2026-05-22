@@ -52,23 +52,39 @@ const SOURCES = [
     scope: "salvador",
   },
 
-  // ─── RSS diretos quebrados (mantidos como referência, desativados) ───
-  // bocao-news: domínio redirecionou pra bnews.com.br (Bocão virou BNews
-  //   em algum momento). Home retorna 403 (anti-bot). RSS desconhecido.
-  // bahia-noticias: /principal-rss aponta pra página HTML, não pro XML.
-  // Estratégia: pegamos cobertura desses portais via gnews-* abaixo.
+  // ─── Expansão 2026-05-22: portais validados com RSS ativo ───
+  // bnews (Bocão News): /feed retorna RSS válido com Mozilla UA. Mistura
+  //   tudo (entretenimento, esporte, política, segurança) — o classificador
+  //   Groq descarta o irrelevante. Cobre greve dos rodoviários, operações
+  //   policiais, casos cotidianos com forte ênfase em Salvador.
+  // bahianoar: feed RSS confirmado, cobertura policial diária forte da
+  //   RMS (Alagoinhas, Dias d'Ávila, Salvador, periferia). Match perfeito
+  //   pro app — relatos exclusivos que não saem nos grandes portais.
   {
     id: "bocao-news",
     name: "Bocão News (BNews)",
     url: "https://www.bnews.com.br/feed",
-    enabled: false,
+    enabled: true,
     weight: 0.30,
     scope: "salvador",
   },
   {
+    id: "bahia-no-ar",
+    name: "Bahia no Ar",
+    url: "https://bahianoar.com/feed/",
+    enabled: true,
+    weight: 0.30,
+    scope: "salvador",
+  },
+
+  // ─── RSS verificados sem itens (mantidos como referência) ───
+  // bahia-noticias: RSS oficial em /quem-somos/rss.xml retorna <channel>
+  //   vazio (sem <item>). Cobertura continua via gnews-bahia-noticias.
+  // metropoles-ba: feed nacional sem segmentação por estado.
+  {
     id: "bahia-noticias",
     name: "Bahia Notícias",
-    url: "https://www.bahianoticias.com.br/principal-rss",
+    url: "https://www.bahianoticias.com.br/quem-somos/rss.xml",
     enabled: false,
     weight: 0.30,
     scope: "salvador",

@@ -67,7 +67,11 @@ function getParser() {
   _parser = new Parser({
     timeout: PARSE_TIMEOUT_MS,
     headers: {
-      "User-Agent": "Faro-NewsIngest/0.1 (+https://github.com/Maufloquet/faro)",
+      // Prefixo Mozilla-like evita filtros anti-bot simples que bloqueiam
+      // UAs custom (ex: BNews retorna 403 com 'Faro-NewsIngest'). O sufixo
+      // FaroBot mantém honestidade — identificamos o bot no log do server.
+      "User-Agent":
+        "Mozilla/5.0 (compatible; FaroBot/0.1; +https://github.com/Maufloquet/faro)",
     },
   });
   return _parser;
