@@ -147,26 +147,32 @@ async function ingestFromSource(db, source) {
       continue;
     }
 
-    // Só marca como visto depois de classificar com sucesso. Idempotência
-    // do write em occurrences (doc-id determinístico) protege duplicação.
-    await seenRef.set({
+    // Helper local: marca o item como visto. Chamado em 2 cenários:
+    //  (a) descarte por filtro — já gastamos classificação, não vale
+    //      reclassificar no próximo run.
+    //  (b) escrita em /occurrences ok — sucesso do pipeline.
+    // O que NÃO faz seen: falha de escrita em Firestore. Aí o item
+    // volta no próximo run pra retentativa (custa Groq de novo, mas
+    // evita perda silenciosa como aconteceu no bug do índice em 18/05).
+    const markSeen = () => seenRef.set({
       source: source.id,
       url,
       title: item.title || "",
       seenAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    if (!classification.security_related) continue;
-    if ((classification.confidence ?? 0) < 0.55) continue;
+    if (!classification.security_related) { await markSeen(); continue; }
+    if ((classification.confidence ?? 0) < 0.55) { await markSeen(); continue; }
     // Cidade tem que ser uma das 4 cobertas. resolveBairro depois trata
     // o caso de bairro ausente caindo no centroide.
-    if (!classification.city) continue;
+    if (!classification.city) { await markSeen(); continue; }
 
     const geo = resolveBairro(classification.neighborhood, classification.city);
     if (!geo) {
       logger.info(
         `Não resolvido: bairro=\"${classification.neighborhood}\" cidade=\"${classification.city}\"`
       );
+      await markSeen();
       continue;
     }
 
@@ -216,6 +222,7 @@ async function ingestFromSource(db, source) {
       });
       logger.info(`Corroborado · ${existing.id} += ${source.id}`);
       result.written++;
+      await markSeen();
       continue;
     }
 
@@ -253,6 +260,7 @@ async function ingestFromSource(db, source) {
       { merge: true }
     );
     result.written++;
+    await markSeen();
   }
 
   logger.info(`${source.id}: fetched=${result.fetched} new=${result.newItems} written=${result.written}`);
