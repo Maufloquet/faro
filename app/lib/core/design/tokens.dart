@@ -35,11 +35,15 @@ class FaroColors {
   static const Color cardBorder = Color(0xFFE6E6DC);
 
   // ─── Textos ────────────────────────────────────────────────────────────
+  // Faixa de cinzas calibrada pra leitura ao ar livre / sol forte — uso
+  // típico de quem usa o app na rua. Antes textSoft estava em 0x7A7A7A
+  // (contraste ~4.6:1 sobre branco) e o footer dos cards sumia em luz
+  // direta. Subimos um degrau em cada nível mantendo a hierarquia visual.
   static const Color textPrimary = Color(0xFF1A1A1A);
-  static const Color textSecondary = Color(0xFF3A3A3A);
-  static const Color textMuted = Color(0xFF555555);
-  static const Color textSoft = Color(0xFF7A7A7A);
-  static const Color textHint = Color(0xFF8A8A8A);
+  static const Color textSecondary = Color(0xFF333333);
+  static const Color textMuted = Color(0xFF4D4D4D);
+  static const Color textSoft = Color(0xFF666666);
+  static const Color textHint = Color(0xFF767676);
 
   // ─── Estados editoriais (alinha com docs/principios_editoriais.md) ─────
   /// Marrom institucional — usado em disclaimers, hints, "atenção sem alarme".
