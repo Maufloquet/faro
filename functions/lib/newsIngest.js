@@ -246,6 +246,19 @@ async function ingestFromSource(db, source) {
     const uf = stateForCity(geo.cityKey);
     const stateLabel = STATE_NAME_BY_UF[uf] || uf || "Bahia";
 
+    // Guarda MVP: só grava relatos da Bahia. Se o classificador resolveu
+    // outra UF (matéria de portal BA que cita SP/RJ, ou source não-BA
+    // ainda ligado por engano), descartamos. markSeen mesmo assim pra
+    // não reclassificar no próximo run. Remover quando o app ganhar
+    // selector de estado na UI.
+    if (stateLabel !== "Bahia") {
+      logger.info(
+        `Descartado por estado != BA: state=${stateLabel} city=${classification.city}`
+      );
+      await markSeen();
+      continue;
+    }
+
     await db.collection("occurrences").doc(docId).set(
       {
         latitude: geo.lat,
