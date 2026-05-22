@@ -4,23 +4,22 @@
  * Agrega contestações de uma ocorrência e marca o relato como `contested`
  * quando o número de usuários distintos atingir um threshold.
  *
- * Trigger: criação de doc em /contestations/{id}.
+ * Trigger: escrita (create/update/delete) em /contestations/{id}. Recalcula
+ * do zero a cada evento — barato porque por ocorrência são poucas dezenas
+ * de docs no pior caso, e mantém a moderação reversa simples: se um
+ * moderador apagar contestações abusivas, o flag `contested` cai junto.
  *
  * Estratégia anti-abuso: contamos UIDs *distintos*. Um mesmo usuário
  * contestando 100 vezes o mesmo relato gera 100 docs mas conta como 1.
  * O próprio doc da contestação guarda o UID (regra do Firestore exige).
  *
- * Não deletamos contestações nem o relato — apenas marcamos o relato
- * com `contested: true` e gravamos um breakdown. O cliente pode então
- * exibir um indicador visual ("X usuários questionam este relato")
- * sem suprimir a informação.
- *
- * Se contestações forem deletadas no futuro (V2 — moderação reversa),
- * essa função precisa virar onWrite e recalcular do zero.
+ * Não deletamos o relato — apenas marcamos com `contested: true` e
+ * gravamos um breakdown. Se o agregado cair abaixo do threshold (deleção
+ * de contestações), `contested` é apagado com `FieldValue.delete()`.
  */
 
 const admin = require("firebase-admin");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions/v2");
 
 // Threshold de UIDs distintos para marcar o relato como contestado.
@@ -59,19 +58,22 @@ function aggregate(contestations) {
   };
 }
 
-exports.onContestationCreated = onDocumentCreated(
+exports.onContestationWritten = onDocumentWritten(
   {
     document: "contestations/{contestationId}",
     region: "southamerica-east1",
     memory: "256MiB",
   },
   async (event) => {
-    const data = event.data?.data();
-    if (!data) return;
+    const before = event.data?.before?.data();
+    const after = event.data?.after?.data();
 
-    const occurrenceId = data.occurrenceId;
+    // Pega occurrenceId do estado vigente. Em delete, after é null e
+    // precisamos do before pra saber qual relato reagregar. Em update
+    // bem-comportado, before.occurrenceId == after.occurrenceId.
+    const occurrenceId = after?.occurrenceId || before?.occurrenceId;
     if (!occurrenceId || typeof occurrenceId !== "string") {
-      logger.warn("contestation without occurrenceId, skipping", {
+      logger.warn("contestation write without occurrenceId, skipping", {
         id: event.params.contestationId,
       });
       return;
@@ -97,6 +99,12 @@ exports.onContestationCreated = onDocumentCreated(
     if (agg.contested) {
       update.contested = true;
       update.contestedAt = admin.firestore.FieldValue.serverTimestamp();
+    } else {
+      // Caiu abaixo do threshold (moderação removeu contestações abusivas
+      // ou usuário desfez a sua). Tira o flag pro cliente não exibir
+      // "contestado" indevidamente.
+      update.contested = admin.firestore.FieldValue.delete();
+      update.contestedAt = admin.firestore.FieldValue.delete();
     }
 
     await db

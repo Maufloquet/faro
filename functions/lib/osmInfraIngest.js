@@ -1,9 +1,15 @@
 "use strict";
 
 /**
- * HTTP function manual one-shot: puxa camadas de infraestrutura urbana
- * (delegacias, hospitais, postes de iluminação, comércio 24h) via OpenStreetMap
- * Overpass API e salva cada uma como single doc em /osm/{kind}.
+ * Camadas de infraestrutura urbana (delegacias, hospitais, postes de
+ * iluminação, comércio 24h) via OpenStreetMap Overpass API. Cada uma
+ * vira single doc em /osm/{kind}.
+ *
+ * Dois pontos de entrada:
+ *  - `fetchOsmInfra` (HTTP, admin): atualização manual one-shot, suporta
+ *    ?kinds=police,hospitals pra refresh seletivo.
+ *  - `syncOsmInfra` (scheduler, semanal): mantém o snapshot fresco sem
+ *    intervenção. Esses dados mudam pouco — semanal cobre com folga.
  *
  * Por que essas camadas: peso editorial alto — Faro mostra infraestrutura
  * existente como contexto, não como veredito. "Tem delegacia/hospital/poste
@@ -11,20 +17,14 @@
  * Ver docs/roadmap_features.md §"Camada 6 — OSM Overpass".
  *
  * Custo: Overpass é grátis, sem auth. Limite ~10k queries/dia compartilhado.
- * Uso manual (raro), folga absoluta. Cache server-side: app consome de
- * Firestore, nunca martela Overpass direto.
- *
- * Como invocar (admin):
- *   curl -X POST -H "Authorization: Bearer <token>" "<function-url>"
- *
- * Opcional ?kinds=police,hospitals (default: todas). Útil pra atualizar
- * uma camada específica sem refazer as outras.
+ * Tick semanal = 4 queries/run × 1 run/semana, folga absoluta.
  *
  * Idempotente: roda 2x, sobrescreve com snapshot fresco.
  */
 
 const admin = require("firebase-admin");
 const { onRequest } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
@@ -107,23 +107,7 @@ exports.fetchOsmInfra = onRequest(
         return;
       }
 
-      const db = admin.firestore();
-      const summary = {};
-
-      for (const kind of kinds) {
-        const spec = QUERIES[kind];
-        const raw = await fetchOverpass(spec.query(spec.bbox));
-        const items = parseInfra(raw, kind);
-        await db.collection("osm").doc(kind).set({
-          items,
-          count: items.length,
-          bbox: spec.bbox,
-          fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        summary[kind] = items.length;
-        logger.info(`OSM ${kind} sincronizado: ${items.length} itens`);
-      }
-
+      const summary = await runInfraSync(kinds);
       res.status(200).json(summary);
     } catch (e) {
       logger.error(`OSM infra fetch falhou: ${e.message}`);
@@ -131,6 +115,41 @@ exports.fetchOsmInfra = onRequest(
     }
   },
 );
+
+// Tick semanal: segunda 04:30 (depois do cleanup diário e do osm-notes).
+// Atualiza as 4 camadas em série; Overpass não gosta de paralelismo agressivo.
+exports.syncOsmInfra = onSchedule(
+  {
+    schedule: "every monday 04:30",
+    timeZone: "America/Bahia",
+    region: "southamerica-east1",
+    memory: "512MiB",
+    timeoutSeconds: 540,
+  },
+  async () => {
+    const summary = await runInfraSync(Object.keys(QUERIES));
+    logger.info("OSM infra sync semanal concluído", { summary });
+  },
+);
+
+async function runInfraSync(kinds) {
+  const db = admin.firestore();
+  const summary = {};
+  for (const kind of kinds) {
+    const spec = QUERIES[kind];
+    const raw = await fetchOverpass(spec.query(spec.bbox));
+    const items = parseInfra(raw, kind);
+    await db.collection("osm").doc(kind).set({
+      items,
+      count: items.length,
+      bbox: spec.bbox,
+      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    summary[kind] = items.length;
+    logger.info(`OSM ${kind} sincronizado: ${items.length} itens`);
+  }
+  return summary;
+}
 
 async function fetchOverpass(query) {
   const body = `data=${encodeURIComponent(query.trim())}`;

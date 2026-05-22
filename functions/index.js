@@ -7,6 +7,7 @@ admin.initializeApp();
 exports.syncFogoCruzado = require("./lib/fogoCruzadoSync").syncFogoCruzado;
 exports.ingestNewsBahia = require("./lib/newsIngest").ingestNewsBahia;
 exports.ingestOsmNotes = require("./lib/osmNotesIngest").ingestOsmNotes;
+exports.syncOsmInfra = require("./lib/osmInfraIngest").syncOsmInfra;
 exports.cleanupOccurrences = require("./lib/cleanupOccurrences").cleanupOccurrences;
 exports.aggregateHistoricalBaseline =
   require("./lib/historicalBaseline").aggregateHistoricalBaseline;
@@ -23,5 +24,5 @@ exports.getOccurrences = require("./lib/researchApi").getOccurrences;
 
 // Firestore triggers
 exports.onOccurrenceCreated = require("./lib/proximityAlert").onOccurrenceCreated;
-exports.onContestationCreated =
-  require("./lib/contestationAggregator").onContestationCreated;
+exports.onContestationWritten =
+  require("./lib/contestationAggregator").onContestationWritten;
