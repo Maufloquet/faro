@@ -13,6 +13,8 @@ import 'package:flutter/services.dart' show rootBundle;
 ///   Estimativa por divisão simples entre bairros da PB.
 /// - Bahia Notícias (Censo IBGE 2022) para bairros com dado publicado
 ///   diretamente — sobrescreve a estimativa.
+/// - IBGE Cidades (Censo 2022) para populações municipais da RMS —
+///   acessadas via `populationForCity` quando o bairro é desconhecido.
 ///
 /// Bairros sem dado retornam null — UI deve esconder a normalização nesse
 /// caso (preferimos silêncio honesto a número inventado).
@@ -21,20 +23,30 @@ class DensityService {
   static final DensityService instance = DensityService._();
 
   Map<String, _Entry>? _byBairro;
+  Map<String, _Entry>? _byCity;
 
   Future<void> initialize() async {
     if (_byBairro != null) return;
     final raw = await rootBundle.loadString('assets/bairros_pop_salvador.json');
     final parsed = json.decode(raw) as Map<String, dynamic>;
-    final map = <String, _Entry>{};
+    final bairros = <String, _Entry>{};
+    final cities = <String, _Entry>{};
     parsed.forEach((key, value) {
-      if (key.startsWith('_')) return; // _meta
+      if (key == '_cities' && value is Map<String, dynamic>) {
+        value.forEach((cityKey, cityValue) {
+          final entry = _parse(cityValue);
+          if (entry != null) cities[_normalize(cityKey)] = entry;
+        });
+        return;
+      }
+      if (key.startsWith('_')) return; // _meta e afins
       final entry = _parse(value);
       if (entry != null) {
-        map[_normalize(key)] = entry;
+        bairros[_normalize(key)] = entry;
       }
     });
-    _byBairro = map;
+    _byBairro = bairros;
+    _byCity = cities;
   }
 
   /// População do bairro. Null se não temos o dado.
@@ -65,12 +77,34 @@ class DensityService {
     return double.parse(value.toStringAsFixed(1));
   }
 
-  /// Versão para teste — injeta população direto sem carregar asset.
-  /// Todos os bairros injetados são marcados como `verified`.
-  static DensityService testWith(Map<String, int> populations) {
+  /// População do município. Útil pra contexto editorial quando o relato
+  /// caiu no centroide da cidade (bairro desconhecido) e a UI quer
+  /// ancorar o leitor.
+  ///
+  /// IMPORTANTE: não use isso pra calcular per10k de um bairro — usar
+  /// pop municipal como denominador de um bairro específico é matemática
+  /// errada. Pra isso temos `populationFor` (bairro) ou nada.
+  int? populationForCity(String? city) {
+    if (city == null || city.isEmpty) return null;
+    return _byCity?[_normalize(city)]?.population;
+  }
+
+  /// Versão para teste — injeta populações direto sem carregar asset.
+  /// Todos os valores injetados são marcados como `verified`.
+  static DensityService testWith(
+    Map<String, int> populations, {
+    Map<String, int> cities = const {},
+  }) {
     final s = DensityService._();
     s._byBairro = {
       for (final e in populations.entries)
+        _normalize(e.key): _Entry(
+          population: e.value,
+          confidence: 'verified',
+        ),
+    };
+    s._byCity = {
+      for (final e in cities.entries)
         _normalize(e.key): _Entry(
           population: e.value,
           confidence: 'verified',

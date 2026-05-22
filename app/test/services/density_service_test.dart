@@ -60,5 +60,25 @@ void main() {
       expect(svc.isEstimated(''), isNull);
       expect(svc.isEstimated(null), isNull);
     });
+
+    test('populationForCity retorna pop municipal e ignora bairros', () {
+      final svc = DensityService.testWith(
+        {'Itapuã': 123000},
+        cities: {
+          'Salvador': 2418005,
+          'Camaçari': 300372,
+          'Lauro de Freitas': 203334,
+        },
+      );
+      expect(svc.populationForCity('Salvador'), 2418005);
+      expect(svc.populationForCity('Camaçari'), 300372);
+      expect(svc.populationForCity('LAURO DE FREITAS'), 203334);
+      expect(svc.populationForCity('lauro de freitas'), 203334);
+      // Bairros não devem ser confundidos com cidades.
+      expect(svc.populationForCity('Itapuã'), isNull);
+      expect(svc.populationForCity('Cidade Inexistente'), isNull);
+      expect(svc.populationForCity(''), isNull);
+      expect(svc.populationForCity(null), isNull);
+    });
   });
 }

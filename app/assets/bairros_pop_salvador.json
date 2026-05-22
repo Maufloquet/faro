@@ -2,10 +2,33 @@
   "_meta": {
     "source_pb": "PDDU Salvador - Quadro 09 (Anexo 2). População por Prefeitura-Bairro, Censo IBGE 2010. Fonte: cms.ba.gov.br/uploads/pddu/pdduquadro09.pdf",
     "source_verified": "Bahia Notícias (Censo IBGE 2022, bairros estritos)",
-    "methodology": "Bairros com dado verificado (Censo 2022 publicado) usam o valor exato. Demais recebem estimativa = população da Prefeitura-Bairro (Censo 2010) dividida igualmente entre os bairros listados na Wikipedia (Subdivisões de Salvador). Bairros do dict do Faro que não constam em nenhuma PB ficam sem dado — a UI esconde a normalização nesse caso.",
+    "source_cities": "IBGE Cidades, Censo 2022 (populações municipais). Camaçari: 300.372; Lauro de Freitas: 203.334; Simões Filho: 114.559; Salvador: 2.418.005.",
+    "methodology": "Bairros com dado verificado (Censo 2022 publicado) usam o valor exato. Demais recebem estimativa = população da Prefeitura-Bairro (Censo 2010) dividida igualmente entre os bairros listados na Wikipedia (Subdivisões de Salvador). Bairros do dict do Faro que não constam em nenhuma PB ficam sem dado — a UI esconde a normalização nesse caso. Para municípios da RMS fora de Salvador, IBGE não publica agregação bairro-granular: registramos só população municipal em '_cities' para contexto editorial. Não adicionamos bairros granulares dessas cidades porque há colisão de nomes (ex: 'Itinga' existe em Salvador e em Lauro de Freitas) e divisão simples entre 7 bairros de Lauro daria números enganosos.",
     "caveat": "Estimativas por divisão simples não respeitam diferenças de área/densidade entre bairros da mesma PB. Use 'per10kInhabitants' como aproximação editorial, não medida estatística. Bairros com confidence='verified' têm precisão maior.",
-    "limitations": "Censo 2022 ainda não publicou agregação bairro-granular completa para Salvador. Dataset oficial da CONDER (Geodatabase v10) requer ofício formal para acesso. Reabrir esta camada quando o IBGE publicar a agregação bairro do Censo 2022.",
-    "updated": "2026-05-20"
+    "limitations": "Censo 2022 ainda não publicou agregação bairro-granular completa para Salvador. Dataset oficial da CONDER (Geodatabase v10) requer ofício formal para acesso. Camaçari, Lauro de Freitas e Simões Filho não têm PDDU com Quadro de População Por PB equivalente publicado abertamente. Reabrir esta camada quando o IBGE publicar a agregação bairro do Censo 2022.",
+    "updated": "2026-05-21"
+  },
+  "_cities": {
+    "Salvador": {
+      "population": 2418005,
+      "source": "Censo IBGE 2022",
+      "confidence": "verified"
+    },
+    "Camaçari": {
+      "population": 300372,
+      "source": "Censo IBGE 2022",
+      "confidence": "verified"
+    },
+    "Lauro de Freitas": {
+      "population": 203334,
+      "source": "Censo IBGE 2022",
+      "confidence": "verified"
+    },
+    "Simões Filho": {
+      "population": 114559,
+      "source": "Censo IBGE 2022",
+      "confidence": "verified"
+    }
   },
   "Pirajá": {
     "population": 21553,
