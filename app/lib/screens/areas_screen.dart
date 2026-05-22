@@ -387,12 +387,6 @@ class _AreaCard extends ConsumerWidget {
                   color: FaroColors.textSoft,
                 ),
               ),
-              FavoriteButton(
-                name: area.name,
-                city: null,
-                lat: area.centroidLat,
-                lng: area.centroidLng,
-              ),
             ],
           ),
           if (per10k != null)
@@ -446,7 +440,7 @@ class _AreaCard extends ConsumerWidget {
             );
           }),
           SafeArrivalCounter(lat: area.centroidLat, lng: area.centroidLng),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -472,6 +466,18 @@ class _AreaCard extends ConsumerWidget {
                   ),
                 ),
             ],
+          ),
+          const SizedBox(height: 8),
+          // Chip visível pra descoberta da feature de "Acompanhar". Antes
+          // só tinha ícone solto no header do card e ninguém percebia.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FavoriteToggleChip(
+              name: area.name,
+              city: area.city,
+              lat: area.centroidLat,
+              lng: area.centroidLng,
+            ),
           ),
         ],
       ),
@@ -860,28 +866,48 @@ class _BaselineLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = baseline;
-    if (b == null || b.trend == BaselineTrend.insufficientData) {
-      return const SizedBox.shrink();
+    if (b == null) return const SizedBox.shrink();
+    // Insufficient data não fica mais invisível — vira chip discreto com
+    // a frase "Sem histórico ainda". Antes o card silenciava por completo,
+    // o usuário não sabia se ainda não há dado ou se o componente quebrou.
+    if (b.trend == BaselineTrend.insufficientData) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8, left: 40),
+        child: Text(
+          FaroStrings.baselineInsufficientData,
+          style: const TextStyle(
+            fontSize: 11.5,
+            color: FaroColors.textHint,
+          ),
+        ),
+      );
     }
     final trendText = _trendText(b.trend);
     final avg = b.weeklyAverage.toStringAsFixed(1);
     final color = _trendColor(b.trend);
+    // Chip inline com a tendência + média semanal — sem tooltip. Passageiro
+    // de ônibus deslizando os cards consegue ler direto a inteligência
+    // editorial do app sem precisar tocar pra revelar.
     return Padding(
-      padding: const EdgeInsets.only(top: 4, left: 40),
-      child: Tooltip(
-        message: FaroStrings.baselineWeeklyAverage(avg),
+      padding: const EdgeInsets.only(top: 8, left: 40),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withAlpha(20),
+          borderRadius: BorderRadius.circular(6),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(_trendIcon(b.trend), size: 12, color: color),
-            const SizedBox(width: 4),
+            Icon(_trendIcon(b.trend), size: 13, color: color),
+            const SizedBox(width: 5),
             Flexible(
               child: Text(
-                trendText,
+                '$trendText · média ~$avg/sem',
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 12,
                   color: color,
-                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
