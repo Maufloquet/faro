@@ -77,6 +77,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   LatLng? _userPos;
   bool _alertDismissed = false;
 
+  /// Estado default quando ainda não temos GPS — Faro é focado em Salvador
+  /// no MVP. Sem isso, relatos do pool global (que agora inclui RJ/PE/SP
+  /// pela Camada 2 expandida) apareciam misturados antes da permissão
+  /// de localização ser concedida.
+  static const String _defaultStateName = 'Bahia';
+
+  /// Raio de exibição quando temos GPS. 200km cobre a RMS toda (Salvador
+  /// + Camaçari + Lauro + Simões) com folga, e ainda funciona pra usuário
+  /// em qualquer outra capital coberta (corta relatos de outras regiões).
+  static const double _regionRadiusKm = 200;
+
   // Telemetria de zoom: log apenas quando bate um novo máximo de sessão.
   double _maxZoomLogged = 0;
   // Última quantidade de alertas de proximidade reportada — evita logar
@@ -112,11 +123,30 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   bool _matchesFilters(Occurrence o) {
     if (!_window.includes(o.date)) return false;
+    if (!_passesRegionFilter(o)) return false;
     if (_activeReasons.isNotEmpty && !_activeReasons.contains(o.mainReason)) {
       return false;
     }
     if (!_passesAheadFilter(o)) return false;
     return true;
+  }
+
+  /// Filtro regional — corta relatos de outros estados/regiões que
+  /// aparecem no pool global desde que a Camada 2 expandiu pra
+  /// RJ/PE/SP. Lógica:
+  ///   - Com GPS: relato precisa estar dentro de `_regionRadiusKm` da
+  ///     posição do usuário. Cobre RMS toda quando o usuário está em
+  ///     Salvador, e funciona em qualquer outra capital coberta.
+  ///   - Sem GPS (permissão pendente, primeiro boot): default editorial
+  ///     `_defaultStateName` = Bahia. App é focado em Salvador no MVP.
+  bool _passesRegionFilter(Occurrence o) {
+    final pos = _userPos;
+    if (pos == null) {
+      return (o.state ?? '').toLowerCase() ==
+          _defaultStateName.toLowerCase();
+    }
+    final km = haversineKm(pos.latitude, pos.longitude, o.latitude, o.longitude);
+    return km <= _regionRadiusKm;
   }
 
   /// Filtro "à minha frente" — só ativo em modo carro/bike E em
@@ -728,62 +758,17 @@ class _Map extends StatelessWidget {
               ..._infraMarkers(),
               ..._drivingMarker(),
             },
-      // Heatmap nativo funciona bem no iOS. No Android o suporte é
-      // inconsistente — usamos cluster circles como fallback. Em zoom-in
-      // (asHeatmap=false), só os círculos de incerteza dos centroides.
-      circles: asHeatmap ? _clusterCircles() : _uncertaintyCircles(),
+      // Heatmap nativo do google_maps_flutter ≥ 2.6 funciona em iOS e
+      // Android. Em vista panorâmica (asHeatmap=true) só o heatmap, sem
+      // círculos por cima — evita aquele visual de "bolas" sobrepostas.
+      // Em zoom-in (asHeatmap=false), apenas círculos de incerteza dos
+      // centroides de cidade.
+      circles: asHeatmap ? const {} : _uncertaintyCircles(),
       heatmaps: asHeatmap ? _heatmaps() : const {},
       onMapCreated: onCreated,
       onCameraMove: onCameraMove,
       onCameraIdle: onCameraIdle,
     );
-  }
-
-  Set<Circle> _clusterCircles() {
-    if (occurrences.isEmpty) return const {};
-    // Agrupa por célula de ~5km (1° latitude ≈ 111km, então 0.045° ≈ 5km)
-    final clusters = <String, List<Occurrence>>{};
-    for (final o in occurrences) {
-      final key =
-          '${(o.latitude / 0.045).floor()},${(o.longitude / 0.045).floor()}';
-      clusters.putIfAbsent(key, () => []).add(o);
-    }
-
-    final result = <Circle>{};
-    for (final entry in clusters.entries) {
-      final items = entry.value;
-      final count = items.length;
-      // Centroide ponderado
-      final lat = items.map((o) => o.latitude).fold(0.0, (a, b) => a + b) / count;
-      final lng = items.map((o) => o.longitude).fold(0.0, (a, b) => a + b) / count;
-
-      // Paleta surge-style: amarelo claro → laranja → vermelho conforme densidade
-      Color color;
-      if (count >= 20) {
-        color = const Color(0xFF8B0000);
-      } else if (count >= 10) {
-        color = const Color(0xFFD93030);
-      } else if (count >= 5) {
-        color = const Color(0xFFFF6B3D);
-      } else if (count >= 2) {
-        color = const Color(0xFFFFA646);
-      } else {
-        color = const Color(0xFFFFD56A);
-      }
-
-      // Raio escala com a contagem, com piso e teto
-      final radius = (500 + count * 60.0).clamp(500.0, 2500.0);
-
-      result.add(Circle(
-        circleId: CircleId('cluster-${entry.key}'),
-        center: LatLng(lat, lng),
-        radius: radius,
-        fillColor: color.withValues(alpha: 0.40),
-        strokeColor: color.withValues(alpha: 0.70),
-        strokeWidth: 1,
-      ));
-    }
-    return result;
   }
 
   Set<Circle> _uncertaintyCircles() {
@@ -959,25 +944,36 @@ class _Map extends StatelessWidget {
 
   Set<Heatmap> _heatmaps() {
     if (occurrences.isEmpty) return const {};
-    final points = occurrences
-        .map((o) => WeightedLatLng(LatLng(o.latitude, o.longitude)))
-        .toList(growable: false);
+    // Peso por recência: relatos novos pesam mais. Sem isso, um relato
+    // de 25 dias atrás influencia tanto quanto um de hoje — o heatmap
+    // vira foto antiga. Decaimento simples por horas até 30 dias.
+    final now = DateTime.now();
+    final points = occurrences.map((o) {
+      final hours = now.difference(o.date).inHours.clamp(0, 24 * 30);
+      // 1.0 (agora) → ~0.2 (30 dias). Linear é mais previsível que log
+      // pra ajustar visualmente.
+      final weight = 1.0 - 0.8 * (hours / (24.0 * 30.0));
+      return WeightedLatLng(LatLng(o.latitude, o.longitude), weight: weight);
+    }).toList(growable: false);
     return {
       Heatmap(
         heatmapId: const HeatmapId('faro_occurrences'),
         data: points,
-        radius: const HeatmapRadius.fromPixels(80),
-        opacity: 0.85,
-        // Paleta estilo \"surge\" do Uber: transparente nas bordas, amarelo
-        // suave em densidade baixa, laranja em densidade média, vermelho
-        // intenso onde concentra. Sem verde nem azul-base — evita tingir
-        // o mapa inteiro.
+        // Raio maior funde blobs vizinhos em manchas contínuas (estilo
+        // surge do Uber) em vez de bolinhas individuais legíveis.
+        radius: const HeatmapRadius.fromPixels(60),
+        // Paleta surge: transparente nas pontas, amarelo→laranja→vermelho
+        // sem verde nem azul. Mais paradas próximas dão transição suave
+        // sem hard edges entre faixas.
         gradient: const HeatmapGradient([
           HeatmapGradientColor(Color(0x00FFE082), 0.0),
-          HeatmapGradientColor(Color(0xFFFFD56A), 0.15),
-          HeatmapGradientColor(Color(0xFFFFA646), 0.35),
-          HeatmapGradientColor(Color(0xFFFF6B3D), 0.6),
-          HeatmapGradientColor(Color(0xFFD93030), 0.85),
+          HeatmapGradientColor(Color(0x33FFD56A), 0.08),
+          HeatmapGradientColor(Color(0x99FFC04D), 0.20),
+          HeatmapGradientColor(Color(0xCCFFA646), 0.35),
+          HeatmapGradientColor(Color(0xE6FF8A3D), 0.50),
+          HeatmapGradientColor(Color(0xF2FF6B3D), 0.65),
+          HeatmapGradientColor(Color(0xFFE94A30), 0.80),
+          HeatmapGradientColor(Color(0xFFD93030), 0.92),
           HeatmapGradientColor(Color(0xFF8B0000), 1.0),
         ]),
       ),
