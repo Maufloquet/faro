@@ -81,6 +81,7 @@ exports.ingestOsmNotes = onSchedule(
   {
     schedule: "every day 03:30",
     timeZone: "America/Bahia",
+    region: "southamerica-east1",
     memory: "256MiB",
     timeoutSeconds: 300,
   },
@@ -91,8 +92,15 @@ exports.ingestOsmNotes = onSchedule(
     const stats = { fetched: 0, kept: 0, written: 0, skipped: 0 };
     const seen = new Set();
 
-    for (const keyword of KEYWORDS) {
-      const notes = await fetchNotesForKeyword(keyword);
+    // Paralelo: 9 fetches contra OSM API. fetchNotesForKeyword tem
+    // try/catch interno e devolve [] em erro, então Promise.all é seguro.
+    // OSM Notes API tem rate limit alto (~10k/dia compartilhado); 9 em
+    // burst é negligível. Ganho: 9× menos wall time quando a API tá lenta.
+    const allBatches = await Promise.all(
+      KEYWORDS.map((k) => fetchNotesForKeyword(k))
+    );
+
+    for (const notes of allBatches) {
       stats.fetched += notes.length;
 
       for (const note of notes) {

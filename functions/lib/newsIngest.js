@@ -95,17 +95,31 @@ exports.ingestNewsBahia = onSchedule(
       errors: 0,
     };
 
-    for (const source of sources) {
-      try {
-        const result = await ingestFromSource(db, source);
-        stats.itemsFetched += result.fetched;
-        stats.itemsNew += result.newItems;
-        stats.itemsClassified += result.classified;
-        stats.itemsWritten += result.written;
-        stats.itemsSkipped += result.skipped;
-      } catch (e) {
-        stats.errors++;
-        logger.error(`Falha em ${source.id}: ${e.message}`, { source: source.id });
+    // Processamento em chunks paralelos. 24+ sources em série encostava
+    // no timeout de 540s quando Groq ficava lento. Chunks de 4 sources
+    // simultâneas limitam pico de paralelismo no Groq (8 items × 4 srcs =
+    // ~32 calls em pico curto) e ainda cortam o wall time em ~4x.
+    const CONCURRENCY = 4;
+    for (let i = 0; i < sources.length; i += CONCURRENCY) {
+      const chunk = sources.slice(i, i + CONCURRENCY);
+      const results = await Promise.allSettled(
+        chunk.map((source) => ingestFromSource(db, source))
+      );
+      for (let j = 0; j < results.length; j++) {
+        const r = results[j];
+        const source = chunk[j];
+        if (r.status === "fulfilled") {
+          stats.itemsFetched += r.value.fetched;
+          stats.itemsNew += r.value.newItems;
+          stats.itemsClassified += r.value.classified;
+          stats.itemsWritten += r.value.written;
+          stats.itemsSkipped += r.value.skipped;
+        } else {
+          stats.errors++;
+          logger.error(`Falha em ${source.id}: ${r.reason?.message || r.reason}`, {
+            source: source.id,
+          });
+        }
       }
     }
 
