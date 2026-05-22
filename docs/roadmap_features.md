@@ -38,30 +38,31 @@ Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado
 **Detalhes:** Auditoria caso a caso. SSP-BA via Transparência Bahia (painel, sem API estruturada). ISP-RJ tem dados abertos maduros. SDS-PE via Fogo Cruzado.
 
 ### Camada 6 — OSM Overpass (contexto urbano)
-**Status:** Implementada em 2026-05-21 — pontos de ônibus, delegacias, hospitais, postes de iluminação, comércio 24h
+**Status:** Implementada em 2026-05-21 (cron semanal adicionado em 2026-05-21)
 **Peso editorial:** alto — destrava o discurso "Faro mostra infraestrutura, não veredito"
 **Detalhes:**
 - Pontos de ônibus já estavam (`fetchOsmBusStops`, doc `/osm/bus_stops`).
-- 4 novas categorias via `fetchOsmInfra` (`functions/lib/osmInfraIngest.js`), invocação manual one-shot (`curl -X POST` ou `?kinds=police,hospitals,…`). Cada uma vira doc em `/osm/{kind}`: `police`, `hospitals`, `street_lamps`, `commerce_24h`.
+- 4 categorias via `fetchOsmInfra` (HTTP manual, `?kinds=police,hospitals,…`) e `syncOsmInfra` (scheduler semanal, segunda 04:30) em `functions/lib/osmInfraIngest.js`. Cada uma vira doc em `/osm/{kind}`: `police`, `hospitals`, `street_lamps`, `commerce_24h`. O core (`runInfraSync`) é compartilhado entre os dois pontos de entrada.
 - Bbox da RMS (Salvador + Camaçari + Lauro + Simões) pra delegacias/hospitais/comércio; bbox menor (Salvador urbano) pra postes — `highway=street_lamp` tem milhares de nós e a RMS inteira poluiria sem ganho.
 - Cliente Flutter: `OsmInfra` (modelo único com factory), `osmInfraProvider(kind)` (Riverpod família, lazy). Toggle individual por camada no `LayersSheet`, com nota editorial explicando que cobertura OSM é desigual.
 - Cada categoria tem zoom mínimo próprio (`_infraMinZoom` em `map_screen.dart`): delegacias/hospitais a partir de 13, comércio 14, postes 16.5 — evita poluir vista panorâmica.
 - Markers em cores neutras (azul polícia, rosa hospitais, verde comércio, amarelo postes) com `InfoWindow` mostrando nome + tag relevante (operator, emergency, brand). Postes não têm InfoWindow (só posição importa).
 - 10 testes unitários cobrem o parser em `functions/test/osmInfraIngest.test.js`.
-- **TODO**: cron periódico (atualmente é manual). Combina com features V2 de passageiros de ônibus.
 
 ### Camada 7 — IBGE: densidade populacional por bairro
-**Status:** Cobertura expandida em 2026-05-20 (129/159 bairros de Salvador, com sinalização de incerteza)
+**Status:** Cobertura expandida em 2026-05-20 (129/159 bairros de Salvador) + populações municipais da RMS adicionadas em 2026-05-21
 **Peso editorial:** crítico — blinda Faro de viés territorial
 **Detalhes:**
-- Asset `app/assets/bairros_pop_salvador.json` agora cobre 129 dos 159 bairros do dict do Faro. Schema enriquecido por entrada: `{population, source, confidence}`.
+- Asset `app/assets/bairros_pop_salvador.json` cobre 129 dos 159 bairros do dict de Salvador. Schema por entrada: `{population, source, confidence}`.
 - Dois níveis de confiança:
   - `verified` — valor publicado pelo Censo 2022 via imprensa (Itapuã, Pituba, Pernambués por ora).
   - `estimated` — população da Prefeitura-Bairro do PDDU (Censo 2010, fonte cms.ba.gov.br/uploads/pddu/pdduquadro09.pdf) dividida igualmente entre os bairros listados na Wikipedia (Subdivisões de Salvador).
-- 30 bairros do dict não constam em nenhuma PB da Wikipedia e ficam sem dado — UI esconde a normalização nesse caso.
-- `DensityService` mantém a mesma API (`populationFor`, `per10kInhabitants`) e ganha `isEstimated(bairro)` pra que a UI possa diferenciar visualmente (ex: "~" antes do número, ou tooltip explicando a metodologia).
-- Exposição na UI: `AreasScreen` exibe `~X.X relatos por 10 mil habitantes` em cada card de bairro. `OccurrenceDetailSheet` mostra a população do bairro como contexto editorial (`~X mil habitantes`). Ambas em linha discreta com `~` para estimativas e tooltip distinguindo as fontes. Implementado em 2026-05-20.
-- **TODO**: adicionar Camaçari/Lauro/Simões; quando Censo 2022 sair com agregação bairro-granular, substituir as estimativas por valores `verified`; pedir o dataset oficial CONDER por ofício pra refinar a distribuição dentro das PBs.
+- 30 bairros do dict de Salvador não constam em nenhuma PB da Wikipedia e ficam sem dado — UI esconde a normalização nesse caso.
+- Nova seção `_cities` no asset (2026-05-21) com população municipal dos 4 municípios da RMS (Censo 2022 IBGE): Salvador 2.418.005, Camaçari 300.372, Lauro de Freitas 203.334, Simões Filho 114.559. Permite contexto editorial pra relatos que caem no centroide de cidade (bairro=null).
+- `DensityService` mantém `populationFor`, `per10kInhabitants`, `isEstimated(bairro)` e ganha `populationForCity(city)`. A doc do método deixa explícito: **não use pop municipal como denominador de per10k de bairro** — é matemática errada.
+- Exposição na UI: `AreasScreen` exibe `~X.X relatos por 10 mil habitantes` em cada card de bairro. `OccurrenceDetailSheet` mostra a população do bairro como contexto editorial (`~X mil habitantes`). Ambas em linha discreta com `~` para estimativas e tooltip distinguindo as fontes.
+- **Decisão de design (2026-05-21):** *não* adicionamos bairros granulares de Camaçari/Lauro/Simões porque (a) há colisão de nomes (ex: "Itinga" existe em Salvador e em Lauro), e (b) divisão simples entre poucos bairros do dict daria números enganosos. População municipal cobre o contexto editorial sem inventar dados.
+- **TODO**: quando Censo 2022 sair com agregação bairro-granular, substituir as estimativas de Salvador por valores `verified`; pedir o dataset oficial CONDER por ofício pra refinar a distribuição dentro das PBs; usar `populationForCity` na UI pra ancorar relatos com bairro=null da RMS.
 
 ---
 
@@ -170,13 +171,14 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 **Detalhes:** Entre zoom 14.5 e 17 (`_heatmapZoomThreshold` → `_clusterCeilingZoom`), agrupa por célula dimensionada pra ~80px na tela. Cluster vira badge com count + anel da cor do `RiskLevel` máximo. Tap zoom-in 2 níveis. Ícones pré-bakeados (45 = 9 strings × 5 risks) em `ClusterMarkerFactory`. Rebuild via `onCameraIdle` quando zoom muda > 0.3.
 
 ### Sistema de contestação real
-**Status:** Loop completo fechado em 2026-05-20
+**Status:** Loop completo fechado em 2026-05-20 + moderação reversa (onWrite) em 2026-05-21
 **Detalhes:**
 - Cliente: `ContestationScreen` com 5 motivos pré-prontos + campo livre. `ContestationService` (Riverpod) escreve em Firestore via Anonymous Auth — usuário sem cadastro mas com UID estável.
-- Server: Cloud Function `onContestationCreated` (`functions/lib/contestationAggregator.js`) é disparada por criação de doc em `/contestations`, agrega todas as contestações da ocorrência e grava no doc da ocorrência: `contestationCount`, `contestationDistinctUsers`, `contestationReasonBreakdown`, `contestationsLastUpdated`. Quando `distinctUsers >= 3` (threshold conservador anti-abuso, conta UIDs distintos), marca também `contested: true` e `contestedAt`.
+- Server: Cloud Function `onContestationWritten` (`functions/lib/contestationAggregator.js`) é disparada por **qualquer** escrita em `/contestations` (create/update/delete), agrega todas as contestações da ocorrência e grava no doc da ocorrência: `contestationCount`, `contestationDistinctUsers`, `contestationReasonBreakdown`, `contestationsLastUpdated`. Quando `distinctUsers >= 3` (threshold conservador anti-abuso, conta UIDs distintos), marca também `contested: true` e `contestedAt`. Se o agregado cair abaixo do threshold (moderador apagou contestações abusivas, usuário desfez a sua), o flag `contested` é removido com `FieldValue.delete()` — mantém o estado coerente.
 - Cliente lê esses campos via `Occurrence.fromFirestore` (`contestationDistinctUsers`, `contested`) e a `OccurrenceDetailSheet` mostra um banner discreto: tom neutro abaixo do threshold, atenção visível quando contestado.
+- Rules Firestore (`/contestations`) bloqueiam delete/update pelo cliente — moderação reversa fica restrita ao Console Firebase ou Admin SDK.
 - 6 testes unitários na lógica pura de agregação (`functions/test/contestationAggregator.test.js`).
-- **TODO V2**: virar `onWrite` pra suportar deleção de contestações (moderação reversa), expor `contestationReasonBreakdown` em uma view de moderação interna.
+- **TODO V2**: expor `contestationReasonBreakdown` em uma view de moderação interna.
 
 ### Onboarding de 1 tela com aceite de termos
 **Status:** Implementado em 2026-05-11 (commit 3d9950c)
