@@ -70,6 +70,7 @@ class FaroStrings {
   // ─── Aceite e botão ───────────────────────────────────────────────────
   static String get acceptanceText => _t('acceptance.text');
   static String get acceptanceCta => _t('acceptance.cta');
+  static String get acceptanceSkip => _t('acceptance.skip');
 
   // ─── Disclaimers genéricos ────────────────────────────────────────────
   static String get silenceDisclaimer => _t('disclaimer.silence');
@@ -237,6 +238,11 @@ class FaroStrings {
   static String get mapSearchHint => _t('map.search_hint');
   static String get mapAreasTooltip => _t('map.areas_tooltip');
   static String get mapLocationFailed => _t('map.location_failed');
+  static String get locationErrorTitle => _t('location.error.title');
+  static String get locationErrorOpenSettings =>
+      _t('location.error.open_settings');
+  static String get locationErrorTryAgain => _t('location.error.try_again');
+  static String get locationErrorDismiss => _t('location.error.dismiss');
   static String get mapBusStop => _t('map.bus_stop');
   static String get mapBusStopShelter => _t('map.bus_stop.shelter');
   static String get mapBusStopBench => _t('map.bus_stop.bench');
@@ -245,6 +251,8 @@ class FaroStrings {
   static String get baselineTrendUp => _t('baseline.trend.up');
   static String get baselineTrendDown => _t('baseline.trend.down');
   static String get baselineTrendStable => _t('baseline.trend.stable');
+  static String get baselineInsufficientData =>
+      _t('baseline.insufficient_data');
   static String baselineWeeklyAverage(String value) =>
       _t('baseline.weekly_average').replaceAll('{v}', value);
   static String get mapPolice => _t('map.police');
@@ -504,6 +512,9 @@ class FaroStrings {
       _t('favorites.removed').replaceAll('{name}', name);
   static String get favoritesActionAdd => _t('favorites.action.add');
   static String get favoritesActionRemove => _t('favorites.action.remove');
+  static String get favoritesFollowLabel => _t('favorites.follow.label');
+  static String get favoritesFollowingLabel =>
+      _t('favorites.following.label');
 
   static String get languageTitle => _t('language.title');
   static String get languageAuto => _t('language.auto');
@@ -588,6 +599,7 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.text':
         'Entendi os princípios acima e concordo em usar o Faro como complemento à minha atenção, não substituto.',
     'acceptance.cta': 'Entendi, abrir o mapa',
+    'acceptance.skip': 'Ver o mapa antes (princípios continuam em Sobre)',
     'disclaimer.silence': 'Silêncio nos dados não é silêncio nas ruas',
     'disclaimer.not_a_ranking': 'Isto NÃO é um ranking de risco',
     'slogan': 'Contexto. Não veredito.',
@@ -718,6 +730,10 @@ const Map<String, Map<String, String>> _table = {
     'map.search_hint': 'Buscar bairro em Salvador',
     'map.areas_tooltip': 'Atividade por área',
     'map.location_failed': 'Não foi possível obter sua localização agora.',
+    'location.error.title': 'Localização',
+    'location.error.open_settings': 'Abrir configurações',
+    'location.error.try_again': 'Tentar de novo',
+    'location.error.dismiss': 'Agora não',
     'map.bus_stop': 'Ponto de ônibus',
     'map.bus_stop.shelter': 'cobertura',
     'map.bus_stop.bench': 'banco',
@@ -727,6 +743,7 @@ const Map<String, Map<String, String>> _table = {
     'baseline.trend.down': 'abaixo da média histórica do bairro',
     'baseline.trend.stable': 'em linha com a média histórica do bairro',
     'baseline.weekly_average': 'média histórica: {v} por semana',
+    'baseline.insufficient_data': 'sem histórico suficiente ainda',
     'map.police': 'Delegacia',
     'map.hospital': 'Hospital',
     'map.hospital.emergency': 'pronto-socorro',
@@ -738,7 +755,7 @@ const Map<String, Map<String, String>> _table = {
     'sheet.scope.in': 'em {window}',
     'sheet.empty.title': 'Sem relatos {scope}.',
     'sheet.empty.body':
-        'Isso não significa que está seguro — significa que ninguém reportou nada nessa janela. Mantenha atenção.',
+        'Pode ser que ninguém tenha reportado nessa janela, ou que a cobertura editorial ainda não chegue por aqui. Não é confirmação de que está calmo — é silêncio nos dados.',
     'sheet.empty.button': 'Ver tudo o que temos',
     'sheet.summary.empty': 'Sem relatos{scope}',
     'sheet.summary.one': '{count} relato{scope}',
@@ -934,6 +951,8 @@ const Map<String, Map<String, String>> _table = {
     'favorites.removed': 'Removido: {name}',
     'favorites.action.add': 'Adicionar aos favoritos',
     'favorites.action.remove': 'Remover dos favoritos',
+    'favorites.follow.label': 'Acompanhar',
+    'favorites.following.label': 'Acompanhando',
     'language.title': 'Idioma',
     'language.auto': 'Automático (do celular)',
     'language.auto.current': 'Atualmente: {name}',
@@ -962,6 +981,7 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.text':
         'I understand the principles above and agree to use Faro as a complement to my attention, not a replacement.',
     'acceptance.cta': 'Got it, open the map',
+    'acceptance.skip': 'See the map first (principles stay in About)',
     'disclaimer.silence': 'Silence in the data is not silence on the streets',
     'disclaimer.not_a_ranking': 'This is NOT a risk ranking',
     'slogan': 'Context. Not verdict.',
@@ -1090,6 +1110,10 @@ const Map<String, Map<String, String>> _table = {
     'map.search_hint': 'Search neighborhood in Salvador',
     'map.areas_tooltip': 'Activity by area',
     'map.location_failed': 'Could not get your location right now.',
+    'location.error.title': 'Location',
+    'location.error.open_settings': 'Open settings',
+    'location.error.try_again': 'Try again',
+    'location.error.dismiss': 'Not now',
     'map.bus_stop': 'Bus stop',
     'map.bus_stop.shelter': 'shelter',
     'map.bus_stop.bench': 'bench',
@@ -1099,6 +1123,7 @@ const Map<String, Map<String, String>> _table = {
     'baseline.trend.down': 'below the neighborhood historical average',
     'baseline.trend.stable': 'in line with the neighborhood historical average',
     'baseline.weekly_average': 'historical average: {v} per week',
+    'baseline.insufficient_data': 'not enough history yet',
     'map.police': 'Police station',
     'map.hospital': 'Hospital',
     'map.hospital.emergency': 'emergency room',
@@ -1110,7 +1135,7 @@ const Map<String, Map<String, String>> _table = {
     'sheet.scope.in': 'in {window}',
     'sheet.empty.title': 'No reports {scope}.',
     'sheet.empty.body':
-        'This does not mean it is safe — it means nobody reported anything in this window. Stay alert.',
+        'It can mean that nobody reported anything in this window, or that editorial coverage has not reached here yet. This is not confirmation that things are calm — it is silence in the data.',
     'sheet.empty.button': 'See everything we have',
     'sheet.summary.empty': 'No reports{scope}',
     'sheet.summary.one': '{count} report{scope}',
@@ -1306,6 +1331,8 @@ const Map<String, Map<String, String>> _table = {
     'favorites.removed': 'Removed: {name}',
     'favorites.action.add': 'Add to favorites',
     'favorites.action.remove': 'Remove from favorites',
+    'favorites.follow.label': 'Follow',
+    'favorites.following.label': 'Following',
     'language.title': 'Language',
     'language.auto': 'Automatic (device default)',
     'language.auto.current': 'Currently: {name}',
@@ -1334,6 +1361,7 @@ const Map<String, Map<String, String>> _table = {
     'acceptance.text':
         'Entiendo los principios anteriores y acepto usar Faro como complemento a mi atención, no como sustituto.',
     'acceptance.cta': 'Entendido, abrir el mapa',
+    'acceptance.skip': 'Ver el mapa antes (los principios siguen en Acerca)',
     'disclaimer.silence': 'El silencio en los datos no es silencio en la calle',
     'disclaimer.not_a_ranking': 'Esto NO es un ranking de riesgo',
     'slogan': 'Contexto. No veredicto.',
@@ -1464,6 +1492,10 @@ const Map<String, Map<String, String>> _table = {
     'map.search_hint': 'Buscar barrio en Salvador',
     'map.areas_tooltip': 'Actividad por zona',
     'map.location_failed': 'No fue posible obtener tu ubicación ahora.',
+    'location.error.title': 'Ubicación',
+    'location.error.open_settings': 'Abrir ajustes',
+    'location.error.try_again': 'Intentar de nuevo',
+    'location.error.dismiss': 'Ahora no',
     'map.bus_stop': 'Parada de autobús',
     'map.bus_stop.shelter': 'techo',
     'map.bus_stop.bench': 'banco',
@@ -1473,6 +1505,7 @@ const Map<String, Map<String, String>> _table = {
     'baseline.trend.down': 'por debajo del promedio histórico del barrio',
     'baseline.trend.stable': 'en línea con el promedio histórico del barrio',
     'baseline.weekly_average': 'promedio histórico: {v} por semana',
+    'baseline.insufficient_data': 'sin suficiente historial aún',
     'map.police': 'Comisaría',
     'map.hospital': 'Hospital',
     'map.hospital.emergency': 'urgencias',
@@ -1484,7 +1517,7 @@ const Map<String, Map<String, String>> _table = {
     'sheet.scope.in': 'en {window}',
     'sheet.empty.title': 'Sin reportes {scope}.',
     'sheet.empty.body':
-        'Esto no significa que sea seguro — significa que nadie reportó nada en esta ventana. Mantén la atención.',
+        'Puede ser que nadie haya reportado en esta ventana, o que la cobertura editorial aún no llegue aquí. No es confirmación de que esté calmado — es silencio en los datos.',
     'sheet.empty.button': 'Ver todo lo que tenemos',
     'sheet.summary.empty': 'Sin reportes{scope}',
     'sheet.summary.one': '{count} reporte{scope}',
@@ -1680,6 +1713,8 @@ const Map<String, Map<String, String>> _table = {
     'favorites.removed': 'Eliminado: {name}',
     'favorites.action.add': 'Agregar a favoritos',
     'favorites.action.remove': 'Quitar de favoritos',
+    'favorites.follow.label': 'Seguir',
+    'favorites.following.label': 'Siguiendo',
     'language.title': 'Idioma',
     'language.auto': 'Automático (del celular)',
     'language.auto.current': 'Actualmente: {name}',

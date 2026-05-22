@@ -107,6 +107,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(FaroStrings.acceptanceCta),
                 ),
               ),
+              const SizedBox(height: 8),
+              // Saída secundária pra quem chegou no app e quer ver o mapa
+              // antes de ler os princípios. O aceite formal continua sendo
+              // pedido em qualquer feature que escreva pra cloud (UGC, FCM,
+              // login). Princípios continuam visíveis em /sobre/.
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: _complete,
+                  style: TextButton.styleFrom(
+                    foregroundColor: FaroColors.textMuted,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    textStyle: const TextStyle(fontSize: 13.5),
+                  ),
+                  child: Text(FaroStrings.acceptanceSkip),
+                ),
+              ),
             ],
           ),
         ),
