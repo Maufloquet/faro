@@ -43,19 +43,35 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Contestations — usuário autenticado (mesmo anonymous) pode criar.
-    // Leitura bloqueada: visíveis só via admin/dashboard (V2).
-    // Campos obrigatórios + tamanho máximo do detail evitam abuso.
+    // Contestations — usuário autenticado (mesmo anonymous) pode criar
+    // ou atualizar a própria contestação (mudou de ideia sobre o motivo).
+    //
+    // Rate limit grátis via doc id determinístico: contestationId precisa
+    // ser exatamente '{uid}_{occurrenceId}'. Resultado: 1 contestação por
+    // usuário por ocorrência, no máximo. Spam fica limitado ao número de
+    // ocorrências ativas. Aggregator do server conta UIDs distintos, então
+    // o resultado não muda — só impede inflar count com lixo.
+    //
+    // Leitura bloqueada: visíveis só via admin/dashboard. Delete bloqueado
+    // pelo cliente — moderação reversa é via Console Firebase / Admin SDK.
     match /contestations/{contestationId} {
       allow read: if false;
       allow create: if request.auth != null
         && request.resource.data.occurrenceId is string
         && request.resource.data.reason is string
         && request.resource.data.submittedBy == request.auth.uid
+        && contestationId == request.auth.uid + '_' + request.resource.data.occurrenceId
         && (request.resource.data.detail == null
             || (request.resource.data.detail is string
                 && request.resource.data.detail.size() < 500));
-      allow update, delete: if false;
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.submittedBy
+        && request.resource.data.occurrenceId == resource.data.occurrenceId
+        && request.resource.data.submittedBy == resource.data.submittedBy
+        && (request.resource.data.detail == null
+            || (request.resource.data.detail is string
+                && request.resource.data.detail.size() < 500));
+      allow delete: if false;
     }
 
     // Safe arrivals — "Cheguei bem". Sinal POSITIVO anônimo, agregado

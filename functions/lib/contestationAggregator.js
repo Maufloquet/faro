@@ -80,37 +80,48 @@ exports.onContestationWritten = onDocumentWritten(
     }
 
     const db = admin.firestore();
+    const occRef = db.collection("occurrences").doc(occurrenceId);
 
-    const snap = await db
-      .collection("contestations")
-      .where("occurrenceId", "==", occurrenceId)
-      .get();
+    // Wrap em transação pra evitar race em escritas concorrentes no doc
+    // da ocorrência. Quando 2+ contestações chegam quase ao mesmo tempo,
+    // dois handlers leem o estado, agregam e escrevem — sem proteção, a
+    // última escrita pode refletir um agregado parcialmente desatualizado.
+    //
+    // Lendo o doc da ocorrência DENTRO da transação, marcamos ele como
+    // "dependência": se outro handler commitar antes de nós, Firestore
+    // faz retry automático (até 5x). No retry, a query de contestações
+    // pega o estado mais fresco.
+    const agg = await db.runTransaction(async (tx) => {
+      await tx.get(occRef);
 
-    const contestations = snap.docs.map((d) => d.data());
-    const agg = aggregate(contestations);
+      const snap = await db
+        .collection("contestations")
+        .where("occurrenceId", "==", occurrenceId)
+        .get();
 
-    const update = {
-      contestationCount: agg.contestationCount,
-      contestationDistinctUsers: agg.contestationDistinctUsers,
-      contestationReasonBreakdown: agg.contestationReasonBreakdown,
-      contestationsLastUpdated:
-        admin.firestore.FieldValue.serverTimestamp(),
-    };
-    if (agg.contested) {
-      update.contested = true;
-      update.contestedAt = admin.firestore.FieldValue.serverTimestamp();
-    } else {
-      // Caiu abaixo do threshold (moderação removeu contestações abusivas
-      // ou usuário desfez a sua). Tira o flag pro cliente não exibir
-      // "contestado" indevidamente.
-      update.contested = admin.firestore.FieldValue.delete();
-      update.contestedAt = admin.firestore.FieldValue.delete();
-    }
+      const aggregated = aggregate(snap.docs.map((d) => d.data()));
 
-    await db
-      .collection("occurrences")
-      .doc(occurrenceId)
-      .set(update, { merge: true });
+      const update = {
+        contestationCount: aggregated.contestationCount,
+        contestationDistinctUsers: aggregated.contestationDistinctUsers,
+        contestationReasonBreakdown: aggregated.contestationReasonBreakdown,
+        contestationsLastUpdated:
+          admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (aggregated.contested) {
+        update.contested = true;
+        update.contestedAt = admin.firestore.FieldValue.serverTimestamp();
+      } else {
+        // Caiu abaixo do threshold (moderação removeu contestações abusivas
+        // ou usuário desfez a sua). Tira o flag pro cliente não exibir
+        // "contestado" indevidamente.
+        update.contested = admin.firestore.FieldValue.delete();
+        update.contestedAt = admin.firestore.FieldValue.delete();
+      }
+
+      tx.set(occRef, update, { merge: true });
+      return aggregated;
+    });
 
     logger.info("contestation aggregated", {
       occurrenceId,

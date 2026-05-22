@@ -36,6 +36,11 @@ class ContestationService {
   /// Grava uma contestação no Firestore.
   /// O detalhe é opcional. UID anônimo do usuário é gravado pra rastrear
   /// abuso (mesmo dispositivo contestando 100 relatos seguidos = sinal).
+  ///
+  /// Doc id é determinístico — `{uid}_{occurrenceId}` — pra impedir que o
+  /// mesmo usuário spam várias contestações da mesma ocorrência (rate
+  /// limit grátis via primary key). Resubmeter sobrescreve o motivo, o
+  /// que é o comportamento esperado: usuário corrigindo intenção.
   Future<void> submit({
     required String occurrenceId,
     required ContestationReason reason,
@@ -46,7 +51,8 @@ class ContestationService {
       throw const ContestationException('Sem identificação. Tente novamente.');
     }
 
-    await _db.collection('contestations').add({
+    final docId = '${uid}_$occurrenceId';
+    await _db.collection('contestations').doc(docId).set({
       'occurrenceId': occurrenceId,
       'reason': reason.name,
       'reasonLabel': reason.label,
