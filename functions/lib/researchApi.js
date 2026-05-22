@@ -32,13 +32,28 @@ const TIER_DAILY_LIMIT = {
 };
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 1000;
+// Janela máxima de consulta. Pesquisador que precisa de série histórica
+// paginar por meses consecutivos — evita query gigante que arrasta
+// quota Firestore num único request.
+const MAX_WINDOW_DAYS = 365;
 
 exports.getOccurrences = onRequest(
   {
-    cors: true,
+    // CORS aberto é intencional: a defesa primária é a API key (header
+    // Authorization). Pesquisadores podem consumir via curl, Python ou
+    // notebook no navegador. Sem credentials (cookies), CORS preflight
+    // não vaza autenticação — quem tiver a key consegue do server dele
+    // independente do que o browser permitir. Restringimos só os métodos
+    // pra não responder a preflights de POST/PUT/DELETE indevidamente.
+    cors: { origin: true, methods: ["GET", "OPTIONS"] },
     maxInstances: 5,
     timeoutSeconds: 60,
     memory: "256MiB",
+    // Region: us-central1 (default). NÃO movemos pra southamerica-east1
+    // como o resto das functions porque mudar region recria a função com
+    // URL nova — pesquisadores credenciados podem ter URL hardcoded em
+    // scripts. Quando publicarmos URL canônica via custom domain, dá pra
+    // mover sem impacto externo.
   },
   async (req, res) => {
     try {
@@ -57,6 +72,18 @@ exports.getOccurrences = onRequest(
       }
       if (until instanceof Error) {
         return res.status(400).json({ error: "invalid_until" });
+      }
+      if (since && until && since.getTime() >= until.getTime()) {
+        return res.status(400).json({ error: "since_must_be_before_until" });
+      }
+      if (since && until) {
+        const windowMs = until.getTime() - since.getTime();
+        if (windowMs > MAX_WINDOW_DAYS * 24 * 60 * 60 * 1000) {
+          return res.status(400).json({
+            error: "window_too_large",
+            maxDays: MAX_WINDOW_DAYS,
+          });
+        }
       }
 
       const db = admin.firestore();
