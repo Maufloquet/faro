@@ -69,15 +69,42 @@ exports.onOccurrenceCreated = onDocumentCreated(
         scope: t.scope,
         topic: t.name,
       });
-      try {
-        await admin.messaging().send(message);
-        logger.info(`FCM enviado · topic=${t.name} · type=${data.source}`);
-      } catch (e) {
-        logger.error(`FCM falhou · topic=${t.name} · ${e.message}`);
-      }
+      await sendWithRetry(message, t.name, data.source);
     }
   }
 );
+
+/**
+ * Envia mensagem FCM com retry exponencial pra falhas transientes
+ * (rate limit do FCM, instabilidade momentânea, INTERNAL errors).
+ * Códigos de erro não-recuperáveis (INVALID_ARGUMENT, mensagem mal-formada,
+ * UNREGISTERED no topic) são logados na primeira tentativa.
+ */
+async function sendWithRetry(message, topicName, sourceTag, maxAttempts = 3) {
+  const RECOVERABLE = new Set([
+    "messaging/internal-error",
+    "messaging/server-unavailable",
+    "messaging/quota-exceeded",
+    "messaging/unknown-error",
+  ]);
+  let lastError;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      await admin.messaging().send(message);
+      logger.info(`FCM enviado · topic=${topicName} · type=${sourceTag}`);
+      return;
+    } catch (e) {
+      lastError = e;
+      const code = e?.errorInfo?.code || e?.code || "";
+      if (!RECOVERABLE.has(code) || attempt === maxAttempts - 1) {
+        break;
+      }
+      const backoff = 500 * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+    }
+  }
+  logger.error(`FCM falhou · topic=${topicName} · ${lastError?.message || lastError}`);
+}
 
 function buildMessage({ title, body, occurrenceId, geohash5, scope, topic }) {
   return {

@@ -45,6 +45,8 @@ exports.cleanupOccurrences = onSchedule(
     const stats = {
       occurrencesDeleted: 0,
       newsSeenDeleted: 0,
+      occurrencesFailed: 0,
+      newsSeenFailed: 0,
     };
 
     // 1. Limpa occurrences expiradas
@@ -54,12 +56,9 @@ exports.cleanupOccurrences = onSchedule(
       .get();
 
     if (!occSnap.empty) {
-      const writer = db.bulkWriter();
-      for (const doc of occSnap.docs) {
-        writer.delete(doc.ref);
-      }
-      await writer.close();
-      stats.occurrencesDeleted = occSnap.size;
+      stats.occurrencesDeleted = await bulkDelete(db, occSnap.docs, (n) => {
+        stats.occurrencesFailed += n;
+      });
     }
 
     // 2. Limpa news_seen antigo
@@ -69,14 +68,37 @@ exports.cleanupOccurrences = onSchedule(
       .get();
 
     if (!seenSnap.empty) {
-      const writer = db.bulkWriter();
-      for (const doc of seenSnap.docs) {
-        writer.delete(doc.ref);
-      }
-      await writer.close();
-      stats.newsSeenDeleted = seenSnap.size;
+      stats.newsSeenDeleted = await bulkDelete(db, seenSnap.docs, (n) => {
+        stats.newsSeenFailed += n;
+      });
     }
 
     logger.info("Cleanup concluído", stats);
   }
 );
+
+/**
+ * Wrapper sobre bulkWriter pra contabilizar falhas parciais. Sem o
+ * `onWriteError`, deleções que falham silenciosamente entram no
+ * bulkWriter.close() sem indicação — stats vira mentira. Aqui registramos
+ * cada falha e expomos a contagem nas stats finais.
+ */
+async function bulkDelete(db, docs, onFailure) {
+  const writer = db.bulkWriter();
+  let failures = 0;
+  writer.onWriteError((err) => {
+    failures++;
+    logger.warn(
+      `bulkWriter falhou em ${err.documentRef.path}: ${err.message}`
+    );
+    // Retorno false interrompe retries do próprio writer. Preferimos
+    // não reter um item travado (causaria loop infinito) — log + move on.
+    return false;
+  });
+  for (const doc of docs) {
+    writer.delete(doc.ref);
+  }
+  await writer.close();
+  if (failures > 0) onFailure(failures);
+  return docs.length - failures;
+}
