@@ -5,7 +5,7 @@
  *
  * Por que Groq (e não Gemini, que tentamos antes):
  * - Gemini free tier limita a 250 req/DIA em 2.5 Flash. Não cobre 2.4k/dia
- *   do Faro. Tentativa documentada em geminiClient.js.
+ *   do Faro. Cliente da tentativa foi removido em 2026-05-22.
  * - Groq free tier: 14.4k req/dia + 30 req/min — folga real.
  * - Latência baixa (~500ms) ajuda quando rodando 100+ classificações em
  *   sequência dentro do timeout de 5min da Cloud Function.
