@@ -75,7 +75,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   // Posição atual do usuário pra cálculos de proximidade.
   LatLng? _userPos;
-  bool _alertDismissed = false;
+  // Dismiss do banner de proximidade — guarda os IDs dispensados pra que
+  // novas ocorrências (com ID diferente) façam o banner reaparecer.
+  // O dismiss não é permanente: expira em `_dismissTtl` pra cobrir o caso
+  // de o usuário ficar parado na zona quente sem novos relatos.
+  Set<String> _dismissedAlertIds = const {};
+  DateTime? _dismissedAt;
+  static const Duration _dismissTtl = Duration(minutes: 10);
 
   /// Estado default quando ainda não temos GPS — Faro é focado em Salvador
   /// no MVP. Sem isso, relatos do pool global (que agora inclui RJ/PE/SP
@@ -425,13 +431,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final pos = _userPos;
     if (pos == null) return const [];
     final cutoff = DateTime.now().subtract(_proximityRecency);
-    return all
+    final nearby = all
         .where((o) => o.date.isAfter(cutoff))
         .where((o) =>
             haversineKm(pos.latitude, pos.longitude, o.latitude, o.longitude) <=
             _proximityRadiusKm)
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
+
+    // Dismiss expira por tempo OU quando o conjunto de IDs próximos muda
+    // (chegou relato novo na célula). Antes, `_alertDismissed = true`
+    // suprimia o banner pra sempre na sessão — usuário fechava 1 vez e
+    // perdia o aviso de relatos chegando depois.
+    final dismissAge = _dismissedAt == null
+        ? null
+        : DateTime.now().difference(_dismissedAt!);
+    final dismissExpired = dismissAge != null && dismissAge >= _dismissTtl;
+    final nearbyIds = nearby.map((o) => o.id).toSet();
+    final dismissCoversAll =
+        _dismissedAlertIds.isNotEmpty &&
+        nearbyIds.every(_dismissedAlertIds.contains);
+
+    if (dismissExpired || !dismissCoversAll) {
+      // Reset implícito: o próximo build sai do estado dispensado sem
+      // precisar de timer/listener — barato e idempotente.
+      _dismissedAlertIds = const {};
+      _dismissedAt = null;
+      return nearby;
+    }
+    return const [];
   }
 
   /// Zoom efetivamente refletido no último rebuild — usado pra decidir se o
@@ -491,9 +519,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       unawaited(_ensureMessaging(pos.latitude, pos.longitude));
     } on LocationException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), duration: const Duration(seconds: 3)),
-      );
+      await _showLocationErrorDialog(e);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -505,6 +531,47 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     } finally {
       if (mounted) setState(() => _locating = false);
     }
+  }
+
+  /// Dialog específico por tipo de erro de GPS — guia o usuário pra ação
+  /// concreta (abrir Settings, tentar de novo, etc) em vez de snackbar
+  /// genérico que some em 3s e não diz o que fazer.
+  Future<void> _showLocationErrorDialog(LocationException e) async {
+    final String actionLabel;
+    final Future<void> Function()? action;
+    switch (e.kind) {
+      case LocationErrorKind.serviceOff:
+      case LocationErrorKind.permissionBlocked:
+        actionLabel = FaroStrings.locationErrorOpenSettings;
+        action = () => Geolocator.openAppSettings().then((_) => null);
+        break;
+      case LocationErrorKind.permissionDenied:
+      case LocationErrorKind.timeout:
+      case LocationErrorKind.unknown:
+        actionLabel = FaroStrings.locationErrorTryAgain;
+        action = () => _centerOnMe();
+        break;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(FaroStrings.locationErrorTitle),
+        content: Text(e.message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(FaroStrings.locationErrorDismiss),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              if (action != null) await action();
+            },
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -533,7 +600,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final filteredList = filtered.maybeWhen(data: (v) => v, orElse: () => const <Occurrence>[]);
     final nodes = _buildNodes(filteredList);
     final allList = raw.maybeWhen(data: (v) => v, orElse: () => const <Occurrence>[]);
-    final alerts = _alertDismissed ? const <Occurrence>[] : _proximityAlerts(allList);
+    final alerts = _proximityAlerts(allList);
 
     // Pontos de ônibus: só carrega o provider quando o toggle está ativo
     // (lazy). Markers só são renderizados acima do zoom mínimo pra não
@@ -613,7 +680,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 AnalyticsService.instance.proximityAlertTapped();
                 _openDetail(alerts.first, OccurrenceOpenEntry.proximityBanner);
               },
-              onDismiss: () => setState(() => _alertDismissed = true),
+              onDismiss: () => setState(() {
+                // Guarda os IDs vistos pra que novos relatos reapareçam,
+                // e marca o momento — expira em `_dismissTtl`.
+                _dismissedAlertIds = alerts.map((o) => o.id).toSet();
+                _dismissedAt = DateTime.now();
+              }),
             ),
           Positioned(
             top: MediaQuery.of(context).padding.top + 64 + (alerts.isNotEmpty ? 76 : 0),
