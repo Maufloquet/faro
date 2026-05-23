@@ -50,10 +50,11 @@ describe("bairrosDict.resolveBairro", () => {
     assert.equal(r, null);
   });
 
-  it("bairro válido com cidade ausente ainda casa via fallback global", () => {
+  it("bairro válido com cidade ausente retorna null (sem fallback global)", () => {
+    // REGRESSÃO 2026-05-23: o fallback inter-cidades vazava notícias do
+    // interior baiano em Salvador. Agora, sem cidade resolvida, recusa.
     const r = resolveBairro("Pirajá", null);
-    assert.ok(r);
-    assert.equal(r.cityKey, "salvador");
+    assert.equal(r, null);
   });
 
   it("query curta (<3 chars) não faz match de bairro, vai pro centroide", () => {
@@ -101,13 +102,46 @@ describe("bairrosDict.resolveBairro", () => {
     }
   });
 
-  it("fallback global com query 'Centro' resolve por exato (não substring)", () => {
-    // Quatro cidades têm 'Centro'. Sem cidade indicada, deve dar match
-    // exato — vai cair em Salvador (primeiro do hash) mas via 'exact',
-    // não pegando outros bairros que contenham 'centro' como substring.
+  it("'Centro' sem cidade retorna null (colisão entre 4 cidades é ambiguidade)", () => {
+    // REGRESSÃO 2026-05-23: "Centro" existe em Salvador, Camaçari, Lauro
+    // e Simões. Antes o fallback inter-cidades batia em Salvador
+    // (primeiro iterado), vazando notícias das outras 3 cidades em
+    // Salvador. Agora qualquer ambiguidade sem cidade explícita recusa.
     const r = resolveBairro("Centro", null);
+    assert.equal(r, null);
+  });
+
+  it("'Centro' com cidade Camaçari fica em Camaçari (não vaza pra Salvador)", () => {
+    const r = resolveBairro("Centro", "Camaçari");
     assert.ok(r);
-    assert.equal(r.method, "exact");
+    assert.equal(r.cityKey, "camacari");
     assert.equal(r.matched, "Centro");
+  });
+
+  it("'Itinga' com cidade Lauro fica em Lauro, não em Salvador", () => {
+    // Colisão real: Itinga existe nas duas. Cidade explícita decide.
+    const r = resolveBairro("Itinga", "Lauro de Freitas");
+    assert.ok(r);
+    assert.equal(r.cityKey, "lauro_de_freitas");
+  });
+
+  it("'Itinga' com cidade Salvador fica em Salvador", () => {
+    const r = resolveBairro("Itinga", "Salvador");
+    assert.ok(r);
+    assert.equal(r.cityKey, "salvador");
+  });
+
+  it("cidade fora das 4 cobertas retorna null (não chuta bairro)", () => {
+    // Feira de Santana existe no CITY_CENTROIDS pra outras coisas, mas
+    // não está coberta pela Camada 2 hoje.
+    const r = resolveBairro("Centro", "Feira de Santana");
+    assert.equal(r, null);
+  });
+
+  it("Rio de Janeiro (presente em centroids mas não coberta) retorna null", () => {
+    // Centroids mantém RJ/PE/SP pra futuras expansões, mas a whitelist
+    // bloqueia ingestão fora das 4 cidades BA.
+    const r = resolveBairro(null, "Rio de Janeiro");
+    assert.equal(r, null);
   });
 });

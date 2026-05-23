@@ -33,7 +33,7 @@ const Parser = require("rss-parser");
 const { enabledSources } = require("./newsSources");
 const { classify } = require("./groqClient");
 const { resolveBairro } = require("./bairrosDict");
-const { stateForCity } = require("./cityCentroids");
+const { stateForCity, resolveCityKey, isCoveredCity } = require("./cityCentroids");
 const { buildEventKey } = require("./eventKey");
 const { runWithHealth } = require("./jobHealth");
 const {
@@ -189,14 +189,47 @@ async function ingestFromSource(db, source) {
 
     if (!classification.security_related) { await markSeen(); continue; }
     if ((classification.confidence ?? 0) < 0.55) { await markSeen(); continue; }
-    // Cidade tem que ser uma das 4 cobertas. resolveBairro depois trata
-    // o caso de bairro ausente caindo no centroide.
+    // Cidade tem que ser uma das 4 cobertas. Whitelist explícita pra
+    // bloquear notícias do interior baiano (LLM costuma retornar
+    // "Itabuna"/"Feira", que antes vazavam pra Salvador via centroide).
     if (!classification.city) { await markSeen(); continue; }
+    const llmCityKey = resolveCityKey(classification.city);
+    if (!llmCityKey || !isCoveredCity(llmCityKey)) {
+      logger.info(
+        `Descartado por cidade fora da cobertura: city="${classification.city}"`,
+      );
+      await markSeen();
+      continue;
+    }
 
-    const geo = resolveBairro(classification.neighborhood, classification.city);
+    // Anti-hallucination: o nome da cidade retornado pelo LLM tem que
+    // aparecer no título ou na descrição (case + acento insensitive).
+    // Sem isso, o classificador 8B às vezes inferia "Salvador" só por
+    // ver "Bahia" mencionado em outro contexto. Pra bairro o mesmo —
+    // se o LLM extraiu um nome que não está no texto, rebaixamos pro
+    // centroide em vez de bater num bairro inventado.
+    const haystack = normalizeForMatch(
+      `${item.title || ""} ${item.contentSnippet || item.content || ""}`,
+    );
+    if (!cityAppearsInText(classification.city, haystack)) {
+      logger.info(
+        `Descartado: city="${classification.city}" não aparece no texto`,
+      );
+      await markSeen();
+      continue;
+    }
+    let safeNeighborhood = classification.neighborhood;
+    if (safeNeighborhood && !neighborhoodAppearsInText(safeNeighborhood, haystack)) {
+      logger.info(
+        `Rebaixa pra centroide: neighborhood="${safeNeighborhood}" não aparece no texto`,
+      );
+      safeNeighborhood = null;
+    }
+
+    const geo = resolveBairro(safeNeighborhood, classification.city);
     if (!geo) {
       logger.info(
-        `Não resolvido: bairro=\"${classification.neighborhood}\" cidade=\"${classification.city}\"`
+        `Não resolvido: bairro=\"${safeNeighborhood}\" cidade=\"${classification.city}\"`
       );
       await markSeen();
       continue;
@@ -300,16 +333,14 @@ async function ingestFromSource(db, source) {
     const docId = `media-${hash.slice(0, 16)}`;
 
     const uf = stateForCity(geo.cityKey);
-    const stateLabel = STATE_NAME_BY_UF[uf] || uf || "Bahia";
+    const stateLabel = STATE_NAME_BY_UF[uf] || uf;
 
-    // Guarda MVP: só grava relatos da Bahia. Se o classificador resolveu
-    // outra UF (matéria de portal BA que cita SP/RJ, ou source não-BA
-    // ainda ligado por engano), descartamos. markSeen mesmo assim pra
-    // não reclassificar no próximo run. Remover quando o app ganhar
-    // selector de estado na UI.
+    // Guarda MVP: só grava relatos da Bahia. SEM fallback "Bahia"
+    // hardcoded — se uf é null/desconhecido, descartamos. Antes o
+    // fallback engolia notícias indefinidas e as gravava como BA.
     if (stateLabel !== "Bahia") {
       logger.info(
-        `Descartado por estado != BA: state=${stateLabel} city=${classification.city}`
+        `Descartado por estado != BA: state=${stateLabel || "(null)"} city=${classification.city}`
       );
       await markSeen();
       continue;
@@ -451,6 +482,55 @@ function sanitizeTransportContext(raw) {
   return null;
 }
 
+/**
+ * Normaliza texto pra busca por nome de cidade/bairro: lower + remove
+ * acentos + colapsa espaços. Mantém pontuação e dígitos pra não
+ * desmontar palavras compostas (ex: "São Bernardo do Campo").
+ */
+function normalizeForMatch(text) {
+  if (!text) return "";
+  return String(text)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Confere se o nome da cidade aparece no texto da matéria. Tolera
+ * fronteira não-alfanumérica em torno do nome — "salvador," conta como
+ * "salvador". Sem isso o LLM podia retornar "Salvador" só por ver
+ * "Bahia" mencionado em algum trecho.
+ */
+function cityAppearsInText(cityName, haystackNorm) {
+  if (!cityName) return false;
+  const needle = normalizeForMatch(cityName);
+  if (needle.length === 0) return false;
+  const pattern = new RegExp(
+    `(^|[^a-z0-9])${escapeRegex(needle)}([^a-z0-9]|$)`,
+  );
+  return pattern.test(haystackNorm);
+}
+
+/**
+ * Confere se o bairro aparece no texto. Mesma lógica da cidade, separada
+ * pra deixar evolução independente (ex: bairros podem aceitar aliases).
+ */
+function neighborhoodAppearsInText(neighborhood, haystackNorm) {
+  if (!neighborhood) return false;
+  const needle = normalizeForMatch(neighborhood);
+  if (needle.length === 0) return false;
+  const pattern = new RegExp(
+    `(^|[^a-z0-9])${escapeRegex(needle)}([^a-z0-9]|$)`,
+  );
+  return pattern.test(haystackNorm);
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // Exportado para testes unitários
 exports._internal = {
   sha1,
@@ -462,4 +542,7 @@ exports._internal = {
   MAX_CORROBORATED_WEIGHT,
   sanitizeBusLines,
   sanitizeTransportContext,
+  normalizeForMatch,
+  cityAppearsInText,
+  neighborhoodAppearsInText,
 };

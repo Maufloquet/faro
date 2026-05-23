@@ -15,7 +15,7 @@
 const path = require("path");
 const fs = require("fs");
 
-const { resolveCityKey, getCentroid } = require("./cityCentroids");
+const { resolveCityKey, getCentroid, isCoveredCity } = require("./cityCentroids");
 
 const CITY_FILES = {
   salvador: "bairros_salvador.json",
@@ -140,6 +140,17 @@ function matchInDict(query, dict, opts = {}) {
 /**
  * Resolve um nome de bairro (opcional) + nome de cidade em coordenadas.
  *
+ * Princípio chave (revisão 2026-05-23): a cidade indicada pelo LLM é
+ * a única fonte de verdade pro geocoding. NÃO buscamos bairro em
+ * dicionário de outra cidade mesmo quando o nome bate exato — isso
+ * era o vetor que vazava ocorrências em Salvador (colisões como
+ * "Centro", "Itinga", "Santo Antônio" entre as 4 cidades cobertas).
+ *
+ * Se o bairro não bate no dict da cidade indicada, caímos pro centroide
+ * da cidade — perde precisão, mantém integridade (notícia de Camaçari
+ * vai pro centro de Camaçari, não pra um "Centro" arbitrário em
+ * Salvador). Se a cidade não está nas cobertas, retorna null direto.
+ *
  * @param {string|null} neighborhood - nome do bairro (pode ser null)
  * @param {string|null} cityName - nome da cidade
  * @returns {{lat, lng, matched, method, cityKey} | null}
@@ -148,57 +159,37 @@ function resolveBairro(neighborhood, cityName) {
   const dicts = load();
   const cityKey = resolveCityKey(cityName);
 
-  // Se temos bairro: tenta matchar no dicionário da cidade primeiro,
-  // depois em qualquer dicionário se cidade for ambígua.
+  // Sem cidade resolvida ou cidade fora das cobertas, retorna null.
+  // Não tentamos chutar bairro num dict aleatório — isso vazava em
+  // Salvador todas as notícias de outras cidades baianas.
+  if (!cityKey || !isCoveredCity(cityKey)) return null;
+
   if (neighborhood && typeof neighborhood === "string") {
     const query = stripAccents(neighborhood.trim().toLowerCase());
-    if (query.length >= 3) {
-      // Prioridade: dict da cidade indicada
-      if (cityKey && dicts[cityKey]) {
-        const m = matchInDict(query, dicts[cityKey]);
-        if (m) {
-          return {
-            lat: m.lat,
-            lng: m.lng,
-            matched: m.name,
-            method: m.method,
-            cityKey: m.city,
-          };
-        }
-      }
-      // Fallback inter-cidades: tenta nas outras cidades, mas **somente
-      // match exato**. Substring/fuzzy aqui enviesa pra Salvador (primeiro
-      // dict iterado) e vira fonte de erro sistemático. Se LLM extraiu
-      // bairro real porém cidade errada/ausente, o nome exato basta;
-      // qualquer ambiguidade é mais segura no centroide da cidade.
-      for (const [key, dict] of Object.entries(dicts)) {
-        if (key === cityKey) continue;
-        const m = matchInDict(query, dict, { exactOnly: true });
-        if (m) {
-          return {
-            lat: m.lat,
-            lng: m.lng,
-            matched: m.name,
-            method: m.method,
-            cityKey: m.city,
-          };
-        }
+    if (query.length >= 3 && dicts[cityKey]) {
+      const m = matchInDict(query, dicts[cityKey]);
+      if (m) {
+        return {
+          lat: m.lat,
+          lng: m.lng,
+          matched: m.name,
+          method: m.method,
+          cityKey: m.city,
+        };
       }
     }
   }
 
-  // Sem bairro identificável → cai pro centroide da cidade
-  if (cityKey) {
-    const centroid = getCentroid(cityKey);
-    if (centroid) {
-      return {
-        lat: centroid.lat,
-        lng: centroid.lng,
-        matched: centroid.name,
-        method: "city-centroid",
-        cityKey,
-      };
-    }
+  // Bairro ausente ou não casou no dict da cidade indicada → centroide.
+  const centroid = getCentroid(cityKey);
+  if (centroid) {
+    return {
+      lat: centroid.lat,
+      lng: centroid.lng,
+      matched: centroid.name,
+      method: "city-centroid",
+      cityKey,
+    };
   }
 
   return null;

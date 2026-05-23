@@ -152,16 +152,50 @@ function stripAccents(s) {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
-/** Retorna a key da cidade (slug) se o nome bater, ou null. */
+/**
+ * Whitelist explícita das cidades ingeridas no MVP. Source of truth pro
+ * `newsIngest` decidir se aceita ou descarta o item — não acoplar aos
+ * keys de CITY_CENTROIDS porque incluímos RJ/PE/SP nele pra ter o
+ * `state` resolvido sem hardcode, mas hoje a Camada 2 só ingere BA.
+ *
+ * Quando o app ganhar selector de estado na UI, expandir aqui — e
+ * idealmente passar pra config por flag/env, não código.
+ */
+const COVERED_CITY_KEYS = new Set([
+  "salvador",
+  "camacari",
+  "lauro_de_freitas",
+  "simoes_filho",
+]);
+
+function isCoveredCity(cityKey) {
+  return COVERED_CITY_KEYS.has(cityKey);
+}
+
+/**
+ * Retorna a key da cidade (slug) se o nome bater, ou null.
+ *
+ * Match por palavra inteira (com fronteira não-alfanumérica) em vez de
+ * substring crua — evita que alias curto como "lauro" matche "Lauro
+ * Soares" ou "Sao Paulo" matche "Sao Paulo de Olivença". A entrada
+ * vinda do LLM costuma ter exatamente o nome do município, então
+ * `\b` cobre tudo o que importa sem perder match legítimo.
+ */
 function resolveCityKey(rawCity) {
   if (!rawCity) return null;
   const q = stripAccents(rawCity.trim().toLowerCase());
   for (const [key, city] of Object.entries(CITY_CENTROIDS)) {
     for (const alias of city.aliases) {
-      if (q.includes(stripAccents(alias))) return key;
+      const aliasNorm = stripAccents(alias);
+      const pattern = new RegExp(`(^|[^a-z0-9])${escapeRegex(aliasNorm)}([^a-z0-9]|$)`);
+      if (pattern.test(q)) return key;
     }
   }
   return null;
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function getCentroid(cityKey) {
@@ -179,6 +213,8 @@ function stateForCity(cityKey) {
 
 module.exports = {
   CITY_CENTROIDS,
+  COVERED_CITY_KEYS,
+  isCoveredCity,
   resolveCityKey,
   getCentroid,
   stateForCity,
