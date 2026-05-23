@@ -9,6 +9,7 @@ import '../services/local_notification_service.dart';
 import '../services/reference_location_service.dart';
 import '../widgets/account_card.dart';
 import '../widgets/safe_arrival_button.dart';
+import 'account_actions_screen.dart';
 import 'profile_screen.dart';
 
 /// Tela /sobre/ — transparência editorial pública.
@@ -42,6 +43,8 @@ class _AboutScreenState extends State<AboutScreen> {
           const AccountCard(),
           const SizedBox(height: 12),
           const _ProfileEntry(),
+          const SizedBox(height: 12),
+          const _PrivacyEntry(),
           const SizedBox(height: 12),
           const SafeArrivalButton(),
           const SizedBox(height: 12),
@@ -496,6 +499,59 @@ class _TechDetailsExpansion extends StatelessWidget {
             body: FaroStrings.aboutTechDensityBody,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PrivacyEntry extends StatelessWidget {
+  const _PrivacyEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AccountActionsScreen()),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.privacy_tip_outlined, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Privacidade e dados',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontFamily: 'Fraunces',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'Termos, política, exportar e apagar conta.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: FaroColors.textSoft,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: FaroColors.textHint),
+            ],
+          ),
+        ),
       ),
     );
   }

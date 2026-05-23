@@ -40,6 +40,7 @@ flutter:
   assets:
     - assets/
     - assets/icon/
+    - assets/legal/
   # Nota: assets/dev_occurrences.json (~328KB) é usado apenas em modo
   # dev (USE_DEV_DATA=true). No release vai pro bundle mas é morto.
   # Pra strip em release builds, ver tool/build_release.sh.
