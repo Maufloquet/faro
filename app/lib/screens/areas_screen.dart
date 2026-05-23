@@ -8,11 +8,11 @@ import '../core/stats/area_activity.dart';
 import '../core/stats/temporal_activity.dart';
 import '../core/stats/transport_activity.dart';
 import '../core/text/string_format.dart';
-import '../models/historical_baseline.dart';
 import '../models/occurrence.dart';
 import '../services/analytics_service.dart';
 import '../services/historical_baseline_service.dart';
 import '../services/occurrences_service.dart';
+import '../widgets/baseline_trend_chip.dart';
 import '../widgets/favorite_button.dart';
 import '../widgets/narratives_strip.dart';
 import '../services/density_service.dart';
@@ -409,7 +409,10 @@ class _AreaCard extends ConsumerWidget {
               ),
             ),
           baseline.maybeWhen(
-            data: (b) => _BaselineLine(baseline: b),
+            data: (b) => BaselineTrendChip(
+              baseline: b,
+              padding: const EdgeInsets.only(top: 8, left: 40),
+            ),
             orElse: () => const SizedBox.shrink(),
           ),
           const SizedBox(height: 12),
@@ -859,102 +862,3 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-/// Linha discreta de tendência. Esconde quando não há baseline ou quando
-/// os dados são insuficientes — preferimos silêncio honesto a chute.
-class _BaselineLine extends StatelessWidget {
-  final HistoricalBaseline? baseline;
-  const _BaselineLine({required this.baseline});
-
-  @override
-  Widget build(BuildContext context) {
-    final b = baseline;
-    if (b == null) return const SizedBox.shrink();
-    // Insufficient data não fica mais invisível — vira chip discreto com
-    // a frase "Sem histórico ainda". Antes o card silenciava por completo,
-    // o usuário não sabia se ainda não há dado ou se o componente quebrou.
-    if (b.trend == BaselineTrend.insufficientData) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8, left: 40),
-        child: Text(
-          FaroStrings.baselineInsufficientData,
-          style: const TextStyle(
-            fontSize: 11.5,
-            color: FaroColors.textHint,
-          ),
-        ),
-      );
-    }
-    final trendText = _trendText(b.trend);
-    final avg = b.weeklyAverage.toStringAsFixed(1);
-    final color = _trendColor(b.trend);
-    // Chip inline com a tendência + média semanal — sem tooltip. Passageiro
-    // de ônibus deslizando os cards consegue ler direto a inteligência
-    // editorial do app sem precisar tocar pra revelar.
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, left: 40),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withAlpha(20),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(_trendIcon(b.trend), size: 13, color: color),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                '$trendText · média ~$avg/sem',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: color,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _trendText(BaselineTrend t) {
-    switch (t) {
-      case BaselineTrend.up:
-        return FaroStrings.baselineTrendUp;
-      case BaselineTrend.down:
-        return FaroStrings.baselineTrendDown;
-      case BaselineTrend.stable:
-        return FaroStrings.baselineTrendStable;
-      case BaselineTrend.insufficientData:
-        return '';
-    }
-  }
-
-  IconData _trendIcon(BaselineTrend t) {
-    switch (t) {
-      case BaselineTrend.up:
-        return Icons.trending_up;
-      case BaselineTrend.down:
-        return Icons.trending_down;
-      case BaselineTrend.stable:
-        return Icons.trending_flat;
-      case BaselineTrend.insufficientData:
-        return Icons.help_outline;
-    }
-  }
-
-  Color _trendColor(BaselineTrend t) {
-    switch (t) {
-      case BaselineTrend.up:
-        return FaroColors.editorialBrown;
-      case BaselineTrend.down:
-        return FaroColors.textSoft;
-      case BaselineTrend.stable:
-        return FaroColors.textHint;
-      case BaselineTrend.insufficientData:
-        return FaroColors.textHint;
-    }
-  }
-}

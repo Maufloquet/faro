@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/design/tokens.dart';
@@ -8,13 +9,15 @@ import '../core/theme/app_theme.dart';
 import '../models/occurrence.dart';
 import '../screens/contestation_screen.dart';
 import '../services/density_service.dart';
+import '../services/historical_baseline_service.dart';
+import 'baseline_trend_chip.dart';
 import 'risk_dot.dart';
 
 /// Sheet modal mostrado quando o usuário toca em um marker ou item da lista.
 ///
 /// Apresenta o relato de forma editorial: sem dramatizar, sem afirmar
 /// segurança, com a fonte explícita.
-class OccurrenceDetailSheet extends StatelessWidget {
+class OccurrenceDetailSheet extends ConsumerWidget {
   final Occurrence occurrence;
 
   const OccurrenceDetailSheet({super.key, required this.occurrence});
@@ -32,7 +35,7 @@ class OccurrenceDetailSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final risk = _classify(occurrence.date);
     final where = titleCasePtBr(occurrence.neighborhood);
     final city = titleCasePtBr(occurrence.city);
@@ -41,12 +44,34 @@ class OccurrenceDetailSheet extends StatelessWidget {
         : FaroStrings.reasonLabel(occurrence.mainReason!);
     final when = _absoluteTime(occurrence.date);
     final relative = _relativeTime(occurrence.date);
-    final population = DensityService.instance.populationFor(
-      occurrence.neighborhood,
-    );
-    final isEstimatedPop =
-        DensityService.instance.isEstimated(occurrence.neighborhood) ?? false;
-    final populationLine = _populationLine(population, isEstimatedPop);
+
+    // Contexto populacional: bairro quando há, cidade como fallback
+    // (relatos sem bairro caem no centroide de cidade — sem o fallback
+    // a linha some completamente, perdendo contexto editorial).
+    int? population;
+    bool isEstimatedPop = false;
+    bool isCityScope = false;
+    if (occurrence.neighborhood != null && occurrence.neighborhood!.isNotEmpty) {
+      population = DensityService.instance.populationFor(occurrence.neighborhood);
+      isEstimatedPop =
+          DensityService.instance.isEstimated(occurrence.neighborhood) ?? false;
+    } else if (occurrence.city != null && occurrence.city!.isNotEmpty) {
+      population = DensityService.instance.populationForCity(occurrence.city);
+      isCityScope = true;
+    }
+    final populationLine = _populationLine(population, isEstimatedPop, isCityScope);
+
+    // Baseline histórico do bairro (não-bloqueante): mostra chip discreto
+    // quando há dado, esconde silenciosa quando não. Só faz sentido quando
+    // há bairro — relatos no centroide de cidade não têm baseline próprio.
+    final baseline = occurrence.neighborhood == null ||
+            occurrence.neighborhood!.isEmpty
+        ? null
+        : ref.watch(baselineProvider(BaselineLookup(
+            state: occurrence.state,
+            city: occurrence.city,
+            neighborhood: occurrence.neighborhood!,
+          )));
 
     return SafeArea(
       child: Padding(
@@ -101,9 +126,11 @@ class OccurrenceDetailSheet extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Tooltip(
-                            message: isEstimatedPop
-                                ? 'População estimada: pop da Prefeitura-Bairro (Censo 2010) dividida entre os bairros listados.'
-                                : 'População do Censo IBGE 2022 (dado publicado para este bairro).',
+                            message: isCityScope
+                                ? 'População do município (Censo IBGE 2022).'
+                                : isEstimatedPop
+                                    ? 'População estimada: pop da Prefeitura-Bairro (Censo 2010) dividida entre os bairros listados.'
+                                    : 'População do Censo IBGE 2022 (dado publicado para este bairro).',
                             child: Text(
                               populationLine,
                               style: const TextStyle(
@@ -113,6 +140,14 @@ class OccurrenceDetailSheet extends StatelessWidget {
                               ),
                             ),
                           ),
+                        ),
+                      if (baseline != null)
+                        baseline.maybeWhen(
+                          data: (b) => BaselineTrendChip(
+                            baseline: b,
+                            padding: const EdgeInsets.only(top: 6),
+                          ),
+                          orElse: () => const SizedBox.shrink(),
                         ),
                     ],
                   ),
@@ -229,14 +264,19 @@ class OccurrenceDetailSheet extends StatelessWidget {
     return '${two(local.day)}/${two(local.month)} ${FaroStrings.occAbsoluteAt} ${two(local.hour)}:${two(local.minute)}';
   }
 
-  String? _populationLine(int? population, bool isEstimated) {
+  String? _populationLine(int? population, bool isEstimated, bool isCityScope) {
     if (population == null || population <= 0) return null;
     final prefix = isEstimated ? '~' : '';
+    final scopeLabel = isCityScope ? ' no município' : '';
+    if (population >= 1_000_000) {
+      final millions = (population / 1_000_000).toStringAsFixed(1);
+      return '$prefix$millions mi habitantes$scopeLabel';
+    }
     if (population >= 1000) {
       final thousands = (population / 1000).toStringAsFixed(0);
-      return '$prefix$thousands mil habitantes';
+      return '$prefix$thousands mil habitantes$scopeLabel';
     }
-    return '$prefix$population habitantes';
+    return '$prefix$population habitantes$scopeLabel';
   }
 
   Future<void> _openExternal(BuildContext context, String url) async {
