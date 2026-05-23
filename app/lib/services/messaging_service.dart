@@ -1,5 +1,7 @@
 import 'dart:io' show Platform;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -77,6 +79,38 @@ class MessagingService {
 
   Future<void> unsubscribeFromTopic(String topic) async {
     await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
+  }
+
+  /// Persiste o token FCM em `/users/{uid}/fcmTokens/{token}` pra que a
+  /// Cloud Function `dailyDigest` consiga mandar push direto pra ele
+  /// (não via topic). Doc id é o próprio token — idempotente, se rodar
+  /// duas vezes só atualiza `updatedAt`.
+  ///
+  /// onTokenRefresh: FCM rotaciona o token periodicamente. Caller deve
+  /// chamar essa função no boot e via listener pra cobrir os 2 casos.
+  ///
+  /// Falha graciosa: erro de rede ou de regra é logado, não propaga.
+  Future<void> persistTokenToFirestore() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      if (!await _hasApnsToken()) return;
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('fcmTokens')
+          .doc(token)
+          .set({
+        'token': token,
+        'platform': Platform.isIOS ? 'ios' : 'android',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      _log.info('fcm token persistido');
+    } catch (e, s) {
+      _log.error('persistTokenToFirestore falhou', e, s);
+    }
   }
 
   /// iOS precisa de APNS token resolvido antes de assinar tópicos.

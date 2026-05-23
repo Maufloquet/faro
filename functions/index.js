@@ -15,6 +15,8 @@ exports.aggregateAdminMetrics =
   require("./lib/adminMetrics").aggregateAdminMetrics;
 exports.aggregateNarratives =
   require("./lib/narrativeAggregator").aggregateNarratives;
+exports.dailyDigest =
+  require("./lib/dailyDigest").dailyDigest;
 
 // HTTP (manual one-shot)
 exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoCruzado;

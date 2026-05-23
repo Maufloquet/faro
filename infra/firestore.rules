@@ -35,6 +35,22 @@ service cloud.firestore {
           && request.resource.data.lng is number;
         allow delete: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Tokens FCM do usuário — usados pela Cloud Function `dailyDigest`
+      // pra mandar push direto pro device. Doc id é o token. Validação
+      // mínima: campo `token` string, `platform` string.
+      match /fcmTokens/{tokenId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null
+          && request.auth.uid == userId
+          && (
+            request.resource == null
+            || (
+              request.resource.data.token is string
+              && request.resource.data.platform is string
+            )
+          );
+      }
     }
 
     // Regions — score agregado por região. Leitura pública, escrita só Cloud Function.

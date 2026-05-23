@@ -115,6 +115,14 @@ Future<void> main() async {
       // antes — não dispara prompt no boot.
       unawaited(MessagingService().ensureForegroundHandlerIfAuthorized());
 
+      // Persiste o token FCM em /users/{uid}/fcmTokens — base pro
+      // dailyDigest mandar push direto pro device. Roda no boot e a
+      // cada rotação do token (FCM rotaciona periodicamente).
+      unawaited(MessagingService().persistTokenToFirestore());
+      FirebaseMessaging.instance.onTokenRefresh.listen((_) {
+        unawaited(MessagingService().persistTokenToFirestore());
+      });
+
       // Camada 7 — densidade populacional por bairro. Carrega asset JSON
       // pra normalizar "relatos por 10k habitantes". Falha silenciosa: se
       // o asset não carregar, populationFor retorna null e a UI esconde.

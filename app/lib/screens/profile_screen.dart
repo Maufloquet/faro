@@ -70,6 +70,16 @@ class _Body extends ConsumerWidget {
         _NeighborhoodCard(profile: profile),
         const SizedBox(height: 24),
         Text(
+          'Notificações',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontFamily: 'Fraunces',
+                color: FaroColors.textSoft,
+              ),
+        ),
+        const SizedBox(height: 8),
+        _DigestToggle(profile: profile),
+        const SizedBox(height: 24),
+        Text(
           'Tudo opcional. O Faro funciona sem você preencher nada — esses '
           'campos só ajudam a personalizar resumo diário, sugestões de rota '
           'e o widget da home.',
@@ -79,6 +89,47 @@ class _Body extends ConsumerWidget {
               ),
         ),
       ],
+    );
+  }
+}
+
+class _DigestToggle extends ConsumerWidget {
+  final UserProfile profile;
+  const _DigestToggle({required this.profile});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(
+          'Resumo do dia (manhã)',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontFamily: 'Fraunces',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: Text(
+          'Notificação às 7h com o que rolou no seu bairro nas últimas 24h.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: FaroColors.textSoft,
+          ),
+        ),
+        value: profile.notifications.dailyDigest,
+        onChanged: (v) async {
+          final next = profile.copyWith(
+            notifications: profile.notifications.copyWith(dailyDigest: v),
+          );
+          await ref.read(userProfileServiceProvider).save(next);
+        },
+      ),
     );
   }
 }
