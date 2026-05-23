@@ -41,6 +41,7 @@ const {
   EMBEDDING_DIM,
   EMBEDDING_PROVIDER,
 } = require("./embedClient");
+const { findSemanticDuplicate } = require("./semanticDedup");
 
 const STATE_NAME_BY_UF = {
   BA: "Bahia",
@@ -263,7 +264,9 @@ async function ingestFromSource(db, source) {
     let existing = null;
     if (embedding) {
       try {
-        existing = await findSemanticDuplicate(db, embedding, pubDate);
+        existing = await findSemanticDuplicate(db, embedding, pubDate, {
+          windowHours: DEDUP_WINDOW_HOURS,
+        });
       } catch (e) {
         logger.warn(`findNearest falhou, caindo pra eventKey: ${e.message}`);
       }
@@ -352,47 +355,6 @@ async function ingestFromSource(db, source) {
 
 function sha1(s) {
   return crypto.createHash("sha1").update(s).digest("hex");
-}
-
-// Distância máxima pra considerar dois relatos como o mesmo evento.
-// COSINE distance = 1 - cossine_similarity. 0.12 ≈ similaridade 0.88.
-// Threshold conservador: prefere falso negativo (criar duplicata) a
-// falso positivo (mesclar relatos diferentes).
-const SEMANTIC_DUP_DISTANCE = 0.12;
-const SEMANTIC_DUP_LIMIT = 5;
-
-/**
- * Procura o doc mais próximo semanticamente em /occurrences dentro de
- * ±DEDUP_WINDOW_HOURS. Usa `findNearest` (Firestore Vector Search).
- * Exige o vector index em `occurrences.embedding` (declarado em
- * `infra/firestore.indexes.json`).
- *
- * Retorna o DocumentSnapshot do match se cosseno >= 0.88; null caso
- * contrário.
- */
-async function findSemanticDuplicate(db, embedding, pubDate) {
-  const windowMs = DEDUP_WINDOW_HOURS * 60 * 60 * 1000;
-  const since = new Date(pubDate.getTime() - windowMs);
-  const until = new Date(pubDate.getTime() + windowMs);
-
-  const snap = await db
-    .collection("occurrences")
-    .where("date", ">=", admin.firestore.Timestamp.fromDate(since))
-    .where("date", "<=", admin.firestore.Timestamp.fromDate(until))
-    .findNearest({
-      vectorField: "embedding",
-      queryVector: admin.firestore.FieldValue.vector(embedding),
-      limit: SEMANTIC_DUP_LIMIT,
-      distanceMeasure: "COSINE",
-      distanceResultField: "_vector_distance",
-    })
-    .get();
-
-  if (snap.empty) return null;
-  const best = snap.docs[0];
-  const dist = best.get("_vector_distance");
-  if (typeof dist !== "number" || dist > SEMANTIC_DUP_DISTANCE) return null;
-  return best;
 }
 
 /**

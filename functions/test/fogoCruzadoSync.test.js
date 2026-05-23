@@ -4,7 +4,7 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { _internal } = require("../lib/fogoCruzadoSync");
-const { prepareOccurrenceDoc } = _internal;
+const { prepareOccurrenceDoc, fogoCruzadoCanonicalText } = _internal;
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 1 dia
 
@@ -134,5 +134,52 @@ describe("fogoCruzadoSync.prepareOccurrenceDoc", () => {
       TTL_MS,
     );
     assert.equal(a.fields.eventKey, b.fields.eventKey);
+  });
+});
+
+describe("fogoCruzadoCanonicalText", () => {
+  it("monta frase com motivo, bairro, cidade", () => {
+    const prepared = prepareOccurrenceDoc(sampleItem, "BA", TTL_MS);
+    const text = fogoCruzadoCanonicalText(prepared);
+    assert.match(text, /Tiroteio em Pelourinho , Salvador/);
+  });
+
+  it("inclui marcador de ação policial quando presente", () => {
+    const prepared = prepareOccurrenceDoc(sampleItem, "BA", TTL_MS);
+    const text = fogoCruzadoCanonicalText(prepared);
+    assert.match(text, /com ação policial/);
+  });
+
+  it("omite marcadores quando ausentes", () => {
+    const noPolice = prepareOccurrenceDoc(
+      { ...sampleItem, policeAction: false, agentPresence: false },
+      "BA",
+      TTL_MS,
+    );
+    const text = fogoCruzadoCanonicalText(noPolice);
+    assert.doesNotMatch(text, /ação policial/);
+    assert.doesNotMatch(text, /agentes presentes/);
+  });
+
+  it("retorna null pra prepared null", () => {
+    assert.equal(fogoCruzadoCanonicalText(null), null);
+  });
+
+  it("cai pra 'Relato' quando mainReason está ausente", () => {
+    const semMotivo = prepareOccurrenceDoc(
+      { ...sampleItem, contextInfo: {} },
+      "BA",
+      TTL_MS,
+    );
+    const text = fogoCruzadoCanonicalText(semMotivo);
+    assert.match(text, /^Relato/);
+  });
+
+  it("nunca contém palavras alarmistas", () => {
+    const prepared = prepareOccurrenceDoc(sampleItem, "BA", TTL_MS);
+    const text = fogoCruzadoCanonicalText(prepared);
+    for (const banned of ["PERIGO", "CUIDADO", "EVITE", "URGENTE"]) {
+      assert.doesNotMatch(text, new RegExp(banned, "i"));
+    }
   });
 });
