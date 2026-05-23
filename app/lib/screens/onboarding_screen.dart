@@ -1,20 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/design/tokens.dart';
 import '../core/i18n/faro_strings.dart';
+import '../models/user_profile.dart';
 import '../services/analytics_service.dart';
+import '../services/user_profile_service.dart';
 import '../widgets/faro_logo.dart';
 import 'map_screen.dart';
 
-/// Onboarding de UMA tela, bloqueante na primeira abertura.
+/// Onboarding em passos. Página 0 (princípios + aceite) é bloqueante.
+/// Páginas 1-3 (perfil) são opcionais — cada uma tem botão "pular" e
+/// "depois" sai pro mapa salvando o que já foi preenchido.
 ///
-/// Princípio do relatório §7.2: onboarding de múltiplas telas tem
-/// abandono alto. Uma única tela com aceite explícito é o suficiente —
-/// resto fica na tela /sobre/ e /ajuda/ acessível pelo header.
-class OnboardingScreen extends StatefulWidget {
+/// Decisão de design: a tela única continua sendo a porta de entrada
+/// editorial. Os 3 passos seguintes são leves (3 selects), curtos, e
+/// claramente marcados como opcionais — pra não inflar abandono.
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   static const _prefsKey = 'onboarding_completed_v1';
@@ -26,11 +31,18 @@ class OnboardingScreen extends StatefulWidget {
   }
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool _agreed = false;
+  int _pageIndex = 0;
+  final _controller = PageController();
+
+  // Drafts dos campos do perfil. Salvos no fim ou ao pular.
+  Set<TransportMode> _transportModes = {};
+  Set<HourBand> _typicalHours = {};
+  String _mainNeighborhood = '';
 
   @override
   void initState() {
@@ -38,12 +50,59 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     AnalyticsService.instance.logScreen('onboarding');
   }
 
-  Future<void> _complete() async {
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _persistFlag() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(OnboardingScreen._prefsKey, true);
+  }
+
+  Future<void> _persistProfile() async {
+    // Mesmo perfil parcialmente preenchido vale salvar — usuário pode
+    // ter escolhido só "ônibus" e nada mais. App funciona com qualquer
+    // subset.
+    if (_transportModes.isEmpty &&
+        _typicalHours.isEmpty &&
+        _mainNeighborhood.trim().isEmpty) {
+      return;
+    }
+    final next = UserProfile(
+      transportModes: _transportModes.toList(),
+      typicalHours: _typicalHours.toList(),
+      mainNeighborhood:
+          _mainNeighborhood.trim().isEmpty ? null : _mainNeighborhood.trim(),
+    );
+    try {
+      await ref.read(userProfileServiceProvider).save(next);
+    } catch (_) {
+      // Falha silenciosa — usuário não deve ser bloqueado por erro
+      // de Firestore na entrada. Pode preencher de novo em /Sobre.
+    }
+  }
+
+  Future<void> _finish() async {
+    await _persistFlag();
+    await _persistProfile();
     if (!mounted) return;
     unawaited(Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MapScreen()),
+    ));
+  }
+
+  Future<void> _advance() async {
+    if (_pageIndex >= 3) {
+      await _finish();
+      return;
+    }
+    setState(() => _pageIndex++);
+    unawaited(_controller.animateToPage(
+      _pageIndex,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
     ));
   }
 
@@ -58,71 +117,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              _Header(),
-              const SizedBox(height: 28),
+              if (_pageIndex == 0)
+                _Header()
+              else
+                _StepIndicator(current: _pageIndex, total: 4),
+              const SizedBox(height: 18),
               Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
+                child: PageView(
+                  controller: _controller,
+                  physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    _Principle(
-                      icon: Icons.warning_amber_rounded,
-                      title: FaroStrings.principleNeverSafeTitle,
-                      body: FaroStrings.principleNeverSafeBody,
+                    _PrinciplesPage(
+                      agreed: _agreed,
+                      onAgreedChanged: (v) =>
+                          setState(() => _agreed = v ?? false),
                     ),
-                    _Principle(
-                      icon: Icons.layers_outlined,
-                      title: FaroStrings.principleContextTitle,
-                      body: FaroStrings.principleContextBody,
+                    _TransportPage(
+                      selected: _transportModes,
+                      onChanged: (s) => setState(() => _transportModes = s),
                     ),
-                    _Principle(
-                      icon: Icons.lock_outline,
-                      title: FaroStrings.principleLocationTitle,
-                      body: FaroStrings.principleLocationBody,
+                    _HoursPage(
+                      selected: _typicalHours,
+                      onChanged: (s) => setState(() => _typicalHours = s),
                     ),
-                    _Principle(
-                      icon: Icons.person_off_outlined,
-                      title: FaroStrings.principleNoSignupTitle,
-                      body: FaroStrings.principleNoSignupBody,
+                    _NeighborhoodPage(
+                      initial: _mainNeighborhood,
+                      onChanged: (v) => _mainNeighborhood = v,
                     ),
                   ],
                 ),
               ),
-              _AcceptanceRow(
-                checked: _agreed,
-                onChanged: (v) => setState(() => _agreed = v ?? false),
-              ),
               const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _agreed ? _complete : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: FaroColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                  child: Text(FaroStrings.acceptanceCta),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Saída secundária pra quem chegou no app e quer ver o mapa
-              // antes de ler os princípios. O aceite formal continua sendo
-              // pedido em qualquer feature que escreva pra cloud (UGC, FCM,
-              // login). Princípios continuam visíveis em /sobre/.
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: _complete,
-                  style: TextButton.styleFrom(
-                    foregroundColor: FaroColors.textMuted,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 13.5),
-                  ),
-                  child: Text(FaroStrings.acceptanceSkip),
-                ),
+              _FooterButtons(
+                pageIndex: _pageIndex,
+                canAdvance: _pageIndex == 0 ? _agreed : true,
+                onAdvance: _advance,
+                onSkip: _pageIndex == 0 ? _finish : _finish,
               ),
             ],
           ),
@@ -158,6 +188,299 @@ class _Header extends StatelessWidget {
             fontSize: 14,
             height: 1.4,
             color: FaroColors.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepIndicator extends StatelessWidget {
+  final int current;
+  final int total;
+  const _StepIndicator({required this.current, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(total, (i) {
+        final active = i <= current;
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(right: i == total - 1 ? 0 : 6),
+            height: 3,
+            decoration: BoxDecoration(
+              color: active ? FaroColors.primary : FaroColors.textHint,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _PrinciplesPage extends StatelessWidget {
+  final bool agreed;
+  final ValueChanged<bool?> onAgreedChanged;
+  const _PrinciplesPage({required this.agreed, required this.onAgreedChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _Principle(
+                icon: Icons.warning_amber_rounded,
+                title: FaroStrings.principleNeverSafeTitle,
+                body: FaroStrings.principleNeverSafeBody,
+              ),
+              _Principle(
+                icon: Icons.layers_outlined,
+                title: FaroStrings.principleContextTitle,
+                body: FaroStrings.principleContextBody,
+              ),
+              _Principle(
+                icon: Icons.lock_outline,
+                title: FaroStrings.principleLocationTitle,
+                body: FaroStrings.principleLocationBody,
+              ),
+              _Principle(
+                icon: Icons.person_off_outlined,
+                title: FaroStrings.principleNoSignupTitle,
+                body: FaroStrings.principleNoSignupBody,
+              ),
+            ],
+          ),
+        ),
+        _AcceptanceRow(checked: agreed, onChanged: onAgreedChanged),
+      ],
+    );
+  }
+}
+
+class _StepPage extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget child;
+  const _StepPage({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Fraunces',
+            fontSize: 22,
+            height: 1.2,
+            color: FaroColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: FaroColors.textSoft,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+class _TransportPage extends StatelessWidget {
+  final Set<TransportMode> selected;
+  final ValueChanged<Set<TransportMode>> onChanged;
+  const _TransportPage({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return _StepPage(
+      title: 'Como você anda pela cidade?',
+      subtitle: 'Marque tudo o que você usa. Opcional — pode pular.',
+      child: ListView(
+        children: TransportMode.values
+            .map(
+              (m) => CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(m.label),
+                value: selected.contains(m),
+                onChanged: (v) {
+                  final next = {...selected};
+                  if (v == true) {
+                    next.add(m);
+                  } else {
+                    next.remove(m);
+                  }
+                  onChanged(next);
+                },
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _HoursPage extends StatelessWidget {
+  final Set<HourBand> selected;
+  final ValueChanged<Set<HourBand>> onChanged;
+  const _HoursPage({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return _StepPage(
+      title: 'Quando costuma andar na rua?',
+      subtitle:
+          'Pra entender quando o resumo do dia faz mais sentido pra você.',
+      child: ListView(
+        children: HourBand.values
+            .map(
+              (h) => CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(h.label),
+                value: selected.contains(h),
+                onChanged: (v) {
+                  final next = {...selected};
+                  if (v == true) {
+                    next.add(h);
+                  } else {
+                    next.remove(h);
+                  }
+                  onChanged(next);
+                },
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _NeighborhoodPage extends StatefulWidget {
+  final String initial;
+  final ValueChanged<String> onChanged;
+  const _NeighborhoodPage({required this.initial, required this.onChanged});
+
+  @override
+  State<_NeighborhoodPage> createState() => _NeighborhoodPageState();
+}
+
+class _NeighborhoodPageState extends State<_NeighborhoodPage> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initial);
+    _controller.addListener(() => widget.onChanged(_controller.text));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _StepPage(
+      title: 'Qual seu bairro principal?',
+      subtitle:
+          'Casa, trabalho, escola. Resumo diário foca no que rola por aí.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              hintText: 'Ex: Pituba, Liberdade, Centro…',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Você pode mudar isso depois em "Meu perfil" no menu.',
+            style: TextStyle(
+              fontSize: 12,
+              color: FaroColors.textHint,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FooterButtons extends StatelessWidget {
+  final int pageIndex;
+  final bool canAdvance;
+  final VoidCallback onAdvance;
+  final VoidCallback onSkip;
+  const _FooterButtons({
+    required this.pageIndex,
+    required this.canAdvance,
+    required this.onAdvance,
+    required this.onSkip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isPrinciples = pageIndex == 0;
+    final isLast = pageIndex == 3;
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: canAdvance ? onAdvance : null,
+            style: FilledButton.styleFrom(
+              backgroundColor: FaroColors.primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            child: Text(
+              isLast
+                  ? 'Terminar'
+                  : isPrinciples
+                      ? FaroStrings.acceptanceCta
+                      : 'Avançar',
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: onSkip,
+            style: TextButton.styleFrom(
+              foregroundColor: FaroColors.textMuted,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              textStyle: const TextStyle(fontSize: 13.5),
+            ),
+            child: Text(
+              isPrinciples ? FaroStrings.acceptanceSkip : 'Pular e ir pro mapa',
+            ),
           ),
         ),
       ],
