@@ -58,6 +58,22 @@
                 <data android:scheme="faro" android:host="admin"/>
             </intent-filter>
         </activity>
+        <!-- App widget pra tela inicial (Frente 6).
+             Recebe broadcast APPWIDGET_UPDATE e ACTION_BACKGROUND quando
+             o Flutter chama HomeWidget.updateWidget(name: 'FaroWidgetProvider').
+             O `home_widget` plugin emite a 2ª action; o sistema emite a 1ª
+             a cada 30 min (definido em xml/faro_widget_info.xml). -->
+        <receiver android:name=".FaroWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/faro_widget_info" />
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -20,6 +20,7 @@ import 'firebase_options.dart';
 import 'screens/admin_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/analytics_service.dart';
+import 'services/home_widget_service.dart';
 import 'services/background_location_service.dart';
 import 'services/density_service.dart';
 import 'services/dev_data_source.dart';
@@ -122,6 +123,11 @@ Future<void> main() async {
       FirebaseMessaging.instance.onTokenRefresh.listen((_) {
         unawaited(MessagingService().persistTokenToFirestore());
       });
+
+      // Widget de tela inicial (iOS WidgetKit + Android AppWidget):
+      // inicializa o canal nativo. Sync entre perfil/ocorrências e
+      // widget mora num provider observado pelo FaroApp.
+      unawaited(HomeWidgetService().initialize());
 
       // Camada 7 — densidade populacional por bairro. Carrega asset JSON
       // pra normalizar "relatos por 10k habitantes". Falha silenciosa: se
@@ -232,6 +238,8 @@ class _FaroAppState extends ConsumerState<FaroApp> {
     // O watch garante rebuild quando o usuário troca de idioma — toda a
     // árvore (incluindo as telas via Navigator) recria com strings novas.
     ref.watch(localeNotifierProvider);
+    // Side-effect: sincroniza widget de tela inicial com perfil + ocorrências.
+    ref.watch(homeWidgetSyncProvider);
     return MaterialApp(
       title: 'Faro',
       debugShowCheckedModeBanner: false,
