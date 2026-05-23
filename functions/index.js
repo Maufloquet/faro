@@ -11,10 +11,15 @@ exports.syncOsmInfra = require("./lib/osmInfraIngest").syncOsmInfra;
 exports.cleanupOccurrences = require("./lib/cleanupOccurrences").cleanupOccurrences;
 exports.aggregateHistoricalBaseline =
   require("./lib/historicalBaseline").aggregateHistoricalBaseline;
+exports.aggregateAdminMetrics =
+  require("./lib/adminMetrics").aggregateAdminMetrics;
+exports.aggregateNarratives =
+  require("./lib/narrativeAggregator").aggregateNarratives;
 
 // HTTP (manual one-shot)
 exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoCruzado;
 exports.backfillDedup = require("./lib/dedupBackfill").backfillDedup;
+exports.backfillEmbeddings = require("./lib/embedBackfill").backfillEmbeddings;
 exports.fetchOsmBusStops = require("./lib/osmFetch").fetchOsmBusStops;
 exports.fetchOsmInfra = require("./lib/osmInfraIngest").fetchOsmInfra;
 

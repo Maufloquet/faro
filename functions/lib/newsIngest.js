@@ -35,6 +35,12 @@ const { classify } = require("./groqClient");
 const { resolveBairro } = require("./bairrosDict");
 const { stateForCity } = require("./cityCentroids");
 const { buildEventKey } = require("./eventKey");
+const { runWithHealth } = require("./jobHealth");
+const {
+  embedTexts,
+  EMBEDDING_DIM,
+  EMBEDDING_PROVIDER,
+} = require("./embedClient");
 
 const STATE_NAME_BY_UF = {
   BA: "Bahia",
@@ -84,9 +90,9 @@ exports.ingestNewsBahia = onSchedule(
     region: "southamerica-east1",
     memory: "512MiB",
     timeoutSeconds: 540,
-    secrets: ["GROQ_API_KEY"],
+    secrets: ["GROQ_API_KEY", "GEMINI_API_KEY"],
   },
-  async () => {
+  async () => runWithHealth("ingestNewsBahia", async () => {
     const db = admin.firestore();
     const sources = enabledSources();
     const stats = {
@@ -128,7 +134,8 @@ exports.ingestNewsBahia = onSchedule(
     }
 
     logger.info("Ingest news concluído", stats);
-  }
+    return { itemsWritten: stats.itemsWritten };
+  })
 );
 
 async function ingestFromSource(db, source) {
@@ -207,6 +214,32 @@ async function ingestFromSource(db, source) {
       geocodeMethod: geo.method,
     });
 
+    // Embedding semântico: vai pra dedup cross-source e clustering de
+    // narrativas (camada nova de inteligência editorial). Falha graciosa:
+    // se Gemini falhar (rate limit, sem secret, erro de rede), seguimos
+    // gravando o doc sem embedding e o pipeline antigo (eventKey) cobre o
+    // dedup. O backfill manual ou um run futuro preenche depois.
+    let embedding = null;
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (apiKey) {
+        const text = [item.title || "", item.contentSnippet || item.content || ""]
+          .filter(Boolean)
+          .join(" — ")
+          .slice(0, 2000);
+        if (text.trim().length > 0) {
+          const vectors = await embedTexts([text], { apiKey });
+          if (vectors[0] && vectors[0].length === EMBEDDING_DIM) {
+            embedding = vectors[0];
+          }
+        }
+      } else {
+        logger.warn("GEMINI_API_KEY ausente — relato gravado sem embedding");
+      }
+    } catch (e) {
+      logger.warn(`Embedding falhou pra ${url}: ${e.message}`);
+    }
+
     // Dedupe cross-source: se já existe doc com mesma eventKey em ±6h,
     // adicionamos uma corroboração em vez de criar duplicata. Cobre
     // "mesmo tiroteio sai em 3 portais" e "Fogo Cruzado + matéria sobre
@@ -221,7 +254,23 @@ async function ingestFromSource(db, source) {
       addedAt: new Date(),
     };
 
-    const existing = eventKey ? await findCorroboratableDoc(db, eventKey, pubDate) : null;
+    // Tenta primeiro dedup semântico via embedding (resolve casos que o
+    // eventKey deixa passar: mesma matéria reescrita em outros portais,
+    // bairro grafado diferente, motivo classificado de forma próxima).
+    // Fallback pro eventKey quando não há embedding (provedor caiu,
+    // backfill ainda não rodou) ou quando o índice vetorial não está
+    // pronto.
+    let existing = null;
+    if (embedding) {
+      try {
+        existing = await findSemanticDuplicate(db, embedding, pubDate);
+      } catch (e) {
+        logger.warn(`findNearest falhou, caindo pra eventKey: ${e.message}`);
+      }
+    }
+    if (!existing && eventKey) {
+      existing = await findCorroboratableDoc(db, eventKey, pubDate);
+    }
     if (existing) {
       const data = existing.data();
       const currentWeight = typeof data.weight === "number" ? data.weight : 0.5;
@@ -263,33 +312,36 @@ async function ingestFromSource(db, source) {
       continue;
     }
 
-    await db.collection("occurrences").doc(docId).set(
-      {
-        latitude: geo.lat,
-        longitude: geo.lng,
-        geohash: ngeohash.encode(geo.lat, geo.lng, 8),
-        date: admin.firestore.Timestamp.fromDate(pubDate),
-        expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
-        state: stateLabel,
-        city: classification.city,
-        neighborhood,
-        geocodeMethod: geo.method,
-        mainReason,
-        eventKey,
-        busLines,
-        transportContext,
-        source: SOURCE,
-        sourceProvider: source.id,
-        sourceName: source.name,
-        weight: source.weight,
-        externalUrl: url,
-        externalTitle: item.title,
-        confidence: classification.confidence,
-        corroborationCount: 0,
-        ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+    const occurrenceDoc = {
+      latitude: geo.lat,
+      longitude: geo.lng,
+      geohash: ngeohash.encode(geo.lat, geo.lng, 8),
+      date: admin.firestore.Timestamp.fromDate(pubDate),
+      expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+      state: stateLabel,
+      city: classification.city,
+      neighborhood,
+      geocodeMethod: geo.method,
+      mainReason,
+      eventKey,
+      busLines,
+      transportContext,
+      source: SOURCE,
+      sourceProvider: source.id,
+      sourceName: source.name,
+      weight: source.weight,
+      externalUrl: url,
+      externalTitle: item.title,
+      confidence: classification.confidence,
+      corroborationCount: 0,
+      ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    if (embedding) {
+      occurrenceDoc.embedding = admin.firestore.FieldValue.vector(embedding);
+      occurrenceDoc.embeddingProvider = EMBEDDING_PROVIDER;
+      occurrenceDoc.embeddingDim = EMBEDDING_DIM;
+    }
+    await db.collection("occurrences").doc(docId).set(occurrenceDoc, { merge: true });
     result.written++;
     await markSeen();
   }
@@ -300,6 +352,47 @@ async function ingestFromSource(db, source) {
 
 function sha1(s) {
   return crypto.createHash("sha1").update(s).digest("hex");
+}
+
+// Distância máxima pra considerar dois relatos como o mesmo evento.
+// COSINE distance = 1 - cossine_similarity. 0.12 ≈ similaridade 0.88.
+// Threshold conservador: prefere falso negativo (criar duplicata) a
+// falso positivo (mesclar relatos diferentes).
+const SEMANTIC_DUP_DISTANCE = 0.12;
+const SEMANTIC_DUP_LIMIT = 5;
+
+/**
+ * Procura o doc mais próximo semanticamente em /occurrences dentro de
+ * ±DEDUP_WINDOW_HOURS. Usa `findNearest` (Firestore Vector Search).
+ * Exige o vector index em `occurrences.embedding` (declarado em
+ * `infra/firestore.indexes.json`).
+ *
+ * Retorna o DocumentSnapshot do match se cosseno >= 0.88; null caso
+ * contrário.
+ */
+async function findSemanticDuplicate(db, embedding, pubDate) {
+  const windowMs = DEDUP_WINDOW_HOURS * 60 * 60 * 1000;
+  const since = new Date(pubDate.getTime() - windowMs);
+  const until = new Date(pubDate.getTime() + windowMs);
+
+  const snap = await db
+    .collection("occurrences")
+    .where("date", ">=", admin.firestore.Timestamp.fromDate(since))
+    .where("date", "<=", admin.firestore.Timestamp.fromDate(until))
+    .findNearest({
+      vectorField: "embedding",
+      queryVector: admin.firestore.FieldValue.vector(embedding),
+      limit: SEMANTIC_DUP_LIMIT,
+      distanceMeasure: "COSINE",
+      distanceResultField: "_vector_distance",
+    })
+    .get();
+
+  if (snap.empty) return null;
+  const best = snap.docs[0];
+  const dist = best.get("_vector_distance");
+  if (typeof dist !== "number" || dist > SEMANTIC_DUP_DISTANCE) return null;
+  return best;
 }
 
 /**

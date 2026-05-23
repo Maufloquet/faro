@@ -30,6 +30,7 @@ const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const ngeohash = require("ngeohash");
+const { runWithHealth } = require("./jobHealth");
 
 const OSM_SEARCH_URL = "https://api.openstreetmap.org/api/0.6/notes/search";
 
@@ -85,7 +86,7 @@ exports.ingestOsmNotes = onSchedule(
     memory: "256MiB",
     timeoutSeconds: 300,
   },
-  async () => {
+  async () => runWithHealth("ingestOsmNotes", async () => {
     const db = admin.firestore();
     const cutoff = Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
@@ -163,8 +164,8 @@ exports.ingestOsmNotes = onSchedule(
       `osm-notes ingest · fetched=${stats.fetched} kept=${stats.kept} ` +
         `written=${stats.written} skipped=${stats.skipped}`
     );
-    return stats;
-  }
+    return { itemsWritten: stats.written };
+  })
 );
 
 /**

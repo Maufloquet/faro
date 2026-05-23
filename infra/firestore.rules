@@ -43,6 +43,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Narratives — clusters semanais de ocorrências relacionadas via
+    // embedding semântico (scheduler aggregateNarratives). Leitura
+    // pública porque alimenta a seção "Esta semana" da UI. Escrita só
+    // via Cloud Function com admin SDK.
+    match /narratives/{narrativeId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Contestations — usuário autenticado (mesmo anonymous) pode criar
     // ou atualizar a própria contestação (mudou de ideia sobre o motivo).
     //
@@ -120,6 +129,29 @@ service cloud.firestore {
       allow read, write: if false;
       match /usage/{day} {
         allow read, write: if false;
+      }
+    }
+
+    // System health — heartbeat dos schedulers, escrito por cada Cloud
+    // Function no fim do run (helper functions/lib/jobHealth.js). Leitura
+    // gateada por custom claim admin pro painel exibir o grid de saúde.
+    match /system_health/{job} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow write: if false;
+    }
+
+    // Admin metrics — agregação operacional escrita por Cloud Function
+    // a cada 30 min. Leitura gateada por custom claim `admin: true`
+    // (concedido via functions/scripts/grantAdmin.js). Cliente comum
+    // não tem o claim, então as rules barram a leitura mesmo se ele
+    // adivinhar a rota.
+    match /admin_metrics/{doc} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow write: if false;
+
+      match /daily/{day} {
+        allow read: if request.auth != null && request.auth.token.admin == true;
+        allow write: if false;
       }
     }
 

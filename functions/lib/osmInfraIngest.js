@@ -26,6 +26,7 @@ const admin = require("firebase-admin");
 const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
+const { runWithHealth } = require("./jobHealth");
 
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 
@@ -126,10 +127,12 @@ exports.syncOsmInfra = onSchedule(
     memory: "512MiB",
     timeoutSeconds: 540,
   },
-  async () => {
+  async () => runWithHealth("syncOsmInfra", async () => {
     const summary = await runInfraSync(Object.keys(QUERIES));
     logger.info("OSM infra sync semanal concluído", { summary });
-  },
+    const itemsWritten = Object.values(summary).reduce((n, c) => n + c, 0);
+    return { itemsWritten };
+  }),
 );
 
 async function runInfraSync(kinds) {

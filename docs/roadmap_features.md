@@ -230,6 +230,37 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 
 ---
 
+### Inteligência semântica (embeddings + narrativas)
+**Status:** Implementado em 2026-05-22 (Bloco 1-4)
+**Peso editorial:** crítico — primeiro recurso onde Faro vai além de "agregador" pra ser "interpretador" de eventos relacionados.
+**Detalhes:**
+- **Embedding pipeline** (`functions/lib/embedClient.js`): wrapper Gemini `text-embedding-004` (768d, multilíngue, free tier 1500 RPM). REST direto sem SDK. `batchEmbedContents` cobre até 100 itens/chamada, com retry exponencial em 429/503.
+- **newsIngest grava embedding** no doc da occurrence (campo `embedding` via `FieldValue.vector()`, mais `embeddingProvider` e `embeddingDim`). Falha graciosa: sem Gemini, grava sem embedding e o pipeline antigo cobre dedup.
+- **Vector index** declarado em `infra/firestore.indexes.json` — `occurrences.embedding`, 768d, COSINE. Deploy via `firebase deploy --only firestore:indexes` (exige CLI ≥ 13.0).
+- **Dedup semântico** (`findSemanticDuplicate` em newsIngest): `findNearest` filtrado por janela ±6h, threshold cosseno ≥ 0.88 (distance ≤ 0.12). Substitui o lookup por eventKey nos casos com embedding; eventKey continua como fallback. Resolve "mesma matéria reescrita em portais diferentes" automaticamente.
+- **Backfill manual** (`backfillEmbeddings` HTTP function): one-shot, paginado, dryRun opcional. Cobre as ~287 occurrences históricas em uma chamada. Idempotente.
+- **Clustering de narrativas** (`functions/lib/narrativeAggregator.js`): scheduler diário 04:00, agrupa últimos 7d por similaridade ≥ 0.80 + mesma cidade. Greedy single-link com centroide incremental — O(n²) trivial em < 1k docs. Filtro mínimo de 3 relatos por cluster. Escreve `/narratives/{citySlug__bairrosSlug}` com `headline` editorial pré-gerada (sem palavras alarmistas), top reasons, 3 samples mais recentes.
+- **UI "Esta semana"** (`app/lib/widgets/narratives_strip.dart`): faixa horizontal no topo da AreasScreen, antes do TimeWindow selector. Esconde quando não há narrativas. Card de 280px com count + headline editorial. Tom: "Esta semana — 6 relatos relacionados em Garcia." Nunca veredito.
+- **Rules**: `/narratives/{id}` leitura pública, escrita só Cloud Function.
+- **Testes**: 24 testes novos cobrindo embedClient (8), embedBackfill (5), narrativeAggregator (11). Total Functions: 180 testes verdes.
+- **Setup pendente manual** (você precisa fazer): criar API key no AI Studio, `firebase functions:secrets:set GEMINI_API_KEY`, deploy do vector index + functions, rodar backfill, esperar primeiro run do aggregator. Passo a passo em `docs/firebase_setup.md` §14.
+- **TODO:** calibrar thresholds após observar dados reais (logs mostram `_vector_distance` em cada match). Estender dedup semântico pra `syncFogoCruzado` (cross-source FC↔notícia do mesmo evento). Vetor `embedding` ocupa ~3KB/doc — em escala (>50k occurrences) considerar separar pra collection paralela.
+
+---
+
+### Painel admin interno
+**Status:** Implementado em 2026-05-22 (bloco 1+2; saúde de crons e drill-down pendentes)
+**Detalhes:**
+- Cloud Function `aggregateAdminMetrics` (scheduler 30min, `functions/lib/adminMetrics.js`) escreve `/admin_metrics/current` + snapshot diário em `/admin_metrics/history/daily/{YYYY-MM-DD}`. KPIs: usuários (total, anônimos, Google, novos/ativos 24h/7d via Auth listUsers), ocorrências (total via `.count()`, 24h/7d via scan, breakdown por source/state/city, contestadas, top reasons), contestações (total + ocorrências distintas contestadas), safe arrivals (24h/7d).
+- Acesso gateado por custom claim `admin: true`. Firestore rules em `/admin_metrics/*` exigem `request.auth.token.admin == true`. Setup via `functions/scripts/grantAdmin.js <UID>` (uma vez).
+- Cliente: `AdminMetricsService` + provider Riverpod (stream do doc). `AdminScreen` lê e renderiza cards de KPIs (sem badge/marketing — ferramenta operacional). `isAdminProvider` faz `getIdTokenResult(true)` pra refrescar o claim sem esperar TTL de 1h.
+- Acesso: deep link `faro://admin` registrado em AndroidManifest (intent-filter scheme/host) e Info.plist (CFBundleURLTypes). Dep nova: `app_links: ^6.4.0`.
+- 6 testes unitários cobrem a lógica pura `computeMetrics` em `functions/test/adminMetrics.test.js`.
+- **TODO:** instrumentar cada Cloud Function existente pra escrever `/system_health/{jobName}` no fim (lastRunAt, lastSuccess, itemsWritten, error?, durationMs) e exibir grid verde/amarelo/vermelho no painel. Drill-down de últimas ocorrências e contestadas também pendente.
+- **Setup pendente manual** (você precisa fazer): deploy de rules/functions, rodar `grantAdmin.js` com seu UID, abrir `faro://admin`. Passo a passo em `docs/firebase_setup.md` §13.
+
+---
+
 ## Marca e legal
 
 ### Validação final do nome no INPI

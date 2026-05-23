@@ -14,6 +14,7 @@ import '../services/analytics_service.dart';
 import '../services/historical_baseline_service.dart';
 import '../services/occurrences_service.dart';
 import '../widgets/favorite_button.dart';
+import '../widgets/narratives_strip.dart';
 import '../services/density_service.dart';
 import '../widgets/safe_arrival_counter.dart';
 import '../widgets/temporal_chart.dart';
@@ -95,6 +96,7 @@ class _AreasScreenState extends ConsumerState<AreasScreen> {
                 children: [
                   const _Disclaimer(),
                   const SizedBox(height: 12),
+                  const NarrativesStrip(),
                   _WindowSelector(
                     selected: _window,
                     onSelect: (w) => setState(() => _window = w),

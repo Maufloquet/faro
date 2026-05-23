@@ -29,6 +29,7 @@
 const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
+const { runWithHealth } = require("./jobHealth");
 
 const WINDOW_DAYS = 90;
 const RECENT_WINDOW_DAYS = 7;
@@ -45,7 +46,7 @@ exports.aggregateHistoricalBaseline = onSchedule(
     memory: "512MiB",
     timeoutSeconds: 300,
   },
-  async () => {
+  async () => runWithHealth("aggregateHistoricalBaseline", async () => {
     const db = admin.firestore();
     const now = new Date();
     const since = new Date(now.getTime() - WINDOW_DAYS * 24 * 60 * 60 * 1000);
@@ -104,7 +105,8 @@ exports.aggregateHistoricalBaseline = onSchedule(
     logger.info(
       `historicalBaseline: ${snap.size} occurrences agrupadas em ${written} regiões`,
     );
-  },
+    return { itemsWritten: written };
+  }),
 );
 
 /**

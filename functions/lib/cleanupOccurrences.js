@@ -19,6 +19,7 @@
 const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
+const { runWithHealth } = require("./jobHealth");
 
 const OCCURRENCE_BUFFER_HOURS = 24; // mantemos 1 dia após expiresAt
 const NEWS_SEEN_TTL_DAYS = 90;
@@ -31,7 +32,7 @@ exports.cleanupOccurrences = onSchedule(
     memory: "256MiB",
     timeoutSeconds: 540,
   },
-  async () => {
+  async () => runWithHealth("cleanupOccurrences", async () => {
     const db = admin.firestore();
     const now = new Date();
 
@@ -74,7 +75,8 @@ exports.cleanupOccurrences = onSchedule(
     }
 
     logger.info("Cleanup concluído", stats);
-  }
+    return { itemsWritten: stats.occurrencesDeleted + stats.newsSeenDeleted };
+  })
 );
 
 /**

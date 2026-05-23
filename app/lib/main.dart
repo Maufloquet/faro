@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:app_links/app_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,6 +17,7 @@ import 'core/i18n/locale_notifier.dart';
 import 'core/log/faro_logger.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
+import 'screens/admin_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/analytics_service.dart';
 import 'services/background_location_service.dart';
@@ -176,6 +178,10 @@ class FaroApp extends ConsumerStatefulWidget {
 }
 
 class _FaroAppState extends ConsumerState<FaroApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  AppLinks? _appLinks;
+  StreamSubscription<Uri>? _linkSub;
+
   @override
   void initState() {
     super.initState();
@@ -189,6 +195,28 @@ class _FaroAppState extends ConsumerState<FaroApp> {
           .bootstrap(WidgetsBinding.instance.platformDispatcher.locale);
       ref.read(drivingModeProvider.notifier).bootstrap();
     });
+    // Deep links: rota oculta `faro://admin` abre o painel interno.
+    // Firestore rules barram a leitura pra quem não tem o custom claim,
+    // então mesmo se outro dispositivo abrir a URL, a tela exibe acesso
+    // negado em vez de qualquer dado.
+    if (!kUseDevAssetData) {
+      _appLinks = AppLinks();
+      _linkSub = _appLinks!.uriLinkStream.listen(_handleUri);
+      unawaited(_appLinks!.getInitialLink().then(_handleUri));
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    super.dispose();
+  }
+
+  void _handleUri(Uri? uri) {
+    if (uri == null) return;
+    if (uri.scheme == 'faro' && uri.host == 'admin') {
+      _navigatorKey.currentState?.pushNamed('/admin');
+    }
   }
 
   @override
@@ -201,8 +229,12 @@ class _FaroAppState extends ConsumerState<FaroApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
+      navigatorKey: _navigatorKey,
       navigatorObservers: kUseDevAssetData ? const [] : [AnalyticsService.observer],
       home: const SplashScreen(),
+      routes: {
+        '/admin': (_) => const AdminScreen(),
+      },
     );
   }
 }

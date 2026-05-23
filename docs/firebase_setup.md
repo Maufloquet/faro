@@ -327,3 +327,120 @@ Sem esse environment o secret precisa ser repository-wide e qualquer PR malicios
 
 **"Build iOS falha por pod install"**
 - Cache do CocoaPods pode estar bagunçado. No workflow `flutter.yml` job `build-ios`, adicionar passo `cd ios && pod repo update` antes do build (deixei fora por padrão pra economizar tempo de runner — só inclui se quebrar)
+
+## 13. Painel admin interno
+
+O painel mora dentro do próprio app, na rota oculta `/admin`, acessível por deep link `faro://admin`. Quem não tem o custom claim `admin: true` no token recebe "acesso negado" — as Firestore rules barram a leitura mesmo se outro dispositivo tentar abrir o link.
+
+### Deploy
+
+```
+firebase deploy --only firestore:rules
+firebase deploy --only functions:aggregateAdminMetrics
+```
+
+A função roda a cada 30 min e escreve em `/admin_metrics/current`. Histórico diário fica em `/admin_metrics/history/daily/{YYYY-MM-DD}`.
+
+### Conceder claim de admin pra sua conta
+
+1. Abra o app, faça login com Google (ou se já é a sua conta padrão, pule).
+2. Console Firebase → Authentication → Users → copie o User UID da sua conta.
+3. No terminal:
+
+```
+gcloud auth application-default login
+cd functions
+node scripts/grantAdmin.js <SEU_UID>
+```
+
+O script imprime `Claims atualizados: {"admin":true}`. Pra reverter: `node scripts/grantAdmin.js <UID> --revoke`.
+
+4. **Importante:** custom claims só entram no JWT no próximo refresh do token. Faça logout e login novamente no app — ou abra `/admin` direto, a tela faz `getIdTokenResult(true)` pra forçar refresh imediato.
+
+### Forçar primeiro run da agregação
+
+O scheduler roda no horário cheio e meio. Pra disparar manual sem esperar:
+
+```
+gcloud scheduler jobs run firebase-schedule-aggregateAdminMetrics-southamerica-east1 \
+  --location=southamerica-east1
+```
+
+(o nome do job aparece no Cloud Console → Cloud Scheduler).
+
+### Abrir o painel
+
+No celular, abra o link `faro://admin` (digite no Chrome/Safari, ou compartilhe via WhatsApp pra você mesmo e abra). Cliente intercepta e redireciona pra `AdminScreen`. Tela mostra: usuários (total, por provider, novos/ativos), ocorrências (total, 24h, 7d, fonte, cidade, motivos), contestações, "cheguei bem".
+
+## 14. Embeddings semânticos + narrativas (Gemini)
+
+A camada de inteligência editorial usa o modelo `text-embedding-004` do Google AI Studio pra dedup cross-source e clustering de notícias em narrativas semanais (seção "Esta semana" da AreasScreen).
+
+### Criar a API key do Gemini
+
+1. Vá em https://aistudio.google.com/apikey
+2. Login com a mesma conta Google que tem o projeto Firebase. "Create API key" → escolha o projeto `faro` (vincula billing já existente). Free tier: 1500 RPM, 15 RPM por chave em texto, o suficiente pra news ingest com larga folga.
+3. Copie a chave (`AIza...`).
+
+### Cadastrar como secret nas Functions
+
+```
+cd functions
+firebase functions:secrets:set GEMINI_API_KEY
+# cole a key quando pedir, enter
+```
+
+Verificar:
+```
+firebase functions:secrets:access GEMINI_API_KEY
+```
+
+### Deploy do vector index
+
+```
+firebase deploy --only firestore:indexes
+```
+
+O `infra/firestore.indexes.json` declara um vector field em `occurrences.embedding` (768d, flat). Provisão demora alguns minutos no Firestore — durante esse tempo `findNearest` retorna `FAILED_PRECONDITION`. O newsIngest tem fallback automático pro dedup antigo (eventKey) enquanto o índice está building.
+
+Sintaxe `vectorConfig` exige Firebase CLI ≥ 13.0. Verificar:
+```
+firebase --version
+```
+Se mais antigo: `npm i -g firebase-tools`.
+
+### Deploy das Functions novas
+
+```
+firebase deploy --only functions:ingestNewsBahia,functions:backfillEmbeddings,functions:aggregateNarratives
+```
+
+### Backfill das ocorrências históricas
+
+Depois do deploy, popular as ~287 docs antigas com embeddings:
+
+```
+URL=$(firebase functions:list --json | jq -r '.[] | select(.id == "backfillEmbeddings").httpsTrigger.url')
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  "$URL?limit=500"
+```
+
+Resposta inclui `candidates`, `embedded`, `failed`. Pra dry-run sem gravar: `?limit=500&dryRun=true`.
+
+### Disparar primeira agregação de narrativas
+
+O scheduler diário roda às 04:00 BRT. Pra adiantar manualmente:
+
+```
+gcloud scheduler jobs run firebase-schedule-aggregateNarratives-southamerica-east1 \
+  --location=southamerica-east1
+```
+
+A UI da AreasScreen mostra a seção "Esta semana" automaticamente assim que houver pelo menos um cluster com 3+ relatos relacionados na mesma cidade.
+
+### Calibração do threshold de similaridade
+
+- Dedup semântico (newsIngest): cosseno >= 0.88 (distance ≤ 0.12)
+- Clustering de narrativas (aggregateNarratives): cosseno >= 0.80
+
+Conservador propositalmente — prefere criar duplicata a mesclar relatos diferentes. Pra ajustar, mexer em `SEMANTIC_DUP_DISTANCE` (newsIngest.js) e `SIMILARITY_THRESHOLD` (narrativeAggregator.js). Recomendado: observar logs por 1 semana antes de mexer.

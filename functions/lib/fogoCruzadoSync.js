@@ -19,6 +19,7 @@ const { logger } = require("firebase-functions/v2");
 const ngeohash = require("ngeohash");
 const { authedFetch } = require("./fogoCruzadoAuth");
 const { buildEventKey } = require("./eventKey");
+const { runWithHealth } = require("./jobHealth");
 
 /** Mesma janela do newsIngest — coerência cross-source. */
 const DEDUP_WINDOW_HOURS = 6;
@@ -51,9 +52,10 @@ exports.syncFogoCruzado = onSchedule(
     timeoutSeconds: 120,
     secrets: ["FOGO_CRUZADO_EMAIL", "FOGO_CRUZADO_PASSWORD"],
   },
-  async () => {
+  async () => runWithHealth("syncFogoCruzado", async () => {
     const db = admin.firestore();
     const totals = {};
+    let itemsWritten = 0;
 
     for (const stateAbbr of ENABLED_STATES) {
       const stateId = STATE_IDS[stateAbbr];
@@ -64,11 +66,13 @@ exports.syncFogoCruzado = onSchedule(
 
       const result = await syncState(db, stateAbbr, stateId);
       totals[stateAbbr] = result;
+      itemsWritten += result.upserted + result.corroborated;
       logger.info(`Sync ${stateAbbr}: ${result.upserted} ocorrências`);
     }
 
     logger.info("Sync Fogo Cruzado concluído", { totals });
-  }
+    return { itemsWritten };
+  })
 );
 
 /**
