@@ -1,29 +1,40 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/log/faro_logger.dart';
 
+/// Região onde as Cloud Functions vivem. Callable precisa bater certo —
+/// se ficar no default (us-central1), a chamada cai em "not-found".
+const _functionsRegion = 'southamerica-east1';
+
 /// Ações LGPD: exportar todos os dados do usuário, ou apagar a conta.
 ///
-/// Por que o cliente faz isso direto (e não Cloud Function):
-/// - Exportar: dados estão todos sob `/users/{uid}` + `/contestations`
-///   onde `submittedBy == uid`. Tudo legível com auth do próprio usuário.
-/// - Apagar: mesma lógica. Rules permitem o dono deletar o que escreveu
-///   no `/users/{uid}` e subcoleção `/favorites`. Contestações não têm
-///   delete pelo cliente (rule explícita) — então pra apagar de verdade
-///   precisamos da Cloud Function (`deleteAccountCascade`), que rodará
-///   com admin SDK e cobrirá tudo. Por ora documentamos como TODO.
+/// Divisão de trabalho:
+/// - Exportar: o cliente lê o que consegue de si mesmo (`/users/{uid}` +
+///   subcoleção `/favorites`). Contestações ficam de fora porque as rules
+///   bloqueiam leitura — quem precisar da categoria pede por contato.
+/// - Apagar: delega pra Cloud Function `deleteAccountCascade`, que roda com
+///   admin SDK e cobre o que o cliente não alcança — contestações (delete
+///   bloqueado pela rule) e a própria conta no Firebase Auth (sem o entrave
+///   de `requires-recent-login`). Depois o cliente só desloga.
 class AccountActionsService {
   final FirebaseFirestore _db;
   final FirebaseAuth _auth;
+  final FirebaseFunctions _functions;
   static const _log = FaroLogger('account-actions');
 
-  AccountActionsService({FirebaseFirestore? db, FirebaseAuth? auth})
-      : _db = db ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  AccountActionsService({
+    FirebaseFirestore? db,
+    FirebaseAuth? auth,
+    FirebaseFunctions? functions,
+  })  : _db = db ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance,
+        _functions = functions ??
+            FirebaseFunctions.instanceFor(region: _functionsRegion);
 
   /// Devolve um JSON serializado com tudo o que o usuário pode ler
   /// dele mesmo. Inclui:
@@ -84,50 +95,39 @@ class AccountActionsService {
 
   /// Apaga conta + dados associados. Operação irreversível.
   ///
-  /// Hoje cobre client-side:
-  ///   1. Apaga subcoleção /users/{uid}/favorites
-  ///   2. Apaga doc /users/{uid}
-  ///   3. signOut + delete() do Firebase Auth
+  /// Tudo acontece server-side na Cloud Function `deleteAccountCascade`,
+  /// numa ordem única: contestações → doc /users/{uid} e subcoleções
+  /// (favorites, fcmTokens) → conta no Firebase Auth. Concentrar no admin
+  /// SDK resolve dois entraves do cliente: a rule que proíbe apagar
+  /// contestações e o `requires-recent-login` do `user.delete()`.
   ///
-  /// Não cobre (pendente Cloud Function `deleteAccountCascade`):
-  ///   - Contestações (sem delete client-side)
-  ///   - Re-anonimização de docs já gravados que mencionam o uid em campos
-  ///
-  /// Em caso de erro no meio, o que conseguir apagar fica apagado — o
-  /// resto pode ser limpo posteriormente via solicitação manual.
+  /// Depois que a function retorna, a conta Auth já não existe — o cliente
+  /// só limpa o estado local com signOut. Se a function falhar, propagamos
+  /// o erro e nada foi apagado pela metade (ela aborta antes de tocar no
+  /// Auth se a deleção de dados falhar).
   Future<void> deleteAccount() async {
     final user = _auth.currentUser;
     if (user == null) {
       throw StateError('Sem usuário corrente.');
     }
-    final uid = user.uid;
 
     try {
-      // Subcoleção: favoritos
-      final favSnap =
-          await _db.collection('users').doc(uid).collection('favorites').get();
-      final batch = _db.batch();
-      for (final doc in favSnap.docs) {
-        batch.delete(doc.reference);
-      }
-      if (favSnap.docs.isNotEmpty) await batch.commit();
-    } catch (e, s) {
-      _log.error('delete: limpar favoritos falhou', e, s);
-    }
-
-    try {
-      await _db.collection('users').doc(uid).delete();
-    } catch (e, s) {
-      _log.error('delete: apagar perfil falhou', e, s);
-    }
-
-    try {
-      await user.delete();
-    } catch (e, s) {
-      _log.error('delete: apagar conta Auth falhou', e, s);
-      // Se a conta Google exige re-autenticação recente (requires-recent-login),
-      // o caller precisa pedir login antes de chamar de novo. Propagamos.
+      final callable = _functions.httpsCallable('deleteAccountCascade');
+      await callable.call<Map<String, dynamic>>();
+    } on FirebaseFunctionsException catch (e, s) {
+      _log.error('delete: cascade falhou (${e.code})', e, s);
       rethrow;
+    } catch (e, s) {
+      _log.error('delete: cascade falhou', e, s);
+      rethrow;
+    }
+
+    // A conta já foi apagada no servidor; aqui só derrubamos a sessão local
+    // pra o app voltar ao estado deslogado. Falha aqui não desfaz a deleção.
+    try {
+      await _auth.signOut();
+    } catch (e, s) {
+      _log.error('delete: signOut local falhou (conta já apagada)', e, s);
     }
   }
 }

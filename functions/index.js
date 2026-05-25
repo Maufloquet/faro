@@ -29,6 +29,10 @@ exports.fetchOsmInfra = require("./lib/osmInfraIngest").fetchOsmInfra;
 // gerenciada em /research_keys/{key}). Documentação: docs/parcerias/.
 exports.getOccurrences = require("./lib/researchApi").getOccurrences;
 
+// Callable (invocado pelo app autenticado)
+exports.deleteAccountCascade =
+  require("./lib/deleteAccount").deleteAccountCascade;
+
 // Firestore triggers
 exports.onOccurrenceCreated = require("./lib/proximityAlert").onOccurrenceCreated;
 exports.onContestationWritten =
