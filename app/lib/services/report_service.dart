@@ -50,6 +50,60 @@ class ReportService {
     return ref.id;
   }
 
+  /// Registra (ou troca) o voto do usuário num relato. Id do doc = uid,
+  /// garante 1 voto por pessoa; revotar sobrescreve. O agregador server-side
+  /// recalcula as contagens e decide confirmar/rejeitar.
+  Future<void> vote({
+    required String reportId,
+    required ReportVote vote,
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      throw const ReportException('Sem identificação. Tente de novo.');
+    }
+    await _db
+        .collection('reports')
+        .doc(reportId)
+        .collection('votes')
+        .doc(uid)
+        .set({
+      'vote': vote.id,
+      'votedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Stream de um relato específico — pra o detalhe refletir contagens e
+  /// status ao vivo depois de um voto.
+  Stream<UserReport?> watchById(String reportId) {
+    return _db.collection('reports').doc(reportId).snapshots().map(
+          (doc) => doc.exists ? UserReport.fromFirestore(doc) : null,
+        );
+  }
+
+  /// Stream do voto atual do usuário neste relato (ou null se não votou).
+  Stream<ReportVote?> watchMyVote(String reportId) {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Stream.value(null);
+    return _db
+        .collection('reports')
+        .doc(reportId)
+        .collection('votes')
+        .doc(uid)
+        .snapshots()
+        .map((d) {
+      if (!d.exists) return null;
+      final v = d.data()?['vote'] as String?;
+      return v == 'confirm'
+          ? ReportVote.confirm
+          : v == 'contest'
+              ? ReportVote.contest
+              : null;
+    });
+  }
+
+  /// uid corrente — pra a UI esconder o voto no próprio relato.
+  String? get currentUid => _auth.currentUser?.uid;
+
   /// Stream dos relatos pendentes. Filtro de equality simples (sem índice
   /// composto); a expiração é refinada no cliente porque o scheduler pode
   /// ainda não ter passado.
@@ -82,4 +136,14 @@ final reportServiceProvider = Provider<ReportService>(
 
 final activeReportsProvider = StreamProvider<List<UserReport>>(
   (ref) => ref.watch(reportServiceProvider).activePending(),
+);
+
+/// Relato específico ao vivo (detalhe).
+final reportByIdProvider = StreamProvider.family<UserReport?, String>(
+  (ref, reportId) => ref.watch(reportServiceProvider).watchById(reportId),
+);
+
+/// Voto atual do usuário num relato.
+final myReportVoteProvider = StreamProvider.family<ReportVote?, String>(
+  (ref, reportId) => ref.watch(reportServiceProvider).watchMyVote(reportId),
 );

@@ -38,3 +38,5 @@ exports.exportUserData = require("./lib/exportUserData").exportUserData;
 exports.onOccurrenceCreated = require("./lib/proximityAlert").onOccurrenceCreated;
 exports.onContestationWritten =
   require("./lib/contestationAggregator").onContestationWritten;
+exports.onReportVoteWritten =
+  require("./lib/reportVoteAggregator").onReportVoteWritten;

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/design/tokens.dart';
 import '../models/user_report.dart';
+import '../services/report_service.dart';
 
 /// Folha de detalhe de um relato de usuário (Camada 4).
 ///
 /// Deixa explícito que é um relato NÃO confirmado — visual e texto
 /// diferentes da ocorrência de fonte oficial, pra o usuário nunca
-/// confundir boato com notícia apurada. Os botões de confirmar/contestar
-/// entram no Bloco 2.
-class ReportDetailSheet extends StatelessWidget {
+/// confundir boato com notícia apurada. Traz a validação coletiva:
+/// confirmar/contestar em 2 toques (escondida no próprio relato).
+class ReportDetailSheet extends ConsumerStatefulWidget {
   final UserReport report;
 
   const ReportDetailSheet({super.key, required this.report});
@@ -26,7 +28,46 @@ class ReportDetailSheet extends StatelessWidget {
   }
 
   @override
+  ConsumerState<ReportDetailSheet> createState() => _ReportDetailSheetState();
+}
+
+class _ReportDetailSheetState extends ConsumerState<ReportDetailSheet> {
+  bool _voting = false;
+
+  Future<void> _vote(ReportVote vote) async {
+    if (_voting) return;
+    setState(() => _voting = true);
+    try {
+      await ref
+          .read(reportServiceProvider)
+          .vote(reportId: widget.report.id, vote: vote);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível votar. Tente de novo.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _voting = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Versão ao vivo do relato (contagens/status mudam após votos);
+    // cai pro objeto inicial enquanto o stream não resolve.
+    final live = ref
+        .watch(reportByIdProvider(widget.report.id))
+        .maybeWhen(data: (r) => r, orElse: () => null);
+    final report = live ?? widget.report;
+    final myVote =
+        ref.watch(myReportVoteProvider(widget.report.id)).maybeWhen(
+              data: (v) => v,
+              orElse: () => null,
+            );
+    final isMine =
+        ref.read(reportServiceProvider).currentUid == report.createdBy;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -70,6 +111,16 @@ class ReportDetailSheet extends StatelessWidget {
               _meta(report),
               style: const TextStyle(fontSize: 12.5, color: FaroColors.textSoft),
             ),
+            const SizedBox(height: 18),
+            if (isMine)
+              _MineNote()
+            else
+              _VoteRow(
+                myVote: myVote,
+                busy: _voting,
+                onConfirm: () => _vote(ReportVote.confirm),
+                onContest: () => _vote(ReportVote.contest),
+              ),
           ],
         ),
       ),
@@ -80,13 +131,11 @@ class ReportDetailSheet extends StatelessWidget {
     final parts = <String>[];
     final when = _age(r.createdAt);
     if (when != null) parts.add(when);
-    if (r.confirmCount > 0) {
-      parts.add(r.confirmCount == 1
-          ? '1 confirmação'
-          : '${r.confirmCount} confirmações');
-    } else {
-      parts.add('Ainda sem confirmação');
-    }
+    parts.add(r.confirmCount == 0
+        ? 'Ainda sem confirmação'
+        : r.confirmCount == 1
+            ? '1 confirmação'
+            : '${r.confirmCount} confirmações');
     return parts.join(' · ');
   }
 
@@ -97,6 +146,128 @@ class ReportDetailSheet extends StatelessWidget {
     if (diff.inMinutes < 60) return 'Há ${diff.inMinutes} min';
     if (diff.inHours < 24) return 'Há ${diff.inHours} h';
     return 'Há ${diff.inDays} d';
+  }
+}
+
+class _VoteRow extends StatelessWidget {
+  final ReportVote? myVote;
+  final bool busy;
+  final VoidCallback onConfirm;
+  final VoidCallback onContest;
+
+  const _VoteRow({
+    required this.myVote,
+    required this.busy,
+    required this.onConfirm,
+    required this.onContest,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Você está perto e viu?',
+          style: TextStyle(
+            fontSize: 12.5,
+            color: FaroColors.textSoft,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _VoteButton(
+                icon: Icons.check_circle_outline,
+                label: 'Confirmo',
+                selected: myVote == ReportVote.confirm,
+                color: FaroColors.primary,
+                busy: busy,
+                onTap: onConfirm,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _VoteButton(
+                icon: Icons.cancel_outlined,
+                label: 'Não procede',
+                selected: myVote == ReportVote.contest,
+                color: FaroColors.destructive,
+                busy: busy,
+                onTap: onContest,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _VoteButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final Color color;
+  final bool busy;
+  final VoidCallback onTap;
+
+  const _VoteButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.busy,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? color : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: busy ? null : onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? color : FaroColors.sandBorder,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 18, color: selected ? Colors.white : color),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : FaroColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MineNote extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'Este é o seu relato. Outras pessoas perto é que confirmam.',
+      style: TextStyle(fontSize: 12.5, color: FaroColors.textSoft),
+    );
   }
 }
 

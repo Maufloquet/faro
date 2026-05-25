@@ -23,6 +23,15 @@ enum ReportType {
   }
 }
 
+/// Voto de validação coletiva sobre um relato.
+enum ReportVote {
+  confirm('confirm'),
+  contest('contest');
+
+  const ReportVote(this.id);
+  final String id;
+}
+
 /// Estado de um relato na caixa de entrada /reports.
 ///   - pending: aguardando validação coletiva
 ///   - confirmed: atingiu o limiar de confirmações (promovido a ocorrência)
