@@ -14,6 +14,7 @@ import '../core/theme/app_theme.dart';
 import '../models/bus_stop.dart';
 import '../models/occurrence.dart';
 import '../models/osm_infra.dart';
+import '../models/user_report.dart';
 import '../services/analytics_service.dart';
 import '../services/bairros_directory.dart';
 import '../services/cluster_engine.dart';
@@ -24,6 +25,7 @@ import '../services/marker_factory.dart';
 import '../services/messaging_service.dart';
 import '../services/occurrences_service.dart';
 import '../services/osm_service.dart';
+import '../services/report_service.dart';
 import '../widgets/driving_mode_button.dart';
 import '../widgets/faro_drawer.dart';
 import '../widgets/filter_sheet.dart';
@@ -32,6 +34,8 @@ import '../widgets/map_floating_button.dart';
 import '../widgets/occurrence_detail_sheet.dart';
 import '../widgets/occurrence_tile.dart';
 import '../widgets/proximity_banner.dart';
+import '../widgets/report_detail_sheet.dart';
+import 'report_screen.dart';
 import 'search_screen.dart';
 
 import '../core/design/tokens.dart';
@@ -153,6 +157,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
     final km = haversineKm(pos.latitude, pos.longitude, o.latitude, o.longitude);
     return km <= _regionRadiusKm;
+  }
+
+  /// Mesmo recorte regional do `_passesRegionFilter`, mas pra relatos de
+  /// usuário (Camada 4). Sem GPS, mostra tudo — relatos são poucos e o
+  /// usuário acabou de criar o seu; não queremos escondê-lo só porque o
+  /// fix de localização ainda não chegou.
+  bool _reportInRegion(UserReport r) {
+    final pos = _userPos;
+    if (pos == null) return true;
+    final km = haversineKm(pos.latitude, pos.longitude, r.lat, r.lng);
+    return km <= _regionRadiusKm;
+  }
+
+  /// Abre a tela de relato. GPS é resolvido lá dentro.
+  Future<void> _openReportScreen() async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const ReportScreen()),
+    );
   }
 
   /// Filtro "à minha frente" — só ativo em modo carro/bike E em
@@ -613,6 +635,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             )
         : const <BusStop>[];
 
+    // Relatos de usuário (Camada 4) — camada distinta, recortada na região.
+    // Mostrados em qualquer zoom (são poucos e o usuário quer ver o seu).
+    final reports = ref
+        .watch(activeReportsProvider)
+        .maybeWhen(data: (v) => v, orElse: () => const <UserReport>[])
+        .where(_reportInRegion)
+        .toList();
+
     // Camadas de infraestrutura — cada uma respeita seu próprio zoom mínimo.
     final infraByKind = <OsmInfraKind, List<OsmInfra>>{};
     for (final kind in _activeInfra) {
@@ -654,6 +684,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             asHeatmap: _showHeatmap,
             busStops: busStops,
             infraByKind: infraByKind,
+            reports: reports,
+            onTapReport: (r) => ReportDetailSheet.show(context, r),
             drivingActive: ref.watch(drivingModeProvider) != DrivingMode.off,
             drivingArrowIcon: _drivingArrowIcon,
             drivingPos: _userPos,
@@ -703,6 +735,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             bottom: MediaQuery.of(context).size.height * 0.18 + 12,
             child: Column(
               children: [
+                MapFloatingButton(
+                  icon: Icons.add_location_alt_outlined,
+                  onTap: _openReportScreen,
+                ),
+                const SizedBox(height: 12),
                 DrivingModeButton(
                   mode: ref.watch(drivingModeProvider),
                   onTap: () =>
@@ -779,6 +816,7 @@ class _Map extends StatelessWidget {
   final bool asHeatmap;
   final List<BusStop> busStops;
   final Map<OsmInfraKind, List<OsmInfra>> infraByKind;
+  final List<UserReport> reports;
   final bool drivingActive;
   final BitmapDescriptor? drivingArrowIcon;
   final LatLng? drivingPos;
@@ -786,6 +824,7 @@ class _Map extends StatelessWidget {
   final ValueChanged<GoogleMapController> onCreated;
   final ValueChanged<Occurrence> onTap;
   final ValueChanged<MapNode> onTapCluster;
+  final ValueChanged<UserReport> onTapReport;
   final ValueChanged<CameraPosition> onCameraMove;
   final VoidCallback onCameraIdle;
 
@@ -799,6 +838,7 @@ class _Map extends StatelessWidget {
     required this.asHeatmap,
     required this.busStops,
     required this.infraByKind,
+    required this.reports,
     required this.drivingActive,
     required this.drivingArrowIcon,
     required this.drivingPos,
@@ -806,6 +846,7 @@ class _Map extends StatelessWidget {
     required this.onCreated,
     required this.onTap,
     required this.onTapCluster,
+    required this.onTapReport,
     required this.onCameraMove,
     required this.onCameraIdle,
   });
@@ -822,12 +863,15 @@ class _Map extends StatelessWidget {
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
       compassEnabled: false,
+      // Relatos de usuário aparecem em qualquer zoom (inclusive sobre o
+      // heatmap): são poucos, distintos, e o usuário quer ver o seu.
       markers: asHeatmap
-          ? const {}
+          ? {..._reportMarkers()}
           : {
               ..._markers(),
               ..._busStopMarkers(),
               ..._infraMarkers(),
+              ..._reportMarkers(),
               ..._drivingMarker(),
             },
       // Heatmap nativo do google_maps_flutter ≥ 2.6 funciona em iOS e
@@ -896,6 +940,26 @@ class _Map extends StatelessWidget {
       }
     }
     return result;
+  }
+
+  /// Marcadores de relato de usuário (Camada 4). Cor violeta + alpha
+  /// reduzido sinaliza "não confirmado" — visualmente distinto dos
+  /// marcadores de ocorrência (vermelho/laranja/azul por idade).
+  Set<Marker> _reportMarkers() {
+    if (reports.isEmpty) return const {};
+    final icon =
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
+    return {
+      for (final r in reports)
+        Marker(
+          markerId: MarkerId('report-${r.id}'),
+          position: LatLng(r.lat, r.lng),
+          icon: icon,
+          alpha: 0.78,
+          anchor: const Offset(0.5, 0.5),
+          onTap: () => onTapReport(r),
+        ),
+    };
   }
 
   Set<Marker> _drivingMarker() {

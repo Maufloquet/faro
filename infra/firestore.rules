@@ -11,9 +11,47 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Reports de usuários (V2). Por enquanto bloqueado.
+    // Reports de usuários (Camada 4 — UGC). Caixa de entrada crua de
+    // relatos. Ficam separados de /occurrences de propósito: enquanto não
+    // validados coletivamente, são "boato" e não devem poluir digest,
+    // narrativas nem densidade. A Cloud Function promove os confirmados
+    // pra /occurrences com source='user_report'.
+    //
+    // - Leitura pública: o app mostra relatos pendentes como camada
+    //   distinta ("não confirmado").
+    // - Create: usuário autenticado, GPS obrigatório (lat/lng numéricos),
+    //   tipo válido, status inicial 'pending', contagens zeradas, autoria
+    //   amarrada ao uid. Descrição opcional e curta. expiresAt obrigatório
+    //   (cliente põe agora+4h; a Function de expiração é a fonte real).
+    // - Update/delete pelo cliente: bloqueado. Mudança de status e
+    //   contagens só via Cloud Function (admin SDK). Voto vai na subcoleção.
     match /reports/{reportId} {
-      allow read, write: if false;
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.lat is number
+        && request.resource.data.lng is number
+        && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+        && request.resource.data.lng >= -180 && request.resource.data.lng <= 180
+        && request.resource.data.type is string
+        && request.resource.data.status == 'pending'
+        && request.resource.data.confirmCount == 0
+        && request.resource.data.contestCount == 0
+        && (request.resource.data.description == null
+            || (request.resource.data.description is string
+                && request.resource.data.description.size() <= 280))
+        && request.resource.data.expiresAt is timestamp;
+      allow update, delete: if false;
+
+      // Voto de validação coletiva — id determinístico = uid do votante,
+      // garante 1 voto por usuário por relato. Bloco 2 agrega via Function.
+      match /votes/{voterUid} {
+        allow read: if request.auth != null && request.auth.uid == voterUid;
+        allow create, update: if request.auth != null
+          && request.auth.uid == voterUid
+          && request.resource.data.vote in ['confirm', 'contest'];
+        allow delete: if false;
+      }
     }
 
     // Users — perfil e dados sincronizados. Cada um lê/escreve só o próprio.
