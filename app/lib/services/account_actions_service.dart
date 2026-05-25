@@ -36,14 +36,20 @@ class AccountActionsService {
         _functions = functions ??
             FirebaseFunctions.instanceFor(region: _functionsRegion);
 
-  /// Devolve um JSON serializado com tudo o que o usuário pode ler
-  /// dele mesmo. Inclui:
+  /// Devolve um JSON serializado com tudo o que o Faro guarda do usuário:
   ///   - perfil em /users/{uid}
   ///   - favoritos em /users/{uid}/favorites
+  ///   - tokens de push em /users/{uid}/fcmTokens
   ///   - contestações de autoria dele em /contestations
   ///
-  /// Não inclui:
-  ///   - identificadores opacos do Firebase (não são "seus dados")
+  /// O pacote completo vem da Cloud Function `exportUserData` (admin SDK),
+  /// que é a única forma de incluir as contestações — as rules bloqueiam a
+  /// leitura delas pelo cliente. Se a chamada falhar (offline, função fora
+  /// do ar), caímos pra um export local parcial: perfil + favoritos, com
+  /// aviso explícito de que as contestações ficaram de fora.
+  ///
+  /// Não inclui em nenhum caso:
+  ///   - identificadores opacos do Firebase que não são "seus dados"
   ///   - analytics anônimas (não vinculadas ao uid)
   Future<String> exportAsJson() async {
     final user = _auth.currentUser;
@@ -51,8 +57,23 @@ class AccountActionsService {
       throw StateError('Sem usuário corrente — não há dados a exportar.');
     }
 
+    try {
+      final callable = _functions.httpsCallable('exportUserData');
+      final res = await callable.call<Map<String, dynamic>>();
+      return const JsonEncoder.withIndent('  ').convert(res.data);
+    } catch (e, s) {
+      _log.error('export: callable falhou, caindo pro export local', e, s);
+      return _exportLocalFallback(user);
+    }
+  }
+
+  /// Export degradado, usado só quando a Cloud Function não responde. Lê o
+  /// que o cliente alcança sozinho (perfil + favoritos) e declara a ausência
+  /// das contestações em vez de fingir que o pacote está completo.
+  Future<String> _exportLocalFallback(User user) async {
     final out = <String, dynamic>{
       'exportadoEm': DateTime.now().toIso8601String(),
+      'parcial': true,
       'uid': user.uid,
       'email': user.email,
       'displayName': user.displayName,
@@ -78,16 +99,11 @@ class AccountActionsService {
       out['favoritos'] = {'erro': e.toString()};
     }
 
-    // Contestações: rules bloqueiam READ pra qualquer cliente, então
-    // mesmo o próprio autor não consegue listar. Pra LGPD strict
-    // teríamos uma Cloud Function exportData() com admin SDK que
-    // varre /contestations onde submittedBy == uid. Por ora,
-    // declaramos a ausência explicitamente.
     out['contestacoes'] = {
       'aviso':
-          'Contestações são gravadas mas o cliente não pode listá-las '
-              '(política de moderação). Pedir exportação completa via '
-              'contato@faro.app pra incluir essa categoria.',
+          'Export parcial: a função de exportação completa não respondeu. '
+              'Contestações ficam de fora porque o app não pode lê-las direto. '
+              'Tente de novo com conexão, ou peça via contato@faro.app.',
     };
 
     return const JsonEncoder.withIndent('  ').convert(out);

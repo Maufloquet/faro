@@ -32,6 +32,7 @@ exports.getOccurrences = require("./lib/researchApi").getOccurrences;
 // Callable (invocado pelo app autenticado)
 exports.deleteAccountCascade =
   require("./lib/deleteAccount").deleteAccountCascade;
+exports.exportUserData = require("./lib/exportUserData").exportUserData;
 
 // Firestore triggers
 exports.onOccurrenceCreated = require("./lib/proximityAlert").onOccurrenceCreated;
