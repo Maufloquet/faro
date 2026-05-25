@@ -24,11 +24,11 @@ const SYSTEM_PROMPT = `Você é um classificador editorial de notícias de segur
 
 Cobrimos Salvador e a Região Metropolitana de Salvador (Camaçari, Lauro de Freitas, Simões Filho).
 
-Recebe título + descrição de uma notícia. Retorna APENAS JSON com:
+Recebe título + descrição + (quando disponível) o corpo da matéria. Retorna APENAS JSON com:
 {
   "security_related": true|false,   // é sobre violência urbana real, não política/economia/esporte?
   "occurrence_type": "tiroteio"|"homicidio"|"roubo"|"acao_policial"|"sequestro"|"agressao"|"outros"|null,
-  "neighborhood": "nome do bairro mencionado",  // ou null
+  "neighborhood": "nome do bairro onde o fato ocorreu",  // ou null
   "city": "Salvador"|"Camaçari"|"Lauro de Freitas"|"Simões Filho"|null,  // só essas 4 ou null se outra
   "bus_lines": ["1234", "Cajazeiras-Lapa"],   // ver regras detalhadas abaixo, ou []
   "transport_context": "onibus"|"metro"|null,  // só preencha se a notícia for explicitamente sobre transporte público
@@ -36,8 +36,16 @@ Recebe título + descrição de uma notícia. Retorna APENAS JSON com:
 }
 
 Regras:
+- O bairro é o LOCAL ONDE O FATO ACONTECEU. Leia o corpo inteiro pra achá-lo.
+- Quando vários bairros são citados, escolha o do acontecimento — NÃO o bairro de
+  residência da vítima/suspeito ("morador da Liberdade"), NÃO o destino de uma fuga
+  ("fugiu sentido Cajazeiras"), NÃO uma referência de contexto. Esses são bairros
+  errados; ignore-os.
+- Se o texto dá só uma rua/avenida ou ponto de referência, infira o bairro a que
+  pertence apenas se tiver certeza; senão neighborhood=null.
 - Bairros: use o nome exato como mencionado, sem cidade ("Pirajá" não "Pirajá, Salvador")
 - Se a notícia menciona só município sem bairro, neighborhood=null
+- Se nenhum bairro do local do fato é claro, neighborhood=null (melhor null que errado)
 - Se cidade é outra (Feira de Santana, Ilhéus, etc), retorne city=null
 - bus_lines: extraia APENAS nesses 2 formatos quando o texto identifica claramente a linha:
     (a) número/código: "linha 1234" → "1234", "ônibus 0220-01" → "0220-01", "L-105" → "L-105"
@@ -52,14 +60,14 @@ Regras:
 - Notícias políticas, comentários, opiniões, esporte → security_related=false
 - Sem campo extra, sem markdown, sem explicação. Apenas o JSON.`;
 
-async function classify(title, description) {
-  return classifyWithRetry(title, description, 3);
+async function classify(title, description, body = "") {
+  return classifyWithRetry(title, description, body, 3);
 }
 
-async function classifyWithRetry(title, description, maxRetries) {
+async function classifyWithRetry(title, description, body, maxRetries) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await doClassify(title, description);
+      return await doClassify(title, description, body);
     } catch (e) {
       const m = e.message || "";
       const retry = parseRetryAfter(m);
@@ -86,13 +94,13 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function doClassify(title, description) {
+async function doClassify(title, description, body = "") {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
     throw new Error("GROQ_API_KEY não configurada");
   }
 
-  const userPrompt = `Título: ${title}\n\nDescrição: ${description || "(sem descrição)"}`;
+  const userPrompt = buildUserPrompt(title, description, body);
 
   const r = await fetch(GROQ_URL, {
     method: "POST",
@@ -132,6 +140,30 @@ async function doClassify(title, description) {
   }
 }
 
+/** Teto do corpo no prompt. articleFetch já corta em 5000, mas reforçamos
+ * aqui pra manter o budget de tokens previsível mesmo se a fonte mudar. */
+const MAX_BODY_CHARS = 4000;
+
+/**
+ * Monta o prompt do usuário. O corpo entra como bloco separado e rotulado
+ * pra o modelo distinguir o texto completo do resumo curto. Sem corpo
+ * (item do Google News, fetch falhou), cai pro formato antigo título+resumo.
+ */
+function buildUserPrompt(title, description, body) {
+  const lines = [
+    `Título: ${title}`,
+    "",
+    `Descrição: ${description || "(sem descrição)"}`,
+  ];
+  const trimmed = (body || "").trim();
+  if (trimmed.length > 0) {
+    const clipped =
+      trimmed.length > MAX_BODY_CHARS ? trimmed.slice(0, MAX_BODY_CHARS) : trimmed;
+    lines.push("", `Corpo da matéria: ${clipped}`);
+  }
+  return lines.join("\n");
+}
+
 /**
  * Extrai o primeiro bloco JSON de uma string que pode ter prefixos
  * ("Here is the JSON: {...}"), markdown ("```json {...} ```") ou ruído.
@@ -148,4 +180,4 @@ function extractJsonBlock(s) {
 }
 
 module.exports = { classify };
-module.exports._internal = { extractJsonBlock, parseRetryAfter };
+module.exports._internal = { extractJsonBlock, parseRetryAfter, buildUserPrompt, MAX_BODY_CHARS };

@@ -32,6 +32,7 @@ const Parser = require("rss-parser");
 
 const { enabledSources } = require("./newsSources");
 const { classify } = require("./groqClient");
+const { fetchArticleText } = require("./articleFetch");
 const { resolveBairro } = require("./bairrosDict");
 const { stateForCity, resolveCityKey, isCoveredCity } = require("./cityCentroids");
 const { buildEventKey } = require("./eventKey");
@@ -161,9 +162,16 @@ async function ingestFromSource(db, source) {
     }
     result.newItems++;
 
+    // Busca o corpo da matéria pra o classificador ter mais que o resumo
+    // do RSS — é onde mora o bairro do fato. Falha graciosa: portais do
+    // Google News (link redirecionador) e erros de rede voltam null, e o
+    // pipeline segue só com título + resumo (sem regressão).
+    const description = item.contentSnippet || item.content || "";
+    const articleBody = await fetchArticleText(url);
+
     let classification;
     try {
-      classification = await classify(item.title || "", item.contentSnippet || item.content || "");
+      classification = await classify(item.title || "", description, articleBody || "");
       result.classified++;
     } catch (e) {
       // NÃO marca como visto — vamos tentar de novo no próximo run.
@@ -208,8 +216,10 @@ async function ingestFromSource(db, source) {
     // ver "Bahia" mencionado em outro contexto. Pra bairro o mesmo —
     // se o LLM extraiu um nome que não está no texto, rebaixamos pro
     // centroide em vez de bater num bairro inventado.
+    // Inclui o corpo no texto de verificação — senão um bairro corretamente
+    // extraído do corpo seria rebaixado por não constar no título/resumo.
     const haystack = normalizeForMatch(
-      `${item.title || ""} ${item.contentSnippet || item.content || ""}`,
+      `${item.title || ""} ${description} ${articleBody || ""}`,
     );
     if (!cityAppearsInText(classification.city, haystack)) {
       logger.info(
