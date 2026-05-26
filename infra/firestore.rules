@@ -89,6 +89,19 @@ service cloud.firestore {
             )
           );
       }
+
+      // Trajetos observados (watchRoutes — V2 da rota A→B). Dono lê/escreve.
+      // O scheduler atualiza `lastCheckedAt` via admin SDK (bypassa rules).
+      match /watchedRoutes/{routeId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.originLat is number
+          && request.resource.data.originLng is number
+          && request.resource.data.destLat is number
+          && request.resource.data.destLng is number;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Regions — score agregado por região. Leitura pública, escrita só Cloud Function.

@@ -18,6 +18,7 @@ exports.aggregateNarratives =
 exports.dailyDigest =
   require("./lib/dailyDigest").dailyDigest;
 exports.expireReports = require("./lib/expireReports").expireReports;
+exports.watchRoutes = require("./lib/watchRoutes").watchRoutes;
 
 // HTTP (manual one-shot)
 exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoCruzado;
