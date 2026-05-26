@@ -10,7 +10,9 @@ import '../services/analytics_service.dart';
 import '../services/favorites_service.dart';
 import '../services/reference_location_service.dart';
 import '../services/route_plan_service.dart';
+import '../services/watched_route_service.dart';
 import '../widgets/occurrence_detail_sheet.dart';
+import 'watched_routes_screen.dart';
 
 /// Avaliação de trajeto A → B. Mostra mapa com linha entre os dois
 /// pontos + lista de relatos no corredor + headline editorial.
@@ -95,6 +97,20 @@ class _RoutePlanScreenState extends ConsumerState<RoutePlanScreen> {
         title: const Text('Avaliar trajeto',
             style: TextStyle(fontFamily: 'Fraunces')),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: 'Observar este trajeto',
+            onPressed: plan == null ? null : () => _watchPlan(plan),
+          ),
+          IconButton(
+            icon: const Icon(Icons.route_outlined),
+            tooltip: 'Trajetos observados',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const WatchedRoutesScreen()),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -131,6 +147,30 @@ class _RoutePlanScreenState extends ConsumerState<RoutePlanScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _watchPlan(RoutePlan plan) async {
+    try {
+      await ref.read(watchedRouteServiceProvider).save(plan);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Trajeto observado. Avisamos por push se aparecer relato novo no '
+            'corredor.',
+          ),
+        ),
+      );
+    } on WatchedRouteException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível observar o trajeto.')),
+      );
+    }
   }
 
   Future<void> _pickDestination() async {
