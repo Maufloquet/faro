@@ -26,6 +26,11 @@ const { logger } = require("firebase-functions/v2");
 const ngeohash = require("ngeohash");
 
 const { mapType } = require("./newsIngest")._internal;
+const {
+  reputationToWeight,
+  getReputationScore,
+  applyReputationDelta,
+} = require("./reportReputation");
 
 // Limiares calibrados pra base pequena do beta. Sobem quando houver volume.
 const CONFIRM_THRESHOLD = 2;
@@ -70,8 +75,12 @@ function aggregateVotes(votes, authorUid, opts = {}) {
 
 /**
  * Monta o doc de /occurrences a partir de um relato confirmado. Puro.
+ * O peso vem da reputação do autor (default PROMOTED_WEIGHT quando não
+ * informado).
  */
-function buildPromotedOccurrence(report, reportId, now = new Date()) {
+function buildPromotedOccurrence(report, reportId, opts = {}) {
+  const now = opts.now || new Date();
+  const weight = typeof opts.weight === "number" ? opts.weight : PROMOTED_WEIGHT;
   const createdAt =
     report.createdAt && report.createdAt.toDate
       ? report.createdAt.toDate()
@@ -92,7 +101,7 @@ function buildPromotedOccurrence(report, reportId, now = new Date()) {
     geocodeMethod: "user_gps",
     mainReason: mapType(report.type),
     source: "user_report",
-    weight: PROMOTED_WEIGHT,
+    weight,
     reportId,
     confirmCount: report.confirmCount || 0,
     ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -116,10 +125,12 @@ exports.onReportVoteWritten = onDocumentWritten(
       return;
     }
     const report = reportSnap.data();
+    const prevStatus = report.status;
+    const author = report.createdBy;
 
     const votesSnap = await reportRef.collection("votes").get();
     const votes = votesSnap.docs.map((d) => ({ id: d.id, vote: d.data().vote }));
-    const agg = aggregateVotes(votes, report.createdBy);
+    const agg = aggregateVotes(votes, author);
 
     const occRef = db.collection("occurrences").doc(`user-${reportId}`);
 
@@ -131,16 +142,27 @@ exports.onReportVoteWritten = onDocumentWritten(
     });
 
     if (agg.status === "confirmed") {
-      // Promove (idempotente — docId determinístico, merge).
+      // Peso da ocorrência promovida segue a reputação do autor (relator
+      // confiável entra mais forte). Promoção idempotente (docId fixo).
+      const score = await getReputationScore(db, author);
       const occ = buildPromotedOccurrence(
         { ...report, confirmCount: agg.confirmCount },
         reportId,
+        { weight: reputationToWeight(score) },
       );
       await occRef.set(occ, { merge: true });
+      // Reputação sobe só na TRANSIÇÃO pra confirmado (não a cada voto novo).
+      if (prevStatus !== "confirmed") {
+        await applyReputationDelta(db, author, { scoreDelta: 1, confirmedDelta: 1 });
+      }
       logger.info(`relato ${reportId} confirmado e promovido (confirm=${agg.confirmCount})`);
     } else if (agg.status === "rejected") {
       // Se tinha sido promovido antes, tira do mapa.
       await occRef.delete().catch(() => {});
+      // Penaliza reputação só na transição pra rejeitado.
+      if (prevStatus !== "rejected") {
+        await applyReputationDelta(db, author, { scoreDelta: -1, rejectedDelta: 1 });
+      }
       logger.info(`relato ${reportId} rejeitado (contest=${agg.contestCount})`);
     }
   },

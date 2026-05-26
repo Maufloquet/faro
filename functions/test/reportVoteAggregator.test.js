@@ -109,3 +109,11 @@ test("buildPromotedOccurrence dá TTL maior que a data de criação", () => {
   assert.ok(occ.expiresAt.toDate().getTime() > createdAt.getTime());
   assert.equal(occ.neighborhood, null);
 });
+
+test("buildPromotedOccurrence usa o peso passado (reputação) ou o default", () => {
+  const base = { lat: -12.9, lng: -38.4, type: "roubo" };
+  const padrao = buildPromotedOccurrence(base, "r");
+  assert.equal(padrao.weight, _internal.PROMOTED_WEIGHT);
+  const comReputacao = buildPromotedOccurrence(base, "r", { weight: 0.58 });
+  assert.equal(comReputacao.weight, 0.58);
+});

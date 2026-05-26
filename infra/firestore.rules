@@ -209,6 +209,14 @@ service cloud.firestore {
       }
     }
 
+    // Reputação invisível do autor de relatos (Camada 4). Calibra o peso
+    // editorial dos relatos; NUNCA é mostrada ao usuário. Só a Cloud
+    // Function (admin SDK) lê e escreve — fechado pra todo cliente,
+    // inclusive o próprio dono, pra não virar gamificação visível.
+    match /user_reputation/{uid} {
+      allow read, write: if false;
+    }
+
     // Tudo o que não estiver mapeado: fechado por default.
     match /{document=**} {
       allow read, write: if false;

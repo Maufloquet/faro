@@ -17,6 +17,7 @@ exports.aggregateNarratives =
   require("./lib/narrativeAggregator").aggregateNarratives;
 exports.dailyDigest =
   require("./lib/dailyDigest").dailyDigest;
+exports.expireReports = require("./lib/expireReports").expireReports;
 
 // HTTP (manual one-shot)
 exports.backfillFogoCruzado = require("./lib/fogoCruzadoBackfill").backfillFogoCruzado;
