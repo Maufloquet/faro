@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../core/design/tokens.dart';
 import '../core/design/typography.dart';
 import '../core/i18n/faro_strings.dart';
-import '../widgets/faro_logo.dart';
+import '../widgets/splash_beacon.dart';
 import 'map_screen.dart';
 import 'onboarding_screen.dart';
 
@@ -35,7 +35,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _controller.forward();
 
-    Timer(const Duration(milliseconds: 1400), _goNext);
+    // Segura ~2.2s pra dar tempo do facho varrer pelo menos meia volta.
+    Timer(const Duration(milliseconds: 2200), _goNext);
   }
 
   Future<void> _goNext() async {
@@ -68,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const FaroLogo(size: 96, animated: true),
+              const SplashBeacon(size: 140),
               const SizedBox(height: 22),
               Text(
                 'Faro',
