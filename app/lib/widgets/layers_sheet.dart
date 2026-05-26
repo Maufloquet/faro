@@ -23,6 +23,7 @@ class LayersButton extends StatelessWidget {
     return MapFloatingButton(
       icon: Icons.layers_outlined,
       active: hasActiveLayers,
+      tooltip: 'Camadas do mapa',
       onTap: onTap,
     );
   }

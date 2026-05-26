@@ -666,6 +666,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
     }
 
+    // Dica "Hoje vazio": dados já carregaram, filtro é Hoje e não há nada na
+    // janela. Convida a abrir 7 dias em vez de deixar o mapa parecer quebrado.
+    final showTodayHint = raw.hasValue &&
+        _window == TimeWindow.hoje &&
+        filteredList.isEmpty;
+    // Legenda do heatmap: só quando ele está visível e há dado pra colorir.
+    final showHeatmapLegend = _showHeatmap && filteredList.isNotEmpty;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -732,13 +740,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
           ),
+          if (showTodayHint)
+            Positioned(
+              top: MediaQuery.of(context).padding.top +
+                  64 +
+                  (alerts.isNotEmpty ? 76 : 0) +
+                  50,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _EmptyTodayHint(
+                  onExpand: () =>
+                      setState(() => _window = TimeWindow.semana),
+                ),
+              ),
+            ),
+          if (showHeatmapLegend)
+            Positioned(
+              left: 12,
+              bottom: MediaQuery.of(context).size.height * 0.18 + 18,
+              child: const _HeatmapLegend(),
+            ),
           Positioned(
             right: 14,
             bottom: MediaQuery.of(context).size.height * 0.18 + 12,
             child: Column(
               children: [
+                // Ação primária — destacada em azul pra se distinguir dos
+                // botões utilitários (camadas/localizar/direção) e ficar
+                // claro que é "relatar uma ocorrência".
                 MapFloatingButton(
                   icon: Icons.add_location_alt_outlined,
+                  active: true,
+                  tooltip: 'Relatar ocorrência',
                   onTap: _openReportScreen,
                 ),
                 const SizedBox(height: 12),
@@ -788,6 +822,7 @@ class _LocateButton extends StatelessWidget {
       children: [
         MapFloatingButton(
           icon: Icons.my_location,
+          tooltip: 'Centralizar em mim',
           onTap: loading ? null : onTap,
         ),
         if (loading)
@@ -800,6 +835,118 @@ class _LocateButton extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Dica discreta quando o filtro "Hoje" não tem nada na região — evita que
+/// o mapa pareça quebrado e oferece abrir a janela de 7 dias num toque.
+class _EmptyTodayHint extends StatelessWidget {
+  final VoidCallback onExpand;
+  const _EmptyTodayHint({required this.onExpand});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onExpand,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: FaroColors.sandBorder.withValues(alpha: 0.7)),
+            boxShadow: [
+              BoxShadow(
+                color: FaroColors.primary.withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.event_available_outlined,
+                  size: 16, color: FaroColors.textSoft),
+              SizedBox(width: 8),
+              Text('Poucos relatos hoje',
+                  style: TextStyle(fontSize: 13, color: FaroColors.textPrimary)),
+              SizedBox(width: 8),
+              Text('Ver 7 dias',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: FaroColors.primary)),
+              Icon(Icons.chevron_right, size: 16, color: FaroColors.primary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Legenda do mapa de calor — barra de gradiente + rótulo deixando claro
+/// que a cor é DENSIDADE DE RELATOS, não um veredito de perigo.
+class _HeatmapLegend extends StatelessWidget {
+  const _HeatmapLegend();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: FaroColors.primary.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Intensidade de relatos',
+              style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: FaroColors.textPrimary)),
+          const SizedBox(height: 5),
+          Container(
+            width: 124,
+            height: 7,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFFD56A),
+                  Color(0xFFFF8A3D),
+                  Color(0xFFE94A30),
+                  Color(0xFF8B0000),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('menos',
+                  style: TextStyle(fontSize: 9.5, color: FaroColors.textSoft)),
+              SizedBox(width: 78),
+              Text('mais',
+                  style: TextStyle(fontSize: 9.5, color: FaroColors.textSoft)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
