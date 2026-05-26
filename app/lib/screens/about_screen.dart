@@ -8,7 +8,6 @@ import '../services/background_location_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/reference_location_service.dart';
 import '../widgets/account_card.dart';
-import '../widgets/safe_arrival_button.dart';
 import 'account_actions_screen.dart';
 import 'profile_screen.dart';
 import 'route_plan_screen.dart';
@@ -48,8 +47,6 @@ class _AboutScreenState extends State<AboutScreen> {
           const _RouteEntry(),
           const SizedBox(height: 12),
           const _PrivacyEntry(),
-          const SizedBox(height: 12),
-          const SafeArrivalButton(),
           const SizedBox(height: 12),
           const _BackgroundAlertsToggle(),
           const SizedBox(height: 12),

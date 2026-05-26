@@ -6,6 +6,7 @@ import '../core/design/typography.dart';
 import '../core/driving/driving_mode.dart';
 import '../core/i18n/faro_strings.dart';
 import '../core/i18n/locale_notifier.dart';
+import '../services/safe_arrival_service.dart';
 import 'faro_logo.dart';
 import '../screens/about_screen.dart';
 import '../screens/areas_screen.dart';
@@ -43,6 +44,8 @@ class FaroDrawer extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
+                  const _SafeArrivalTile(),
+                  const SizedBox(height: 4),
                   _SectionLabel(FaroStrings.drawerSectionNavigate),
                   _Item(
                     icon: Icons.map_outlined,
@@ -140,6 +143,96 @@ class FaroDrawer extends ConsumerWidget {
             ),
             const _Footer(),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Ação destacada "Cheguei bem" no topo do menu — sinal positivo anônimo,
+/// um toque. Fica aqui (e não enterrado no /Sobre) pra ser descoberto:
+/// é a coisa que o usuário faz ao terminar bem um trajeto.
+class _SafeArrivalTile extends ConsumerStatefulWidget {
+  const _SafeArrivalTile();
+
+  @override
+  ConsumerState<_SafeArrivalTile> createState() => _SafeArrivalTileState();
+}
+
+class _SafeArrivalTileState extends ConsumerState<_SafeArrivalTile> {
+  bool _busy = false;
+
+  Future<void> _record() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      final result = await ref.read(safeArrivalServiceProvider).record();
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text(result == null
+            ? FaroStrings.safeArrivalLocationDenied
+            : FaroStrings.safeArrivalConfirmed),
+        backgroundColor: result == null ? null : FaroColors.editorialBrown,
+      ));
+      if (navigator.canPop()) navigator.pop(); // fecha o menu
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Material(
+        color: FaroColors.sandSoft,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: _busy ? null : _record,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: FaroColors.sandBorder),
+            ),
+            child: Row(
+              children: [
+                _busy
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.2, color: FaroColors.editorialBrown),
+                      )
+                    : const Icon(Icons.check_circle_outline,
+                        size: 24, color: FaroColors.editorialBrown),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        FaroStrings.safeArrivalAction,
+                        style: const TextStyle(
+                          fontFamily: 'Fraunces',
+                          fontSize: 15.5,
+                          color: FaroColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        FaroStrings.safeArrivalDrawerHint,
+                        style: const TextStyle(
+                            fontSize: 12, color: FaroColors.textSoft),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

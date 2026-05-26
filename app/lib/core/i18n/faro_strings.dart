@@ -501,6 +501,7 @@ class FaroStrings {
     return _t(key).replaceAll('{count}', count.toString());
   }
   static String get safeArrivalHint => _t('safe_arrival.hint');
+  static String get safeArrivalDrawerHint => _t('safe_arrival.drawer_hint');
 
   // ─── Favoritos ────────────────────────────────────────────────────────
   static String get favoritesTitle => _t('favorites.title');
@@ -643,11 +644,11 @@ const Map<String, Map<String, String>> _table = {
     'help.privacy_footer':
         'Erros acontecem. Quando um relato se mostrar impreciso, ele pode ser contestado e expira automaticamente. O app não substitui sua atenção — só a complementa.',
     'about.title': 'Sobre o Faro',
-    'about.bg_alerts.title': 'Alertar com o app fechado',
+    'about.bg_alerts.title': 'Acompanhar enquanto eu me movo',
     'about.bg_alerts.body_on':
-        'Faro está atento à sua região. Avisa se houver relatos recentes próximos.',
+        'Faro acompanha sua região em segundo plano e te avisa de relatos novos no caminho.',
     'about.bg_alerts.body_off':
-        'Receba uma notificação ao entrar em regiões com relatos recentes. Usa GPS em segundo plano.',
+        'Os avisos de relato perto já chegam mesmo com o app fechado. Ative isto pra o Faro também acompanhar conforme você se desloca — usa localização em segundo plano e um pouco mais de bateria.',
     'about.perm.location_always':
         'Permissão de localização "Sempre" necessária.',
     'about.perm.notif': 'Permissão de notificação necessária.',
@@ -673,7 +674,7 @@ const Map<String, Map<String, String>> _table = {
     'about.reference.swap': 'Trocar',
     'about.section.what_we_are.title': 'O que somos',
     'about.section.what_we_are.body':
-        'Um assistente de decisão urbana em tempo real. Mostramos o que está acontecendo perto de você combinando fontes públicas e (futuramente) relatos de usuários. Não somos um mapa de crimes. Não substituímos sua atenção.',
+        'Um apoio à decisão urbana em tempo real. Reunimos o que está sendo relatado perto de você — de fontes públicas e de outros usuários — e mostramos no mapa, com o bairro do fato sempre que dá pra identificar. Não somos um mapa de crimes nem um juiz de bairros: complementamos sua atenção, não a substituímos.',
     'about.section.what_we_are_not.title': 'O que não somos',
     'about.section.what_we_are_not.body':
         'Não somos um produto de garantia. Nunca dizemos "está seguro". A única mensagem possível em uma região sem relatos é "sem relatos recentes" — silêncio nos dados não é silêncio nas ruas. Mantenha atenção sempre.',
@@ -682,10 +683,10 @@ const Map<String, Map<String, String>> _table = {
         'Você não precisa criar conta. Não pedimos seu nome, email ou telefone. Seu uso é anônimo. Não rastreamos seu trajeto. Você abre o app e já está usando — é assim por princípio, não por descuido.',
     'about.section.sources.title': 'Fontes de dados',
     'about.section.sources.body':
-        'Hoje: Fogo Cruzado (banco público de violência armada — RJ, PE, BA, PA) + matérias de jornais locais (G1, A Tarde, Correio 24h, iBahia, Bahia Notícias, Tribuna da Bahia, releases da SSP-BA) processadas por IA pra extrair bairro, tipo de relato e linha de ônibus. Próximas: relatos de usuários com validação coletiva e canais públicos do Telegram. Cada fonte com peso diferente.',
+        'Reunimos três tipos de fonte: o Fogo Cruzado (banco público de violência armada), matérias de jornais locais (G1, A Tarde, Correio 24h, iBahia, BNews, Bahia no Ar, releases da SSP-BA) — onde a IA lê a matéria pra achar o bairro, o tipo do fato e a linha de ônibus — e relatos de usuários, que só viram ocorrência depois de confirmados por outras pessoas perto. Cada fonte entra com um peso diferente. Em estudo, sob avaliação jurídica: canais públicos do Telegram.',
     'about.section.privacy.title': 'Privacidade',
     'about.section.privacy.body':
-        'Sua localização é usada apenas para mostrar relatos próximos. Não armazenamos seu histórico individual de trajetos. Dados agregados por região, nunca por pessoa. A política de privacidade completa está disponível em desenvolvimento.',
+        'Sua localização é usada só pra mostrar relatos próximos. Não guardamos seu histórico individual de trajetos — os dados são agregados por região, nunca por pessoa. Os termos e a política de privacidade completos estão em "Privacidade e dados", no topo desta tela, junto com exportar e apagar seus dados.',
     'about.section.how_to_use.title': 'Como usar o Faro',
     'about.section.how_to_use.body':
         'A tela "Como o Faro funciona" tem caminhos práticos por perfil: passageiro de ônibus, motorista de aplicativo, entregador, visitante. Toque no ícone de informação no canto superior do mapa.',
@@ -943,6 +944,7 @@ const Map<String, Map<String, String>> _table = {
     'safe_arrival.count_one': '1 pessoa registrou "cheguei bem" aqui hoje',
     'safe_arrival.count_many': '{count} pessoas registraram "cheguei bem" aqui hoje',
     'safe_arrival.hint': 'Toque ao chegar em casa, no hotel ou em qualquer destino — registra anonimamente um trajeto sem incidente. Ajuda a desfazer estigma de bairro.',
+    'safe_arrival.drawer_hint': 'Avise, anônimo, que chegou em segurança',
     'favorites.title': 'Favoritos',
     'favorites.empty.title': 'Você ainda não tem favoritos',
     'favorites.empty.body':
@@ -1323,6 +1325,7 @@ const Map<String, Map<String, String>> _table = {
     'safe_arrival.count_one': '1 person reported "made it safely" here today',
     'safe_arrival.count_many': '{count} people reported "made it safely" here today',
     'safe_arrival.hint': 'Tap when you arrive home, at your hotel, or anywhere — anonymously records a trip without incident. Helps undo neighborhood stigma.',
+    'safe_arrival.drawer_hint': 'Anonymously note that you arrived safely',
     'favorites.title': 'Favorites',
     'favorites.empty.title': 'No favorites yet',
     'favorites.empty.body':
@@ -1705,6 +1708,7 @@ const Map<String, Map<String, String>> _table = {
     'safe_arrival.count_one': '1 persona registró "llegué bien" aquí hoy',
     'safe_arrival.count_many': '{count} personas registraron "llegué bien" aquí hoy',
     'safe_arrival.hint': 'Toca al llegar a casa, al hotel o a cualquier destino — registra anónimamente un trayecto sin incidente. Ayuda a deshacer el estigma de barrio.',
+    'safe_arrival.drawer_hint': 'Avisa de forma anónima que llegaste bien',
     'favorites.title': 'Favoritos',
     'favorites.empty.title': 'Aún no tienes favoritos',
     'favorites.empty.body':
