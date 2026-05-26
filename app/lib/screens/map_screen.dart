@@ -1095,9 +1095,13 @@ class _Map extends StatelessWidget {
       Heatmap(
         heatmapId: const HeatmapId('faro_occurrences'),
         data: points,
-        // Raio maior funde blobs vizinhos em manchas contínuas (estilo
-        // surge do Uber) em vez de bolinhas individuais legíveis.
-        radius: const HeatmapRadius.fromPixels(60),
+        // Raio grande funde blobs vizinhos em manchas contínuas (estilo
+        // surge do Uber) em vez de bolinhas individuais. TETO É 50: o
+        // HeatmapTileProvider do android-maps-utils exige raio em [10,50]
+        // e lança IllegalArgumentException fora disso — o que fazia o
+        // heatmap NÃO renderizar no Android (estava 60, antes 80). Não
+        // subir daqui.
+        radius: const HeatmapRadius.fromPixels(50),
         // Paleta surge: transparente nas pontas, amarelo→laranja→vermelho
         // sem verde nem azul. Mais paradas próximas dão transição suave
         // sem hard edges entre faixas.
