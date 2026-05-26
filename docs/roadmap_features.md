@@ -28,9 +28,14 @@ Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado
 **Detalhes:** Bot via MTProto (biblioteca Telethon) em Python. Monitora grupos públicos de segurança da região. Antes de implementar, precisa de parecer sobre LGPD + termos do Telegram.
 
 ### Camada 4 — UGC (relatos de usuários)
-**Status:** V2, bloqueado por base de usuários
-**Peso no score:** 0.3 a 1.0 (dinâmico por reputação)
-**Detalhes:** Botão "reportar" com GPS obrigatório, validação coletiva (confirmar/contestar com 2 toques), expiração automática de relatos não confirmados em 4h, sistema de reputação invisível pro usuário.
+**Status:** Implementada em 2026-05-25 (3 blocos). Falta deploy + calibrar limiares com volume real.
+**Peso no score:** dinâmico por reputação (0.3 a 0.6 na ocorrência promovida)
+**Detalhes (entregue):**
+- Relatos crus vivem em `/reports` (separados de `/occurrences` de propósito — enquanto não validados são boato e não entram em digest/narrativas/densidade). Confirmados são promovidos a `/occurrences` com `source='user_report'`, `geocodeMethod='user_gps'`, TTL 7 dias.
+- **Botão "Relatar"** no mapa → `ReportScreen` com **GPS obrigatório** (resolvido na entrada; sem fix, envio bloqueado), seletor de tipo (casa com `occurrence_type` do newsIngest), detalhe opcional ≤280 e aviso editorial. Marcadores violeta/alpha distintos das fontes oficiais, com `ReportDetailSheet` ("não confirmado").
+- **Validação coletiva** (`onReportVoteWritten`): confirmar/contestar em 2 toques (`/reports/{id}/votes/{uid}`, id determinístico). Conta UIDs distintos, ignora autovoto. confirm≥2 e ≥contest → confirmado+promovido; contest≥2 e >confirm → rejeitado+removido. Limiares 2/2 calibrados pro beta.
+- **Expiração** (`expireReports`, scheduler 15min): relato pendente não-confirmado expira em 4h (`expiresAt`) e some do mapa.
+- **Reputação invisível** (`/user_reputation/{uid}`, só Cloud Function): score ±1 por relato confirmado/rejeitado; define o peso editorial da ocorrência promovida (`reputationToWeight`). Nunca exibida ao usuário.
 
 ### Camada 5 — SSP estadual
 **Status:** rebaixado de crítico — Fogo Cruzado supre o piloto
