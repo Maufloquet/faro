@@ -49,6 +49,45 @@ void main() {
     );
     await _save(image, 'assets/icon/faro_icon_fg.png');
   });
+
+  test('gera splash (selo azul + farol branco, fundo transparente)', () async {
+    // flutter_native_splash centraliza este PNG sobre o fundo creme
+    // (#F7F3EC). Desenhamos um selo azul arredondado com o farol branco
+    // dentro — mesmo visual do ícone da tela inicial.
+    final image = await _renderSplash(canvasSize: 768);
+    await _save(image, 'assets/icon/faro_splash.png');
+  });
+}
+
+Future<ui.Image> _renderSplash({required int canvasSize}) async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  final s = canvasSize.toDouble();
+
+  // Selo azul arredondado, centralizado (~62% do canvas).
+  final badge = s * 0.62;
+  final badgeOff = (s - badge) / 2;
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(
+      Rect.fromLTWH(badgeOff, badgeOff, badge, badge),
+      Radius.circular(badge * 0.22),
+    ),
+    Paint()
+      ..color = FaroColors.primary
+      ..isAntiAlias = true,
+  );
+
+  // Farol branco dentro do selo (~62% do selo).
+  final glyph = badge * 0.62;
+  final glyphOff = (s - glyph) / 2;
+  canvas.save();
+  canvas.translate(glyphOff, glyphOff);
+  FaroLogoPainter(color: Colors.white, accent: FaroColors.editorialOcher)
+      .paint(canvas, Size(glyph, glyph));
+  canvas.restore();
+
+  final picture = recorder.endRecording();
+  return picture.toImage(canvasSize, canvasSize);
 }
 
 Future<ui.Image> _renderIcon({

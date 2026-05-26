@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../core/design/tokens.dart';
@@ -7,11 +5,10 @@ import '../core/design/tokens.dart';
 /// Glifo de marca do Faro — desenhado em CustomPainter pra escalar
 /// nitidamente em qualquer tamanho sem depender de PNG.
 ///
-/// Forma: ponto central sólido (núcleo do farol) + 3 arcos concêntricos
-/// abertos com gap deliberado no canto inferior-direito. A abertura
-/// quebra a leitura "círculo cheio / loading / wifi" e sugere visualmente
-/// que a luz **sai** do centro (pulso, atenção, captação) sem fechar
-/// certezas — alinhado ao princípio editorial "não afirmamos seguro".
+/// Forma: silhueta de uma **torre de farol** com a luz acesa no topo
+/// (casa da luz em cor de acento) e um facho curto saindo pros dois lados.
+/// É literal ao nome (Faro/farol) e foge da leitura de "wifi / sinal" que
+/// a versão anterior (ponto + arcos concêntricos) provocava.
 class FaroLogo extends StatefulWidget {
   final double size;
   final Color? color;
@@ -163,59 +160,75 @@ class FaroLogoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxRadius = size.width / 2;
-    final strokeWidth = size.width * 0.07;
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
 
-    // Gap no canto inferior-direito (4h–8h) pra quebrar a leitura
-    // "anel fechado / wifi / loading".
-    const gapStart = math.pi * 0.30;
-    const gapEnd = math.pi * 0.70;
-    const startAngle = gapEnd;
-    const sweepAngle = 2 * math.pi - (gapEnd - gapStart);
+    // Pulso sutil no modo animado (splash): "respira" o glifo inteiro.
+    // Em estático outerScale = 1.0, então não afeta.
+    if (outerScale != 1.0) {
+      canvas.translate(cx, h / 2);
+      canvas.scale(outerScale);
+      canvas.translate(-cx, -h / 2);
+    }
 
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = strokeWidth;
+    final fill = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    // Anel externo — translúcido (alcance). Aplica `outerScale` quando
-    // animado pra dar pulso sutil; nos casos estáticos vale 1.0.
-    paint.color = color.withValues(alpha: 0.32);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: maxRadius * 0.78 * outerScale),
-      startAngle,
-      sweepAngle,
-      false,
-      paint,
+    // Proporções do farol (relativas ao lado do canvas).
+    final baseY = h * 0.82; // base da torre
+    final galleryY = h * 0.44; // deck/galeria no topo da torre
+    final galleryTopY = galleryY - h * 0.03;
+    final lanternTopY = h * 0.31; // topo da casa da luz
+    final roofApexY = h * 0.20; // ponta do telhado
+    final halfBase = w * 0.185;
+    final halfTop = w * 0.115;
+    final halfLantern = w * 0.10;
+
+    // Plataforma/base (footing) larga embaixo.
+    fill.color = color;
+    final baseW = w * 0.52;
+    canvas.drawRRect(
+      RRect.fromLTRBR(cx - baseW / 2, baseY, cx + baseW / 2, h * 0.87,
+          Radius.circular(w * 0.03)),
+      fill,
     );
 
-    // Anel médio
-    paint.color = color.withValues(alpha: 0.62);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: maxRadius * 0.55),
-      startAngle,
-      sweepAngle,
-      false,
-      paint,
+    // Corpo da torre — trapézio afunilando pra cima.
+    final tower = Path()
+      ..moveTo(cx - halfTop, galleryY)
+      ..lineTo(cx + halfTop, galleryY)
+      ..lineTo(cx + halfBase, baseY)
+      ..lineTo(cx - halfBase, baseY)
+      ..close();
+    canvas.drawPath(tower, fill);
+
+    // Galeria (varanda) — barra fina projetada no topo da torre.
+    final galleryHalf = halfTop + w * 0.05;
+    canvas.drawRRect(
+      RRect.fromLTRBR(cx - galleryHalf, galleryTopY, cx + galleryHalf, galleryY,
+          Radius.circular(w * 0.012)),
+      fill,
     );
 
-    // Anel interno — cor de acento (destaque editorial)
-    paint.color = accent;
-    paint.strokeWidth = strokeWidth * 0.9;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: maxRadius * 0.32),
-      startAngle,
-      sweepAngle,
-      false,
-      paint,
+    // Casa da luz (lanterna) — preenchida com o acento: a luz acesa.
+    fill.color = accent;
+    canvas.drawRRect(
+      RRect.fromLTRBR(cx - halfLantern, lanternTopY, cx + halfLantern,
+          galleryTopY, Radius.circular(w * 0.02)),
+      fill,
     );
 
-    // Núcleo — ponto sólido (a "luz" do farol)
-    final dot = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, maxRadius * 0.10, dot);
+    // Telhado — triângulo sobre a lanterna, na cor principal, com finial.
+    fill.color = color;
+    final roof = Path()
+      ..moveTo(cx - halfLantern - w * 0.02, lanternTopY)
+      ..lineTo(cx + halfLantern + w * 0.02, lanternTopY)
+      ..lineTo(cx, roofApexY)
+      ..close();
+    canvas.drawPath(roof, fill);
+    canvas.drawCircle(Offset(cx, roofApexY - w * 0.005), w * 0.022, fill);
   }
 
   @override
