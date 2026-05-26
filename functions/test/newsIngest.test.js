@@ -4,7 +4,24 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { _internal } = require("../lib/newsIngest");
-const { sha1, mapType, TYPE_MAP } = _internal;
+const { sha1, mapType, TYPE_MAP, maxItemsFor, DIRECT_MAX_ITEMS, GNEWS_MAX_ITEMS } =
+  _internal;
+
+describe("newsIngest.maxItemsFor", () => {
+  it("portal direto puxa mais itens (corpo legível)", () => {
+    assert.equal(maxItemsFor({ url: "https://g1.globo.com/rss/g1/bahia/" }), DIRECT_MAX_ITEMS);
+    assert.equal(maxItemsFor({ url: "https://www.atarde.com.br/rss" }), DIRECT_MAX_ITEMS);
+  });
+  it("Google News puxa menos (sem corpo, cai no centróide)", () => {
+    assert.equal(
+      maxItemsFor({ url: "https://news.google.com/rss/search?q=tiroteio" }),
+      GNEWS_MAX_ITEMS,
+    );
+  });
+  it("direto > google news", () => {
+    assert.ok(DIRECT_MAX_ITEMS > GNEWS_MAX_ITEMS);
+  });
+});
 
 describe("newsIngest.sha1", () => {
   it("retorna sempre 40 caracteres hex (sha1 padrão)", () => {

@@ -53,9 +53,19 @@ const STATE_NAME_BY_UF = {
 
 const SOURCE = "media";
 const PARSE_TIMEOUT_MS = 15000;
-// Reduzido pra 8 — com 12 fontes ativas, são ~96 items/run. Margem
-// confortável dentro do TPM do Groq 8B (30k/min) sem retry agressivo.
-const MAX_ITEMS_PER_SOURCE = 8;
+// Cota de itens por fonte, em camadas. Portais com RSS direto entregam a
+// URL real do artigo → dá pra ler o corpo e achar o bairro do fato; por
+// isso puxamos MAIS deles. Google News entrega link redirecionador
+// ofuscado (a URL real fica atrás de JS/batchexecute, confirmado em
+// 2026-05-26) → sem corpo, quase sempre cai no centróide da cidade; por
+// isso puxamos MENOS, pra não inflar o mapa de pontos imprecisos no centro.
+const DIRECT_MAX_ITEMS = 15;
+const GNEWS_MAX_ITEMS = 5;
+function maxItemsFor(source) {
+  return source.url.includes("news.google.com")
+    ? GNEWS_MAX_ITEMS
+    : DIRECT_MAX_ITEMS;
+}
 const TTL_HOURS = 24 * 30;
 
 /** Janela de ±N horas em que dois relatos do mesmo (cidade, bairro, tipo)
@@ -142,7 +152,7 @@ exports.ingestNewsBahia = onSchedule(
 
 async function ingestFromSource(db, source) {
   const fetched = await getParser().parseURL(source.url);
-  const items = (fetched.items || []).slice(0, MAX_ITEMS_PER_SOURCE);
+  const items = (fetched.items || []).slice(0, maxItemsFor(source));
 
   const result = { fetched: items.length, newItems: 0, classified: 0, written: 0, skipped: 0 };
 
@@ -555,4 +565,7 @@ exports._internal = {
   normalizeForMatch,
   cityAppearsInText,
   neighborhoodAppearsInText,
+  maxItemsFor,
+  DIRECT_MAX_ITEMS,
+  GNEWS_MAX_ITEMS,
 };
