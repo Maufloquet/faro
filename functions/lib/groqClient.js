@@ -140,9 +140,12 @@ async function doClassify(title, description, body = "") {
   }
 }
 
-/** Teto do corpo no prompt. articleFetch já corta em 5000, mas reforçamos
- * aqui pra manter o budget de tokens previsível mesmo se a fonte mudar. */
-const MAX_BODY_CHARS = 4000;
+/** Teto do corpo no prompt. Mantido enxuto de propósito: notícia de crime
+ * põe o bairro nos primeiros parágrafos (a lide), então 2000 chars (~350
+ * palavras) já cobrem o local do fato. Mandar o artigo inteiro estourava o
+ * orçamento diário de tokens do Groq (TPD 500k no free tier) e prejudicava
+ * a ingestão. 2000 dá o ganho de geocoding com ~3x menos tokens por chamada. */
+const MAX_BODY_CHARS = 2000;
 
 /**
  * Monta o prompt do usuário. O corpo entra como bloco separado e rotulado
