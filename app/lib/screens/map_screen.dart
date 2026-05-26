@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/driving/driving_mode.dart';
 import '../core/filters/time_window.dart';
@@ -526,8 +527,50 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  static const _locPrimerKey = 'loc_primer_shown_v1';
+
+  /// Priming de permissão: antes do prompt do SO (que só aparece uma vez e,
+  /// se negado, é difícil reverter), explica POR QUE o Faro quer a
+  /// localização. Mostra só na 1ª vez e só se ainda não foi concedida.
+  /// Retorna false se o usuário recusar aqui — aí nem chamamos o prompt.
+  Future<bool> _maybePrimeLocation() async {
+    final perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.always ||
+        perm == LocationPermission.whileInUse) {
+      return true; // já concedida, sem priming
+    }
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_locPrimerKey) == true) return true; // já explicamos
+    await prefs.setBool(_locPrimerKey, true);
+    if (!mounted) return false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usar sua localização'),
+        content: const Text(
+          'O Faro usa sua localização pra mostrar os relatos perto de você e '
+          'avisar quando algo for relatado na sua região. Você pode recusar e '
+          'continuar usando o mapa normalmente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Agora não'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Permitir'),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
   Future<void> _centerOnMe() async {
     if (_locating) return;
+    if (!await _maybePrimeLocation()) return;
+    if (!mounted) return;
     setState(() => _locating = true);
     try {
       final pos = await _location.currentPosition();
