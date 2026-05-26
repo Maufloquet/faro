@@ -71,6 +71,13 @@ async function classifyWithRetry(title, description, body, maxRetries) {
     } catch (e) {
       const m = e.message || "";
       const retry = parseRetryAfter(m);
+      // Limite DIÁRIO (TPD): não adianta dormir e tentar de novo — não
+      // recupera dentro do run, só queima o timeout da função. Falha rápido;
+      // o item volta no próximo run (amanhã, quando o orçamento reseta).
+      if (m.includes("Groq 429") && isDailyTokenLimit(m)) {
+        throw e;
+      }
+      // Limite por minuto (TPM): espera o tempo indicado e tenta de novo.
       if (m.includes("Groq 429") && retry && attempt < maxRetries) {
         await sleep(retry + 150);
         continue;
@@ -78,6 +85,11 @@ async function classifyWithRetry(title, description, body, maxRetries) {
       throw e;
     }
   }
+}
+
+/** Distingue o 429 de limite diário (TPD) do limite por minuto (TPM). */
+function isDailyTokenLimit(msg) {
+  return /per day|\bTPD\b|tokens per day/i.test(msg);
 }
 
 function parseRetryAfter(msg) {
@@ -183,4 +195,4 @@ function extractJsonBlock(s) {
 }
 
 module.exports = { classify };
-module.exports._internal = { extractJsonBlock, parseRetryAfter, buildUserPrompt, MAX_BODY_CHARS };
+module.exports._internal = { extractJsonBlock, parseRetryAfter, buildUserPrompt, MAX_BODY_CHARS, isDailyTokenLimit };

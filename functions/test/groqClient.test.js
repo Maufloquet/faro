@@ -4,7 +4,18 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { _internal } = require("../lib/groqClient");
-const { extractJsonBlock, parseRetryAfter } = _internal;
+const { extractJsonBlock, parseRetryAfter, isDailyTokenLimit } = _internal;
+
+describe("groqClient.isDailyTokenLimit", () => {
+  it("detecta limite diário (TPD / per day)", () => {
+    const msg = 'Groq 429: tokens per day (TPD): Limit 500000, Used 499882';
+    assert.equal(isDailyTokenLimit(msg), true);
+  });
+  it("não confunde com limite por minuto (TPM)", () => {
+    const msg = 'Groq 429: tokens per minute (TPM): Limit 30000';
+    assert.equal(isDailyTokenLimit(msg), false);
+  });
+});
 
 describe("groqClient.extractJsonBlock", () => {
   it("retorna JSON puro intacto", () => {
