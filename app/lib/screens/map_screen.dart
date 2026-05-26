@@ -55,7 +55,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   GoogleMapController? _map;
   MapType _mapType = MapType.hybrid;
-  TimeWindow _window = TimeWindow.semana;
+  // Abre no recorte do dia — o mapa começa mostrando o que é de hoje.
+  // O usuário expande pra 7d/30d/Tudo pelo filtro quando quiser.
+  TimeWindow _window = TimeWindow.hoje;
   Set<String> _activeReasons = const {};
   final _location = LocationService();
   final _messaging = MessagingService();
