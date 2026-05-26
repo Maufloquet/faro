@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../core/design/tokens.dart';
@@ -176,59 +178,111 @@ class FaroLogoPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
-    // Proporções do farol (relativas ao lado do canvas).
-    final baseY = h * 0.82; // base da torre
-    final galleryY = h * 0.44; // deck/galeria no topo da torre
-    final galleryTopY = galleryY - h * 0.03;
-    final lanternTopY = h * 0.31; // topo da casa da luz
-    final roofApexY = h * 0.20; // ponta do telhado
-    final halfBase = w * 0.185;
-    final halfTop = w * 0.115;
-    final halfLantern = w * 0.10;
+    // Layout vertical (frações da altura) — torre esguia e elegante.
+    final domeApex = h * 0.150;
+    final lanternTop = h * 0.270;
+    final galleryTop = h * 0.385;
+    final galleryBot = h * 0.420;
+    final towerBot = h * 0.800;
+    final baseBot = h * 0.852;
+    final footBot = h * 0.876;
+    // Larguras (frações do lado).
+    final halfLantern = w * 0.085;
+    final halfGallery = w * 0.150;
+    final halfTowerTop = w * 0.105;
+    final halfTowerBase = w * 0.165;
+    final halfBase = w * 0.210;
+    final halfFoot = w * 0.255;
 
-    // Plataforma/base (footing) larga embaixo.
+    final lamp = Offset(cx, (lanternTop + galleryTop) / 2);
+
+    // 1) Glow da lanterna (atrás de tudo) — dá a sensação de luz acesa.
+    final glowR = w * 0.32;
+    canvas.drawCircle(
+      lamp,
+      glowR,
+      Paint()
+        ..isAntiAlias = true
+        ..shader = ui.Gradient.radial(lamp, glowR, [
+          accent.withValues(alpha: 0.42),
+          accent.withValues(alpha: 0.0),
+        ]),
+    );
+
+    // 2) Base em dois níveis (rochedo largo + plataforma) — assentamento.
     fill.color = color;
-    final baseW = w * 0.52;
     canvas.drawRRect(
-      RRect.fromLTRBR(cx - baseW / 2, baseY, cx + baseW / 2, h * 0.87,
-          Radius.circular(w * 0.03)),
+      RRect.fromLTRBR(cx - halfFoot, baseBot, cx + halfFoot, footBot,
+          Radius.circular(w * 0.02)),
+      fill,
+    );
+    canvas.drawRRect(
+      RRect.fromLTRBR(cx - halfBase, towerBot, cx + halfBase, baseBot,
+          Radius.circular(w * 0.02)),
       fill,
     );
 
-    // Corpo da torre — trapézio afunilando pra cima.
+    // 3) Corpo da torre (trapézio afunilando).
     final tower = Path()
-      ..moveTo(cx - halfTop, galleryY)
-      ..lineTo(cx + halfTop, galleryY)
-      ..lineTo(cx + halfBase, baseY)
-      ..lineTo(cx - halfBase, baseY)
+      ..moveTo(cx - halfTowerTop, galleryBot)
+      ..lineTo(cx + halfTowerTop, galleryBot)
+      ..lineTo(cx + halfTowerBase, towerBot)
+      ..lineTo(cx - halfTowerBase, towerBot)
       ..close();
     canvas.drawPath(tower, fill);
 
-    // Galeria (varanda) — barra fina projetada no topo da torre.
-    final galleryHalf = halfTop + w * 0.05;
+    // 4) Listras douradas (clipadas na torre) — a assinatura do farol.
+    canvas.save();
+    canvas.clipPath(tower);
+    fill.color = accent;
+    for (final band in <List<double>>[
+      [h * 0.490, h * 0.548],
+      [h * 0.632, h * 0.690],
+    ]) {
+      canvas.drawRect(Rect.fromLTRB(0, band[0], w, band[1]), fill);
+    }
+    canvas.restore();
+
+    // 5) Galeria (varanda) — deck que se projeta no topo da torre.
+    fill.color = color;
     canvas.drawRRect(
-      RRect.fromLTRBR(cx - galleryHalf, galleryTopY, cx + galleryHalf, galleryY,
+      RRect.fromLTRBR(cx - halfGallery, galleryTop, cx + halfGallery, galleryBot,
           Radius.circular(w * 0.012)),
       fill,
     );
 
-    // Casa da luz (lanterna) — preenchida com o acento: a luz acesa.
+    // 6) Lanterna (a luz) — em cor de acento, com um caixilho central.
     fill.color = accent;
     canvas.drawRRect(
-      RRect.fromLTRBR(cx - halfLantern, lanternTopY, cx + halfLantern,
-          galleryTopY, Radius.circular(w * 0.02)),
+      RRect.fromLTRBR(cx - halfLantern, lanternTop, cx + halfLantern, galleryTop,
+          Radius.circular(w * 0.012)),
       fill,
     );
+    canvas.drawLine(
+      Offset(cx, lanternTop + h * 0.014),
+      Offset(cx, galleryTop - h * 0.014),
+      Paint()
+        ..color = color.withValues(alpha: 0.5)
+        ..strokeWidth = w * 0.011
+        ..strokeCap = StrokeCap.round,
+    );
 
-    // Telhado — triângulo sobre a lanterna, na cor principal, com finial.
+    // 7) Cúpula curva + finial (pináculo) — remate elegante no topo.
     fill.color = color;
-    final roof = Path()
-      ..moveTo(cx - halfLantern - w * 0.02, lanternTopY)
-      ..lineTo(cx + halfLantern + w * 0.02, lanternTopY)
-      ..lineTo(cx, roofApexY)
+    final domeHalf = halfLantern + w * 0.015;
+    final dome = Path()
+      ..moveTo(cx - domeHalf, lanternTop)
+      ..arcToPoint(
+        Offset(cx + domeHalf, lanternTop),
+        radius: Radius.elliptical(domeHalf, lanternTop - domeApex),
+      )
       ..close();
-    canvas.drawPath(roof, fill);
-    canvas.drawCircle(Offset(cx, roofApexY - w * 0.005), w * 0.022, fill);
+    canvas.drawPath(dome, fill);
+    canvas.drawRect(
+      Rect.fromLTWH(cx - w * 0.006, domeApex - h * 0.028, w * 0.012, h * 0.030),
+      fill,
+    );
+    canvas.drawCircle(Offset(cx, domeApex - h * 0.030), w * 0.020, fill);
   }
 
   @override
