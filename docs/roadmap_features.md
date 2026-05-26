@@ -67,7 +67,8 @@ Status atual (sessão de 2026-05-16): MVP **tecnicamente pronto pra beta fechado
 - `DensityService` mantém `populationFor`, `per10kInhabitants`, `isEstimated(bairro)` e ganha `populationForCity(city)`. A doc do método deixa explícito: **não use pop municipal como denominador de per10k de bairro** — é matemática errada.
 - Exposição na UI: `AreasScreen` exibe `~X.X relatos por 10 mil habitantes` em cada card de bairro. `OccurrenceDetailSheet` mostra a população do bairro como contexto editorial (`~X mil habitantes`). Ambas em linha discreta com `~` para estimativas e tooltip distinguindo as fontes.
 - **Decisão de design (2026-05-21):** *não* adicionamos bairros granulares de Camaçari/Lauro/Simões porque (a) há colisão de nomes (ex: "Itinga" existe em Salvador e em Lauro), e (b) divisão simples entre poucos bairros do dict daria números enganosos. População municipal cobre o contexto editorial sem inventar dados.
-- **TODO**: quando Censo 2022 sair com agregação bairro-granular, substituir as estimativas de Salvador por valores `verified`; pedir o dataset oficial CONDER por ofício pra refinar a distribuição dentro das PBs; usar `populationForCity` na UI pra ancorar relatos com bairro=null da RMS.
+- `populationForCity` já é usado na `OccurrenceDetailSheet` pra ancorar relatos com bairro=null da RMS (feito).
+- **TODO**: quando Censo 2022 sair com agregação bairro-granular, substituir as estimativas de Salvador por valores `verified`; pedir o dataset oficial CONDER por ofício pra refinar a distribuição dentro das PBs.
 
 ---
 
@@ -249,7 +250,8 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 - **Rules**: `/narratives/{id}` leitura pública, escrita só Cloud Function.
 - **Testes**: 24 testes novos cobrindo embedClient (8), embedBackfill (5), narrativeAggregator (11). Total Functions: 180 testes verdes.
 - **Setup pendente manual** (você precisa fazer): criar API key no AI Studio, `firebase functions:secrets:set GEMINI_API_KEY`, deploy do vector index + functions, rodar backfill, esperar primeiro run do aggregator. Passo a passo em `docs/firebase_setup.md` §14.
-- **TODO:** calibrar thresholds após observar dados reais (logs mostram `_vector_distance` em cada match). Estender dedup semântico pra `syncFogoCruzado` (cross-source FC↔notícia do mesmo evento). Vetor `embedding` ocupa ~3KB/doc — em escala (>50k occurrences) considerar separar pra collection paralela.
+- Dedup semântico já estendido pro `syncFogoCruzado` (cross-source FC↔notícia do mesmo evento) — feito.
+- **TODO:** calibrar thresholds após observar dados reais (logs mostram `_vector_distance` em cada match). Vetor `embedding` ocupa ~3KB/doc — em escala (>50k occurrences) considerar separar pra collection paralela.
 
 ---
 
@@ -261,7 +263,8 @@ Isso cria a expectativa correta e captura usuários desse perfil sem implementar
 - Cliente: `AdminMetricsService` + provider Riverpod (stream do doc). `AdminScreen` lê e renderiza cards de KPIs (sem badge/marketing — ferramenta operacional). `isAdminProvider` faz `getIdTokenResult(true)` pra refrescar o claim sem esperar TTL de 1h.
 - Acesso: deep link `faro://admin` registrado em AndroidManifest (intent-filter scheme/host) e Info.plist (CFBundleURLTypes). Dep nova: `app_links: ^6.4.0`.
 - 6 testes unitários cobrem a lógica pura `computeMetrics` em `functions/test/adminMetrics.test.js`.
-- **TODO:** instrumentar cada Cloud Function existente pra escrever `/system_health/{jobName}` no fim (lastRunAt, lastSuccess, itemsWritten, error?, durationMs) e exibir grid verde/amarelo/vermelho no painel. Drill-down de últimas ocorrências e contestadas também pendente.
+- Saúde dos crons já instrumentada: helper `runWithHealth` (`functions/lib/jobHealth.js`) envolve 12 schedulers e escreve `/system_health/{job}` (lastRunAt, lastStatus, lastError, itemsWritten, durationMs); AdminScreen mostra o grid verde/amarelo/vermelho (feito).
+- **TODO:** drill-down de últimas ocorrências e contestadas no painel admin.
 - **Setup pendente manual** (você precisa fazer): deploy de rules/functions, rodar `grantAdmin.js` com seu UID, abrir `faro://admin`. Passo a passo em `docs/firebase_setup.md` §13.
 
 ---

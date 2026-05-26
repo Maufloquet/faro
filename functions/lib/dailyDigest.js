@@ -20,7 +20,8 @@
  *   - User com `dailyDigest = false`: pula
  *
  * Push via FCM message per-uid (token guardado em /users/{uid}/fcmTokens
- * — TODO confirmar se já guardamos isso; senão precisa adicionar).
+ * pelo cliente — MessagingService.persistTokenToFirestore no boot e no
+ * onTokenRefresh).
  */
 
 const admin = require("firebase-admin");
