@@ -75,7 +75,7 @@ jobs:
       # subsequentes com mesmo Gradle wrapper + dependências (Kotlin, AGP,
       # androidx) pulam o download pesado.
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -114,7 +114,7 @@ jobs:
       # Cache de CocoaPods — primeiro build do dia ainda é lento, mas
       # builds subsequentes com mesmo Podfile.lock pulam o pod install pesado.
       - name: Cache CocoaPods
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             app/ios/Pods
