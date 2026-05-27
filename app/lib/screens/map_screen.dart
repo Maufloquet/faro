@@ -173,6 +173,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return km <= _regionRadiusKm;
   }
 
+  /// Linha de status do entorno (≤2km, últimas 24h) em linguagem direta.
+  /// Null sem GPS. Silêncio é enquadrado como boa notícia — é a resposta
+  /// que o usuário do dia a dia quer sem precisar interpretar o mapa.
+  String? _vicinityLine(List<Occurrence> all) {
+    final pos = _userPos;
+    if (pos == null) return null;
+    final cutoff = DateTime.now().subtract(const Duration(hours: 24));
+    final n = all
+        .where((o) =>
+            o.date.isAfter(cutoff) &&
+            haversineKm(pos.latitude, pos.longitude, o.latitude, o.longitude) <=
+                2.0)
+        .length;
+    if (n == 0) return 'Sem relatos perto de você nas últimas 24h.';
+    if (n == 1) return '1 relato perto de você nas últimas 24h.';
+    return '$n relatos perto de você nas últimas 24h.';
+  }
+
   /// Abre a tela de relato. GPS é resolvido lá dentro.
   Future<void> _openReportScreen() async {
     await Navigator.of(context).push<bool>(
@@ -208,12 +226,54 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     AnalyticsService.instance.logScreen('map');
     // Auto-centro silencioso: só se permissão já foi concedida em sessão anterior
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _primeNotificationsOnce();
       _silentCenter();
       // Se o usuário voltou ao app com modo direção já ativo, retoma o follow.
       if (ref.read(drivingModeProvider) != DrivingMode.off) {
         _startDrivingFollow();
       }
     });
+  }
+
+  static const _notifPrimerKey = 'notif_primer_shown_v1';
+
+  /// Motor de retenção: na 1ª abertura, oferece o aviso (push) com a
+  /// proposta de valor clara — "saber sem precisar abrir o app". Sem isso,
+  /// o usuário que não configura nada não recebe nada e desinstala. Mostra
+  /// uma vez; quem aceitar tem o canal de push aberto (proximidade + resumo
+  /// diário). Desligar fica disponível depois.
+  Future<void> _primeNotificationsOnce() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_notifPrimerKey) == true) return;
+    await prefs.setBool(_notifPrimerKey, true);
+    if (!mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Quer ser avisado?'),
+        content: const Text(
+          'O Faro pode te avisar quando algo for relatado perto de você — '
+          'mesmo com o app fechado. É o jeito de saber sem ficar abrindo o '
+          'app. Dá pra desligar quando quiser.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Agora não'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Quero ser avisado'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final granted = await _messaging.initialize();
+    if (granted) {
+      _messagingReady = true;
+      await _messaging.persistTokenToFirestore();
+    }
   }
 
   @override
@@ -717,6 +777,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // Legenda do heatmap: só quando ele está visível e há dado pra colorir.
     final showHeatmapLegend = _showHeatmap && filteredList.isNotEmpty;
 
+    // "Como tá aqui agora": resposta direta do entorno (≤2km, últimas 24h)
+    // pra quem só quer saber se rolou algo perto, sem ler o mapa. Silêncio
+    // é enquadrado como boa notícia. Só com GPS.
+    final String? vicinityLine = _vicinityLine(allList);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -837,6 +902,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
           _Sheet(
+            vicinityLine: vicinityLine,
             occurrences: filtered,
             window: _window,
             onTapTile: (o) => _openDetail(o, OccurrenceOpenEntry.list),
@@ -1398,12 +1464,15 @@ class _Sheet extends StatelessWidget {
   final TimeWindow window;
   final ValueChanged<Occurrence> onTapTile;
   final VoidCallback? onExpandWindow;
+  /// Resposta "como tá aqui agora" do entorno do usuário (null sem GPS).
+  final String? vicinityLine;
 
   const _Sheet({
     required this.occurrences,
     required this.window,
     required this.onTapTile,
     this.onExpandWindow,
+    this.vicinityLine,
   });
 
   @override
@@ -1428,6 +1497,7 @@ class _Sheet extends StatelessWidget {
               scrollController: scrollController,
               onTapTile: onTapTile,
               onExpandWindow: onExpandWindow,
+              vicinityLine: vicinityLine,
             ),
             loading: () => _SheetSimple(message: FaroStrings.sheetLoading),
             error: (e, _) => _SheetSimple(message: FaroStrings.sheetError('$e')),
@@ -1444,6 +1514,7 @@ class _SheetContent extends StatelessWidget {
   final ScrollController scrollController;
   final ValueChanged<Occurrence> onTapTile;
   final VoidCallback? onExpandWindow;
+  final String? vicinityLine;
 
   const _SheetContent({
     required this.items,
@@ -1451,6 +1522,7 @@ class _SheetContent extends StatelessWidget {
     required this.scrollController,
     required this.onTapTile,
     this.onExpandWindow,
+    this.vicinityLine,
   });
 
   @override
@@ -1462,7 +1534,8 @@ class _SheetContent extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         const _Handle(),
-        _SummaryHeader(count: items.length, window: window),
+        _SummaryHeader(
+            count: items.length, window: window, vicinityLine: vicinityLine),
         const Divider(height: 1),
         if (sorted.isEmpty)
           _EmptyState(window: window, onExpandWindow: onExpandWindow)
@@ -1531,7 +1604,9 @@ class _EmptyState extends StatelessWidget {
 class _SummaryHeader extends StatelessWidget {
   final int count;
   final TimeWindow window;
-  const _SummaryHeader({required this.count, required this.window});
+  final String? vicinityLine;
+  const _SummaryHeader(
+      {required this.count, required this.window, this.vicinityLine});
 
   @override
   Widget build(BuildContext context) {
@@ -1543,15 +1618,39 @@ class _SummaryHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // "Como tá aqui agora" — a resposta que o usuário do dia a dia
+          // quer, em destaque, antes da contagem da região inteira.
+          if (vicinityLine != null) ...[
+            Row(
+              children: [
+                const Icon(Icons.my_location, size: 15, color: FaroColors.primary),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    vicinityLine!,
+                    style: const TextStyle(
+                      fontFamily: 'Fraunces',
+                      fontSize: 16,
+                      height: 1.2,
+                      color: FaroColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
           Text(
             count == 0
                 ? FaroStrings.sheetSummaryEmpty(scope)
                 : FaroStrings.sheetSummaryCount(count, scope),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Fraunces',
-              fontSize: 17,
+              fontSize: vicinityLine != null ? 13.5 : 17,
               height: 1.2,
-              color: FaroColors.textPrimary,
+              color: vicinityLine != null
+                  ? FaroColors.textSoft
+                  : FaroColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
