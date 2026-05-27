@@ -23,6 +23,7 @@ import '../services/cluster_marker_factory.dart';
 import '../services/driving_arrow_factory.dart';
 import '../services/location_service.dart';
 import '../services/marker_factory.dart';
+import '../services/glyph_marker_factory.dart';
 import '../services/messaging_service.dart';
 import '../services/occurrences_service.dart';
 import '../services/osm_service.dart';
@@ -91,9 +92,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final _markerFactory = MarkerFactory();
   final _clusterFactory = ClusterMarkerFactory();
   final _drivingArrowFactory = DrivingArrowFactory();
+  final _glyphFactory = GlyphMarkerFactory();
   Map<RiskLevel, BitmapDescriptor>? _markerIcons;
   Map<String, BitmapDescriptor>? _clusterIcons;
   BitmapDescriptor? _drivingArrowIcon;
+  Map<GlyphMarker, BitmapDescriptor>? _glyphMarkers;
 
   /// Heading (rumo) reportado pelo GPS na última leitura. Em graus, 0 = norte.
   /// Só é confiável em movimento — usamos `_drivingArrowRotation` que zera
@@ -411,11 +414,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final icons = await _markerFactory.all(devicePixelRatio: dpr);
     final clusters = await _clusterFactory.all(devicePixelRatio: dpr);
     final arrow = await _drivingArrowFactory.build(devicePixelRatio: dpr);
+    final glyphs = await _glyphFactory.all(devicePixelRatio: dpr);
     if (mounted) {
       setState(() {
         _markerIcons = icons;
         _clusterIcons = clusters;
         _drivingArrowIcon = arrow;
+        _glyphMarkers = glyphs;
       });
     }
   }
@@ -823,6 +828,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             nodes: nodes,
             markerIcons: _markerIcons,
             clusterIcons: _clusterIcons,
+            glyphMarkers: _glyphMarkers,
             asHeatmap: _showHeatmap,
             busStops: busStops,
             infraByKind: infraByKind,
@@ -1095,6 +1101,7 @@ class _Map extends StatelessWidget {
   final List<MapNode> nodes;
   final Map<RiskLevel, BitmapDescriptor>? markerIcons;
   final Map<String, BitmapDescriptor>? clusterIcons;
+  final Map<GlyphMarker, BitmapDescriptor>? glyphMarkers;
   final bool asHeatmap;
   final List<BusStop> busStops;
   final Map<OsmInfraKind, List<OsmInfra>> infraByKind;
@@ -1117,6 +1124,7 @@ class _Map extends StatelessWidget {
     required this.nodes,
     required this.markerIcons,
     required this.clusterIcons,
+    required this.glyphMarkers,
     required this.asHeatmap,
     required this.busStops,
     required this.infraByKind,
@@ -1228,12 +1236,12 @@ class _Map extends StatelessWidget {
     return result;
   }
 
-  /// Marcadores de relato de usuário (Camada 4). Cor violeta + alpha
-  /// reduzido sinaliza "não confirmado" — visualmente distinto dos
-  /// marcadores de ocorrência (vermelho/laranja/azul por idade).
+  /// Marcadores de relato de usuário (Camada 4). Marcador customizado
+  /// (ícone de megafone) + alpha reduzido sinaliza "não confirmado" —
+  /// distinto dos marcadores de ocorrência (dot colorido por idade).
   Set<Marker> _reportMarkers() {
     if (reports.isEmpty) return const {};
-    final icon =
+    final icon = glyphMarkers?[GlyphMarker.report] ??
         BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
     return {
       for (final r in reports)
@@ -1241,7 +1249,7 @@ class _Map extends StatelessWidget {
           markerId: MarkerId('report-${r.id}'),
           position: LatLng(r.lat, r.lng),
           icon: icon,
-          alpha: 0.78,
+          alpha: 0.85,
           anchor: const Offset(0.5, 0.5),
           onTap: () => onTapReport(r),
         ),
@@ -1268,8 +1276,9 @@ class _Map extends StatelessWidget {
 
   Set<Marker> _busStopMarkers() {
     if (busStops.isEmpty) return const {};
-    // Marker pequeno e neutro — ônibus é contexto, não evento.
-    final icon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    // Marcador customizado (ícone de ônibus) — contexto, não evento.
+    final icon = glyphMarkers?[GlyphMarker.busStop] ??
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
     return {
       for (final s in busStops)
         Marker(
@@ -1323,6 +1332,14 @@ class _Map extends StatelessWidget {
   }
 
   BitmapDescriptor _iconForInfraKind(OsmInfraKind kind) {
+    final glyph = switch (kind) {
+      OsmInfraKind.police => glyphMarkers?[GlyphMarker.police],
+      OsmInfraKind.hospitals => glyphMarkers?[GlyphMarker.hospital],
+      OsmInfraKind.commerce24h => glyphMarkers?[GlyphMarker.commerce],
+      OsmInfraKind.streetLamps => glyphMarkers?[GlyphMarker.streetLamp],
+    };
+    if (glyph != null) return glyph;
+    // Fallback (marcadores ainda carregando): hue padrão por categoria.
     switch (kind) {
       case OsmInfraKind.police:
         return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
