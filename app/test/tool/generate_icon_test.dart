@@ -31,21 +31,27 @@ void main() {
       backgroundColor: FaroColors.primary,
       logoColor: Colors.white,
       logoAccent: FaroColors.editorialOcher,
-      logoSizeRatio: 0.62,
+      // O farol é uma silhueta esguia: ocupa ~76% da altura da sua caixa e
+      // só ~51% da largura. Pra ele não ficar perdido no meio do quadrado
+      // (iOS/legado não recortam borda), a caixa precisa ser generosa.
+      logoSizeRatio: 0.78,
     );
     await _save(image, 'assets/icon/faro_icon.png');
   });
 
   test('gera adaptive icon foreground (1024×1024, transparente, padding)',
       () async {
-    // Adaptive icon Android pode recortar até 30% nas bordas — usamos
-    // ratio menor pra garantir safe area com folga.
+    // Adaptive icon Android pode recortar até ~33% nas bordas; o conteúdo
+    // chave precisa caber no círculo central (~66% do lado). Como o farol
+    // ocupa só ~76% da altura da própria caixa, uma caixa de 0.70 deixa o
+    // glifo em ~0.53 do canvas — bem dentro da safe area e já bem maior que
+    // os 0.42 anteriores, que o faziam parecer perdido no quadro.
     final image = await _renderIcon(
       canvasSize: 1024,
       backgroundColor: null,
       logoColor: Colors.white,
       logoAccent: FaroColors.editorialOcher,
-      logoSizeRatio: 0.42,
+      logoSizeRatio: 0.70,
     );
     await _save(image, 'assets/icon/faro_icon_fg.png');
   });
