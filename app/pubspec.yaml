@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   app_links: ^6.4.0
-  cloud_firestore: ^6.0.4
+  cloud_firestore: ^6.4.1
   cloud_functions: ^6.0.0
   cupertino_icons: ^1.0.8
   firebase_analytics: ^12.0.0
