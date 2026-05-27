@@ -1,6 +1,6 @@
 # Termos de uso
 
-**Versão 1.0 — válida a partir de 2026-05-23**
+**Versão 1.1 — válida a partir de 2026-05-26**
 
 Esta é a versão inicial dos Termos do Faro, válida pra fase de beta fechado. Texto definitivo passará por revisão jurídica antes do lançamento público.
 
@@ -22,6 +22,10 @@ Ao usar o Faro, você concorda em:
 - Usar o app para fins pessoais, sem fins comerciais ou de vigilância de terceiros.
 - Não usar os dados pra discriminar pessoas, lugares ou populações.
 - Não tentar acessar dados de outros usuários ou burlar mecanismos de segurança.
+
+## 3.1. Relatos de usuário
+
+Se você abre um relato, você é responsável pelo que registra. Relate apenas o que **presenciou** — sem boato, sem relato falso, sem identificar pessoas. Relatos passam por validação coletiva e podem ser removidos. Relatos abusivos, falsos ou discriminatórios podem levar à remoção e ao bloqueio do uso. O Faro não verifica individualmente cada relato e não se responsabiliza pelo conteúdo enviado por usuários.
 
 ## 4. Conta e identidade
 

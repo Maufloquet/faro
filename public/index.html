@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faro — segurança urbana em Salvador</title>
+<style>
+  :root { --navy:#2a4a7a; --ocre:#9a7b33; --texto:#2a2a2a; --suave:#5a6270; --sand:#f7f3ec; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--texto); background:var(--sand); min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:24px; }
+  .card { max-width:520px; text-align:center; }
+  .badge { width:96px; height:96px; border-radius:24px; background:var(--navy);
+    margin:0 auto 20px; display:flex; align-items:center; justify-content:center; }
+  .badge svg { width:54px; height:54px; }
+  h1 { color:var(--navy); font-size:30px; letter-spacing:-0.5px; }
+  p.tag { color:var(--suave); font-size:16px; margin:8px 0 28px; }
+  .links a { display:inline-block; margin:6px 8px; padding:11px 20px; border-radius:10px;
+    background:var(--navy); color:#fff; text-decoration:none; font-size:14px; font-weight:600; }
+  .links a.alt { background:transparent; color:var(--navy); border:1px solid var(--navy); }
+  footer { margin-top:30px; color:var(--suave); font-size:12px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">
+      <svg viewBox="0 0 100 100" aria-label="Faro">
+        <circle cx="50" cy="48" r="34" fill="#9a7b33" opacity="0.18"/>
+        <rect x="42" y="27" width="16" height="13" rx="2" fill="#9a7b33"/>
+        <path d="M38 40 h24 v3 h-24 z" fill="#fff"/>
+        <path d="M41 43 l-5 37 h28 l-5 -37 z" fill="#fff"/>
+        <rect x="33" y="79" width="34" height="5" rx="2" fill="#fff"/>
+        <rect x="44" y="18" width="12" height="9" rx="6" fill="#fff"/>
+        <circle cx="50" cy="15" r="3" fill="#fff"/>
+        <rect x="40" y="55" width="20" height="5" fill="#9a7b33"/>
+        <rect x="38" y="68" width="24" height="5" fill="#9a7b33"/>
+      </svg>
+    </div>
+    <h1>Faro</h1>
+    <p class="tag">Saber o que acontece perto de você, em Salvador — sem alarde, sem veredito.</p>
+    <div class="links">
+      <a href="./privacidade.html">Política de privacidade</a>
+      <a class="alt" href="./termos.html">Termos de uso</a>
+    </div>
+    <footer>Faro · Salvador, Bahia · contato@faro.app</footer>
+  </div>
+</body>
+</html>

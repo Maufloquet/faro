@@ -1,6 +1,6 @@
 # Política de privacidade
 
-**Versão 1.0 — válida a partir de 2026-05-23**
+**Versão 1.1 — válida a partir de 2026-05-26**
 
 Esta política descreve quais dados o Faro coleta, como usa, e quais direitos você tem sobre eles. Em conformidade com a LGPD (Lei nº 13.709/2018).
 
@@ -27,6 +27,8 @@ O Faro foi desenhado pra coletar o **mínimo possível**. Anonymous é o padrão
 ### 1.3. Quando você interage
 
 - **Contestação de relato:** se você marca uma ocorrência como "imprecisa", registramos o motivo + seu identificador anônimo (sem nome). Usado pra moderação coletiva.
+- **Relato de usuário:** se você abre um relato, registramos a **localização (GPS) daquele momento**, o tipo e a descrição opcional, com seu identificador anônimo. O relato passa por validação coletiva (outras pessoas confirmam ou contestam); só os confirmados viram ocorrência no mapa. Não fica vazio nem confirmado some sozinho em poucas horas.
+- **Trajeto observado:** se você salva um trajeto pra ser avisado, guardamos as coordenadas de origem e destino vinculadas à sua conta, pra alertar sobre relatos novos no caminho. Você apaga quando quiser.
 - **"Cheguei bem":** registrado anonimamente, agregado por bairro e dia. Não vinculado a você.
 
 ## 2. Pra que usamos

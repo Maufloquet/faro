@@ -25,7 +25,20 @@ Plano operacional pra abrir o Faro pra ~20-30 usuários reais. O app está tecni
 - [ ] Criar app novo com bundle id `br.com.projetoseg.projeto_seg`.
 - [ ] **Internal Testing Track**: o caminho mais rápido pra distribuir sem revisão completa do Google. Aceita até 100 testers via lista de e-mails.
 - [ ] Data Safety form preenchido (equivalente Android do App Privacy).
-- [ ] Política de privacidade pública obrigatória — **hospedar `legal/politica_privacidade.md` numa URL acessível**. Sugestão: criar `https://faro.app/privacidade.html` ou GitHub Pages. Sem URL pública, Play Console barra o release.
+- [x] **Política de privacidade pública — FEITO.** Hospedada no Firebase Hosting (grátis, já no projeto):
+  - Política: **https://faro-f3472.web.app/privacidade.html**
+  - Termos: **https://faro-f3472.web.app/termos.html**
+  - Pra republicar após editar: `firebase deploy --only hosting` (fontes em `public/`).
+
+### O que declarar no Data Safety / App Privacy (com base na coleta real, v1.1)
+
+- **Localização (aproximada e precisa):** coletada. Finalidade: funcionalidade do app (mostrar relatos perto, alertas de proximidade) e — quando o usuário relata — registrar o local do fato. **Não** vinculada à identidade de forma persistente (id anônimo); **não** compartilhada com terceiros pra publicidade; **não** rastreia o trajeto.
+- **Identificadores:** id anônimo do Firebase + token de push. Finalidade: funcionalidade e analytics.
+- **Conteúdo gerado pelo usuário:** relatos (tipo, descrição opcional, localização), contestações. Finalidade: funcionalidade do app (validação coletiva).
+- **Atividade no app / diagnóstico:** Analytics + Crashlytics, anônimos.
+- **Dados opcionais de perfil:** nome de exibição, bairro principal, favoritos — só se o usuário preencher.
+- **Vendido a terceiros:** NÃO. **Usado pra rastreamento publicitário:** NÃO.
+- **Exclusão de dados:** o app oferece exclusão de conta in-app (LGPD) — declarar o método de exclusão.
 
 ## 2. Pré-requisitos do app
 
