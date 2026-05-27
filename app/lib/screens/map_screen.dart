@@ -41,6 +41,27 @@ import 'search_screen.dart';
 
 import '../core/design/tokens.dart';
 
+/// Estilo editorial do mapa normal — paleta suave (areia/navy), POIs e
+/// trânsito do Google escondidos pra não competir com os marcadores do
+/// Faro, base dessaturada. É o que diferencia "mapa do Google embutido"
+/// de "mapa do app".
+const String kEditorialMapStyle = '''
+[
+  {"elementType":"geometry","stylers":[{"saturation":-20},{"lightness":4}]},
+  {"elementType":"labels.icon","stylers":[{"visibility":"off"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#5a6270"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#f7f3ec"},{"weight":2}]},
+  {"featureType":"poi","stylers":[{"visibility":"off"}]},
+  {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#dde6d6"}]},
+  {"featureType":"transit","stylers":[{"visibility":"off"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"saturation":-30},{"lightness":8}]},
+  {"featureType":"road.arterial","elementType":"labels","stylers":[{"visibility":"simplified"}]},
+  {"featureType":"road.local","elementType":"labels","stylers":[{"visibility":"off"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#a7b6c7"}]},
+  {"featureType":"landscape","elementType":"geometry","stylers":[{"color":"#f1ece1"}]}
+]
+''';
+
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
@@ -55,7 +76,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   );
 
   GoogleMapController? _map;
-  MapType _mapType = MapType.hybrid;
+  // Mapa normal estilizado (não satélite) — visual editorial, sem o ruído
+  // de POIs do Google, deixando os marcadores do Faro protagonizarem.
+  // Satélite continua disponível no painel de Camadas.
+  MapType _mapType = MapType.normal;
   // Abre no recorte do dia — o mapa começa mostrando o que é de hoje.
   // O usuário expande pra 7d/30d/Tudo pelo filtro quando quiser.
   TimeWindow _window = TimeWindow.hoje;
@@ -1114,6 +1138,10 @@ class _Map extends StatelessWidget {
     return GoogleMap(
       initialCameraPosition: initialCamera,
       mapType: mapType,
+      // Estilo editorial — só aplica no mapa normal (Google ignora em
+      // satélite). Dessatura, esconde POIs/trânsito do Google e suaviza
+      // a base, pra os marcadores do Faro serem o protagonista.
+      style: mapType == MapType.normal ? kEditorialMapStyle : null,
       // Em modo direção, escondemos o dot azul nativo pra não duplicar
       // com a seta de carro custom.
       myLocationEnabled: !drivingActive,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/design/tokens.dart';
@@ -86,6 +87,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             type: _type!,
             description: _descController.text,
           );
+      await HapticFeedback.mediumImpact();
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(

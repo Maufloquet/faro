@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -175,6 +176,7 @@ class _SafeArrivalTileState extends ConsumerState<_SafeArrivalTile> {
     setState(() => _busy = true);
     final navigator = Navigator.of(context);
     try {
+      await HapticFeedback.selectionClick();
       double? lat, lng;
       try {
         final pos = await _location.currentPosition();

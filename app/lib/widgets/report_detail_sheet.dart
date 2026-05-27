@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/design/tokens.dart';
@@ -38,6 +39,7 @@ class _ReportDetailSheetState extends ConsumerState<ReportDetailSheet> {
     if (_voting) return;
     setState(() => _voting = true);
     try {
+      await HapticFeedback.selectionClick();
       await ref
           .read(reportServiceProvider)
           .vote(reportId: widget.report.id, vote: vote);
