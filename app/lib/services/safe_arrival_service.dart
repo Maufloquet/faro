@@ -31,17 +31,21 @@ class SafeArrivalService {
   ///
   /// Retorna `null` se permissão de localização foi negada, ou
   /// `SafeArrivalResult` com a célula+contagem do dia em caso de sucesso.
-  Future<SafeArrivalResult?> record() async {
+  Future<SafeArrivalResult?> record({Position? position}) async {
     try {
-      final perm = await _ensurePermission();
-      if (!perm) return null;
-
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 6),
-        ),
-      );
+      Position pos;
+      if (position != null) {
+        pos = position;
+      } else {
+        final perm = await _ensurePermission();
+        if (!perm) return null;
+        pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 6),
+          ),
+        );
+      }
       final cell = geohash5Of(pos.latitude, pos.longitude);
       final today = _todayKey(DateTime.now());
 
@@ -122,6 +126,19 @@ class SafeArrivalResult {
   final String cell;
   final String day;
   const SafeArrivalResult({required this.cell, required this.day});
+}
+
+/// Mensagem pronta pra "avisar que cheguei" a um contato. Pura e testável.
+/// Inclui hora e, se houver posição, um link de mapa pra o contato ver onde.
+String arrivalShareMessage({DateTime? now, double? lat, double? lng}) {
+  final t = (now ?? DateTime.now()).toLocal();
+  final hora =
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  final base = 'Cheguei bem — $hora.';
+  if (lat != null && lng != null) {
+    return '$base Minha localização: https://maps.google.com/?q=$lat,$lng';
+  }
+  return base;
 }
 
 final safeArrivalServiceProvider = Provider<SafeArrivalService>(

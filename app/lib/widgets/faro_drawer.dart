@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../core/design/tokens.dart';
 import '../core/design/typography.dart';
 import '../core/driving/driving_mode.dart';
 import '../core/i18n/faro_strings.dart';
 import '../core/i18n/locale_notifier.dart';
+import '../services/location_service.dart';
 import '../services/safe_arrival_service.dart';
 import 'faro_logo.dart';
 import '../screens/about_screen.dart';
@@ -160,23 +164,30 @@ class _SafeArrivalTile extends ConsumerStatefulWidget {
 }
 
 class _SafeArrivalTileState extends ConsumerState<_SafeArrivalTile> {
+  final _location = LocationService();
   bool _busy = false;
 
-  Future<void> _record() async {
+  /// Avisar que cheguei: pega a posição (sem travar se negar), abre o
+  /// compartilhamento com a mensagem pronta pra mandar a um contato, e
+  /// registra o sinal positivo anônimo de brinde.
+  Future<void> _notify() async {
     if (_busy) return;
     setState(() => _busy = true);
-    final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      final result = await ref.read(safeArrivalServiceProvider).record();
-      if (!mounted) return;
-      messenger.showSnackBar(SnackBar(
-        content: Text(result == null
-            ? FaroStrings.safeArrivalLocationDenied
-            : FaroStrings.safeArrivalConfirmed),
-        backgroundColor: result == null ? null : FaroColors.editorialBrown,
-      ));
-      if (navigator.canPop()) navigator.pop(); // fecha o menu
+      double? lat, lng;
+      try {
+        final pos = await _location.currentPosition();
+        lat = pos.latitude;
+        lng = pos.longitude;
+        // Sinal positivo anônimo (não bloqueia o compartilhar).
+        unawaited(ref.read(safeArrivalServiceProvider).record(position: pos));
+      } catch (_) {
+        // Sem GPS: ainda mandamos a mensagem, só sem o link de mapa.
+      }
+      final msg = arrivalShareMessage(lat: lat, lng: lng);
+      if (navigator.canPop()) navigator.pop(); // fecha o menu antes do share
+      await Share.share(msg);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -191,7 +202,7 @@ class _SafeArrivalTileState extends ConsumerState<_SafeArrivalTile> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: _busy ? null : _record,
+          onTap: _busy ? null : _notify,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
@@ -207,8 +218,8 @@ class _SafeArrivalTileState extends ConsumerState<_SafeArrivalTile> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2.2, color: FaroColors.editorialBrown),
                       )
-                    : const Icon(Icons.check_circle_outline,
-                        size: 24, color: FaroColors.editorialBrown),
+                    : const Icon(Icons.send_outlined,
+                        size: 23, color: FaroColors.editorialBrown),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
