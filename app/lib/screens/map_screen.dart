@@ -147,10 +147,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// tem zoom mínimo próprio: postes só fazem sentido bem aproximado.
   Set<OsmInfraKind> _activeInfra = const {};
   static const Map<OsmInfraKind, double> _infraMinZoom = {
-    OsmInfraKind.police: 13.0,
-    OsmInfraKind.hospitals: 13.0,
-    OsmInfraKind.commerce24h: 14.0,
-    OsmInfraKind.streetLamps: 16.5,
+    // Delegacias, hospitais e comércio 24h são poucos (dezenas/centenas) —
+    // sem limite de zoom: aparecem em qualquer aproximação, inclusive no
+    // mapa afastado. Quem liga a camada quer ver os pontos, ponto.
+    OsmInfraKind.police: 0.0,
+    OsmInfraKind.hospitals: 0.0,
+    OsmInfraKind.commerce24h: 0.0,
+    // Postes são centenas e densos; só fazem sentido aproximado. Mantém
+    // limite alto pra não virar tapete de pontos no afastado.
+    OsmInfraKind.streetLamps: 15.0,
   };
 
   /// Modo direção: stream contínuo de posição que move a câmera. Inicia
@@ -539,6 +544,42 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       value:
           '${result.mapType.name}|busStops=${result.showBusStops}|infra=$infraTag',
     ));
+    _maybeHintZoomForLayers();
+  }
+
+  /// Algumas camadas (postes, ônibus) só renderizam em zoom de rua pra não
+  /// virar tapete de pontos. Se o usuário liga uma delas estando longe, em vez
+  /// de não mostrar nada e parecer quebrado, a gente avisa pra aproximar.
+  void _maybeHintZoomForLayers() {
+    final gated = <String>[];
+    if (_showBusStops && _zoom < _busStopMinZoom) {
+      gated.add(FaroStrings.layersBusStops.toLowerCase());
+    }
+    for (final kind in _activeInfra) {
+      final minZoom = _infraMinZoom[kind] ?? 13.0;
+      if (_zoom < minZoom) gated.add(_infraLabel(kind).toLowerCase());
+    }
+    if (gated.isEmpty || !mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(FaroStrings.layersZoomHint(gated.join(', '))),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ));
+  }
+
+  String _infraLabel(OsmInfraKind kind) {
+    switch (kind) {
+      case OsmInfraKind.police:
+        return FaroStrings.layersPolice;
+      case OsmInfraKind.hospitals:
+        return FaroStrings.layersHospitals;
+      case OsmInfraKind.commerce24h:
+        return FaroStrings.layersCommerce24h;
+      case OsmInfraKind.streetLamps:
+        return FaroStrings.layersStreetLamps;
+    }
   }
 
   List<Occurrence> _proximityAlerts(List<Occurrence> all) {
@@ -903,17 +944,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             right: 14,
             bottom: MediaQuery.of(context).size.height * 0.18 + 12,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Ação primária — destacada em azul pra se distinguir dos
-                // botões utilitários (camadas/localizar/direção) e ficar
-                // claro que é "relatar uma ocorrência".
-                MapFloatingButton(
-                  icon: Icons.add_location_alt_outlined,
-                  active: true,
-                  tooltip: 'Relatar ocorrência',
-                  onTap: _openReportScreen,
-                ),
-                const SizedBox(height: 12),
+                // Utilitários (ajustam a visão) ficam como ícones, empilhados.
                 DrivingModeButton(
                   mode: ref.watch(drivingModeProvider),
                   onTap: () =>
@@ -928,6 +961,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ),
                 const SizedBox(height: 10),
                 _LocateButton(loading: _locating, onTap: _centerOnMe),
+                const SizedBox(height: 12),
+                // Ação primária — pílula "Relatar", na base direita (zona do
+                // polegar) e alinhada com a legenda de intensidade à esquerda.
+                // É a única coisa que o usuário *faz* no mapa; leva texto pra
+                // ser inconfundível pra quem abre o app pela primeira vez.
+                MapPrimaryButton(
+                  icon: Icons.add_location_alt_outlined,
+                  label: FaroStrings.mapReportCta,
+                  tooltip: FaroStrings.mapReportTooltip,
+                  onTap: _openReportScreen,
+                ),
               ],
             ),
           ),

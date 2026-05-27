@@ -87,3 +87,78 @@ class MapFloatingButton extends StatelessWidget {
     return Tooltip(message: tooltip!, child: button);
   }
 }
+
+/// Botão de ação primária do mapa — formato de **pílula com rótulo**
+/// ("Relatar"), não círculo. A diferença é proposital: relatar é a única
+/// ação que o usuário *faz* no mapa (o resto ajusta a visão), então ela
+/// carrega texto pra ser inconfundível, enquanto camadas/localizar/direção
+/// ficam como ícones. Mesma sombra e borda editorial do [MapFloatingButton].
+class MapPrimaryButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final String? tooltip;
+
+  const MapPrimaryButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pill = Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: FaroColors.primary,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: FaroColors.primary.withValues(alpha: 0.28),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          splashColor: Colors.white.withValues(alpha: 0.12),
+          highlightColor: Colors.white.withValues(alpha: 0.06),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 20, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (tooltip == null) return pill;
+    return Tooltip(message: tooltip!, child: pill);
+  }
+}

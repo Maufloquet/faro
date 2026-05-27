@@ -238,6 +238,8 @@ class FaroStrings {
   static String get mapSearchHint => _t('map.search_hint');
   static String get mapAreasTooltip => _t('map.areas_tooltip');
   static String get mapLocationFailed => _t('map.location_failed');
+  static String get mapReportCta => _t('map.report_cta');
+  static String get mapReportTooltip => _t('map.report_tooltip');
   static String get locationErrorTitle => _t('location.error.title');
   static String get locationErrorOpenSettings =>
       _t('location.error.open_settings');
@@ -321,6 +323,8 @@ class FaroStrings {
   static String get layersTrajectoryTitle => _t('layers.trajectory.title');
   static String get layersTrajectoryHint => _t('layers.trajectory.hint');
   static String get layersApply => _t('layers.apply');
+  static String layersZoomHint(String layers) =>
+      _t('layers.zoom_hint').replaceFirst('{layers}', layers);
 
   // ─── Banner de proximidade ────────────────────────────────────────────
   static String get bannerOneTitle => _t('banner.one_title');
@@ -775,6 +779,8 @@ const Map<String, Map<String, String>> _table = {
     'map.search_hint': 'Buscar bairro em Salvador',
     'map.areas_tooltip': 'Atividade por área',
     'map.location_failed': 'Não foi possível obter sua localização agora.',
+    'map.report_cta': 'Relatar',
+    'map.report_tooltip': 'Relatar uma ocorrência que você viu',
     'location.error.title': 'Localização',
     'location.error.open_settings': 'Abrir configurações',
     'location.error.try_again': 'Tentar de novo',
@@ -837,6 +843,7 @@ const Map<String, Map<String, String>> _table = {
     'layers.trajectory.hint':
         'Áreas com relatos por onde você passou nos últimos 7 dias',
     'layers.apply': 'Aplicar',
+    'layers.zoom_hint': 'Aproxime o mapa para ver {layers}',
     'banner.one_title': 'Novo relato perto de você',
     'banner.many_title': '{n} relatos próximos nas últimas 6h',
     'banner.one_subtext': '{reason} · {when}',
@@ -1156,6 +1163,8 @@ const Map<String, Map<String, String>> _table = {
     'map.search_hint': 'Search neighborhood in Salvador',
     'map.areas_tooltip': 'Activity by area',
     'map.location_failed': 'Could not get your location right now.',
+    'map.report_cta': 'Report',
+    'map.report_tooltip': 'Report something you saw',
     'location.error.title': 'Location',
     'location.error.open_settings': 'Open settings',
     'location.error.try_again': 'Try again',
@@ -1218,6 +1227,7 @@ const Map<String, Map<String, String>> _table = {
     'layers.trajectory.hint':
         'Areas with reports that you passed through in the last 7 days',
     'layers.apply': 'Apply',
+    'layers.zoom_hint': 'Zoom in to see {layers}',
     'banner.one_title': 'New report near you',
     'banner.many_title': '{n} reports nearby in the last 6h',
     'banner.one_subtext': '{reason} · {when}',
@@ -1539,6 +1549,8 @@ const Map<String, Map<String, String>> _table = {
     'map.search_hint': 'Buscar barrio en Salvador',
     'map.areas_tooltip': 'Actividad por zona',
     'map.location_failed': 'No fue posible obtener tu ubicación ahora.',
+    'map.report_cta': 'Reportar',
+    'map.report_tooltip': 'Reportar algo que viste',
     'location.error.title': 'Ubicación',
     'location.error.open_settings': 'Abrir ajustes',
     'location.error.try_again': 'Intentar de nuevo',
@@ -1601,6 +1613,7 @@ const Map<String, Map<String, String>> _table = {
     'layers.trajectory.hint':
         'Zonas con reportes por donde pasaste en los últimos 7 días',
     'layers.apply': 'Aplicar',
+    'layers.zoom_hint': 'Acerca el mapa para ver {layers}',
     'banner.one_title': 'Nuevo reporte cerca de ti',
     'banner.many_title': '{n} reportes cercanos en las últimas 6h',
     'banner.one_subtext': '{reason} · {when}',
