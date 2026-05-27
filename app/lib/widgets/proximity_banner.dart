@@ -44,12 +44,14 @@ class ProximityBanner extends StatelessWidget {
     final reasonText = freshest.mainReason != null
         ? FaroStrings.reasonLabel(freshest.mainReason!)
         : null;
+    // O texto plural agora é "Mais recente: {motivo} · {quando}" — como o
+    // motivo vem logo após dois-pontos, entra capitalizado (não minúsculo,
+    // que o template antigo "N relatos de {motivo}" pedia).
     final subtext = n == 1
         ? FaroStrings.bannerOneSubtext(
             reasonText ?? FaroStrings.bannerReportFallback, when)
         : FaroStrings.bannerManySubtext(
-            reasonText?.toLowerCase() ?? FaroStrings.bannerReportFallbackLower,
-            when);
+            reasonText ?? FaroStrings.bannerReportFallback, when);
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + 60,

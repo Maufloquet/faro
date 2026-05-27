@@ -132,9 +132,14 @@ void main() {
 
   group('serialização', () {
     test('round-trip pelo storage preserva campos', () async {
+      // Data ancorada em "agora menos 2 dias" pra ficar sempre dentro da
+      // janela de retenção (7 dias) — uma data fixa apodrece e some do
+      // recent(). Truncada no minuto pra não ter microssegundos que o
+      // round-trip por millisecondsSinceEpoch perderia.
+      final base = DateTime.now().subtract(const Duration(days: 2));
       final original = CrossingEvent(
         id: 12345,
-        at: DateTime(2026, 5, 18, 14, 30),
+        at: DateTime(base.year, base.month, base.day, 14, 30),
         neighborhood: 'Pirajá',
         city: 'Salvador',
         reportCount: 5,
