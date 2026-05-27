@@ -76,6 +76,18 @@ const SOURCES = [
     weight: 0.30,
     scope: "salvador",
   },
+  // ─── Expansão 2026-05-26: portal grande com RSS direto confirmado ───
+  // metro1: /rss retorna RSS válido (UA Mozilla). Portal de grande alcance
+  //   em Salvador, cobertura policial forte. RSS DIRETO → corpo legível →
+  //   geocoding preciso (ao contrário dos itens via Google News).
+  {
+    id: "metro1",
+    name: "Metro1",
+    url: "https://www.metro1.com.br/rss",
+    enabled: true,
+    weight: 0.30,
+    scope: "salvador",
+  },
 
   // ─── RSS verificados sem itens (mantidos como referência) ───
   // bahia-noticias: RSS oficial em /quem-somos/rss.xml retorna <channel>
