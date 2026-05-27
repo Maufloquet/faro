@@ -192,16 +192,32 @@ function parseInfra(raw, kind) {
     seen.add(key);
 
     const tags = e.tags || {};
-    items.push({
-      id: e.id,
-      type: e.type,
-      lat: round5(coords.lat),
-      lng: round5(coords.lng),
-      name: tags.name || null,
-      ...tagSubset(tags, kind),
-    });
+    items.push(
+      omitUndefined({
+        id: e.id,
+        type: e.type,
+        lat: round5(coords.lat),
+        lng: round5(coords.lng),
+        name: tags.name || null,
+        ...tagSubset(tags, kind),
+      }),
+    );
   }
   return items;
+}
+
+/**
+ * Remove chaves com valor `undefined`. O Firestore recusa documentos com
+ * `undefined` (diferente de `null`), e algumas tags opcionais ficam undefined
+ * de propósito — pra distinguir "ausente" de "negativo". A gente honra essa
+ * intenção omitindo a chave em vez de gravar `false`.
+ */
+function omitUndefined(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
 }
 
 function extractCoords(e) {
