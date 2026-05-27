@@ -25,9 +25,11 @@ class _SplashBeaconState extends State<SplashBeacon>
   @override
   void initState() {
     super.initState();
+    // Período mais longo = facho varrendo devagar, dá pra acompanhar a luz
+    // (e é mais realista — farol de verdade gira lento).
     _c = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3600),
+      duration: const Duration(milliseconds: 5400),
     )..repeat();
   }
 

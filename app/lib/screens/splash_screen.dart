@@ -35,8 +35,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _controller.forward();
 
-    // Segura ~2.2s pra dar tempo do facho varrer pelo menos meia volta.
-    Timer(const Duration(milliseconds: 2200), _goNext);
+    // Segura ~2.8s pra dar tempo do facho (mais lento agora) fazer uma
+    // varredura visível antes de ir pro mapa.
+    Timer(const Duration(milliseconds: 2800), _goNext);
   }
 
   Future<void> _goNext() async {
