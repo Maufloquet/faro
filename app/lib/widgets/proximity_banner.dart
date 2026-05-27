@@ -41,11 +41,15 @@ class ProximityBanner extends StatelessWidget {
     final headline = n == 1
         ? FaroStrings.bannerOneTitle
         : FaroStrings.bannerManyTitle(n);
+    final reasonText = freshest.mainReason != null
+        ? FaroStrings.reasonLabel(freshest.mainReason!)
+        : null;
     final subtext = n == 1
         ? FaroStrings.bannerOneSubtext(
-            freshest.mainReason ?? FaroStrings.bannerReportFallback, when)
+            reasonText ?? FaroStrings.bannerReportFallback, when)
         : FaroStrings.bannerManySubtext(
-            freshest.mainReason ?? FaroStrings.bannerReportFallbackLower, when);
+            reasonText?.toLowerCase() ?? FaroStrings.bannerReportFallbackLower,
+            when);
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + 60,

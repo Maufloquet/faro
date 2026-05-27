@@ -195,7 +195,7 @@ class _EventCard extends StatelessWidget {
           if (event.topReasons.isNotEmpty) ...[
             const SizedBox(height: FaroSpacing.sm),
             Text(
-              event.topReasons.join(' · '),
+              event.topReasons.map(FaroStrings.reasonLabel).join(' · '),
               style: const TextStyle(
                 fontSize: 12.5,
                 color: FaroColors.textMuted,

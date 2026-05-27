@@ -541,27 +541,71 @@ class FaroStrings {
   /// nova categoria precisa ser adicionada nos 3 lados (backend + 3
   /// idiomas aqui). Strings desconhecidas caem no fallback (retorna como
   /// veio) pra não esconder dados.
+  /// Traduz o motivo da ocorrência pro idioma atual. Robusto a variantes:
+  /// além dos tipos canônicos do pipeline de notícias (Tiroteio, Roubo…),
+  /// cobre os nomes que o Fogo Cruzado grava ("Homicidio/Tentativa",
+  /// "Operação policial", "Disputa", "Briga", "Tentativa/Roubo") e versões
+  /// em inglês que a API às vezes retorna ("Police action", "Assault"),
+  /// normalizando sem acento + por palavra-chave. Antes, qualquer variante
+  /// fora da lista exata vazava crua, no idioma errado.
   static String reasonLabel(String reason) {
-    switch (reason) {
-      case 'Tiroteio':
+    switch (_reasonKey(reason)) {
+      case 'shooting':
         return _t('reason.shooting');
-      case 'Homicídio':
+      case 'homicide':
         return _t('reason.homicide');
-      case 'Roubo':
+      case 'robbery':
         return _t('reason.robbery');
-      case 'Ação policial':
+      case 'police_action':
         return _t('reason.police_action');
-      case 'Sequestro':
+      case 'kidnapping':
         return _t('reason.kidnapping');
-      case 'Agressão':
+      case 'assault':
         return _t('reason.assault');
-      case 'Outros':
+      case 'other':
         return _t('reason.other');
-      case 'Não categorizado':
-        return _t('reason.uncategorized');
       default:
-        return reason;
+        return reason; // tipo realmente novo/desconhecido — raro
     }
+  }
+
+  static String _reasonKey(String reason) {
+    final n = _stripAccents(reason.toLowerCase()).trim();
+    if (n.contains('tiro') || n.contains('disparo') || n.contains('shoot')) {
+      return 'shooting';
+    }
+    if (n.contains('homic')) return 'homicide';
+    if (n.contains('sequestr') || n.contains('kidnap')) return 'kidnapping';
+    if (n.contains('polic') || n.contains('operac')) return 'police_action';
+    if (n.contains('roubo') ||
+        n.contains('assalt') ||
+        n.contains('assault') ||
+        n.contains('robber') ||
+        n.contains('furto') ||
+        n.contains('carga')) {
+      return 'robbery';
+    }
+    if (n.contains('agress') || n.contains('briga') || n.contains('fight')) {
+      return 'assault';
+    }
+    if (n.contains('disput')) return 'other';
+    if (n.contains('outro') ||
+        n == 'other' ||
+        n.contains('categ') ||
+        n.contains('desconhec')) {
+      return 'other';
+    }
+    return 'unknown';
+  }
+
+  static String _stripAccents(String s) {
+    const from = 'áàâãäéèêëíìîïóòôõöúùûüçñ';
+    const to = 'aaaaaeeeeiiiiooooouuuucn';
+    var r = s;
+    for (var i = 0; i < from.length; i++) {
+      r = r.replaceAll(from[i], to[i]);
+    }
+    return r;
   }
 
   // ─── Dias da semana (1=seg ... 7=dom) ─────────────────────────────────
